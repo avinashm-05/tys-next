@@ -1,0 +1,652 @@
+/* ========================================
+   SMOOTH ANIMATIONS & HOVER EFFECTS
+   For Welcome Page Enhancement
+   ======================================== */
+
+/* ========================================
+   SCROLL ANIMATIONS - AOS (Animate On Scroll)
+   ======================================== */
+
+/* Fade In Animations */
+[data-aos="fade-up"] {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+[data-aos="fade-up"].aos-animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+[data-aos="fade-down"] {
+    opacity: 0;
+    transform: translateY(-50px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+[data-aos="fade-down"].aos-animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+[data-aos="fade-left"] {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+[data-aos="fade-left"].aos-animate {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+[data-aos="fade-right"] {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+[data-aos="fade-right"].aos-animate {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+[data-aos="zoom-in"] {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+[data-aos="zoom-in"].aos-animate {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* ========================================
+   BUTTON HOVER EFFECTS
+   ======================================== */
+
+/* Primary Fill Button Hover */
+.fillbttn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fillbttn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.fillbttn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.fillbttn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 87, 255, 0.3);
+}
+
+.fillbttn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 10px rgba(0, 87, 255, 0.2);
+}
+
+/* Non-Fill Button Hover */
+.nonfillbtn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+}
+
+.nonfillbtn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 87, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.nonfillbtn:hover::before {
+    left: 100%;
+}
+
+.nonfillbtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    border-color: #0057FF;
+}
+
+.nonfillbtn:active {
+    transform: translateY(0);
+}
+
+/* ========================================
+   CARD HOVER EFFECTS
+   ======================================== */
+
+/* Main Card Box Hover */
+.maincardbox {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.maincardbox::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.maincardbox:hover {
+    transform: translateY(-8px);
+}
+
+.maincardbox:hover::after {
+    opacity: 1;
+}
+
+.maincardbox .imgcardcss {
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.maincardbox:hover .imgcardcss {
+    transform: scale(1.05);
+}
+
+/* Grid Card Hover */
+.gridmaincard {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.gridmaincard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(0, 87, 255, 0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.gridmaincard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.gridmaincard:hover::before {
+    opacity: 1;
+}
+
+/* Icon Box Hover */
+.iconboxbg {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gridmaincard:hover .iconboxbg {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.iconboxbg img {
+    transition: transform 0.3s ease;
+}
+
+.gridmaincard:hover .iconboxbg img {
+    transform: scale(1.1);
+}
+
+/* ========================================
+   LINK & TEXT HOVER EFFECTS
+   ======================================== */
+
+/* Text Button Hover */
+.textbtncss {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.textbtncss::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #0057FF;
+    transform: scaleX(1);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.textbtncss:hover {
+    color: #0057FF !important;
+    padding-left: 5px;
+}
+
+.textbtncss:hover::after {
+    transform: scaleX(1.1);
+}
+
+/* Nav Link Hover */
+.nav-bar-link-wrapper-1-items {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.nav-bar-link-wrapper-1-items::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: #fff;
+    transform: translateX(-50%);
+    transition: width 0.3s ease;
+}
+
+.nav-bar-link-wrapper-1-items:hover::after {
+    width: 100%;
+}
+
+.nav-bar-link-wrapper-1-items:hover {
+    transform: translateY(-2px);
+}
+
+/* ========================================
+   ICON ANIMATIONS
+   ======================================== */
+
+/* Social Icon Hover */
+.socialiconbg {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.socialiconbg:hover {
+    transform: translateY(-5px) scale(1.1);
+    background: #0057FF !important;
+}
+
+.socialiconbg img {
+    transition: filter 0.3s ease;
+}
+
+.socialiconbg:hover img {
+    filter: brightness(0) invert(1);
+}
+
+/* ========================================
+   ACCORDION ANIMATIONS
+   ======================================== */
+
+.accordion-item {
+    transition: all 0.3s ease;
+}
+
+.accordion-button {
+    transition: all 0.3s ease;
+}
+
+.accordion-button:hover {
+    background-color: rgba(0, 87, 255, 0.05);
+}
+
+.accordion-button::after {
+    transition: transform 0.3s ease;
+}
+
+.accordion-button:not(.collapsed)::after {
+    transform: rotate(180deg);
+}
+
+/* ========================================
+   FORM INPUT ANIMATIONS
+   ======================================== */
+
+.quoteinputcss {
+    transition: all 0.3s ease;
+}
+
+.quoteinputcss:focus-within {
+    border-color: #0057FF;
+    box-shadow: 0 0 0 4px rgba(0, 87, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.form-control {
+    transition: all 0.3s ease;
+}
+
+/* ========================================
+   PROOF CARD ANIMATIONS
+   ======================================== */
+
+.proofcard {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.proofcard::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #0057FF, #00c851);
+    transition: width 0.5s ease;
+}
+
+.proofcard:hover::before {
+    width: 100%;
+}
+
+.proofcard:hover {
+    transform: translateX(10px);
+    background: rgba(0, 87, 255, 0.02);
+}
+
+.proofcard .proofcount {
+    transition: all 0.3s ease;
+}
+
+.proofcard:hover .proofcount {
+    color: #0057FF;
+    transform: scale(1.1);
+}
+
+/* ========================================
+   HERO SECTION ANIMATIONS
+   ======================================== */
+
+/* Hero Content Fade In */
+.heder-text {
+    animation: heroFadeIn 1s ease-out;
+}
+
+@keyframes heroFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hero Title Animation */
+.herosectitle {
+    animation: heroTitleSlide 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes heroTitleSlide {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hero Form Animation */
+.form-main {
+    animation: heroFormFade 1.4s ease-out;
+}
+
+@keyframes heroFormFade {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ========================================
+   FLOATING ANIMATIONS
+   ======================================== */
+
+/* Floating Animation for Hero Image */
+.herotoppngimg {
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translate(-50%, -50%) translateY(0);
+    }
+    50% {
+        transform: translate(-50%, -50%) translateY(-20px);
+    }
+}
+
+/* ========================================
+   PULSE ANIMATIONS
+   ======================================== */
+
+/* Pulse Animation for Important Elements */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.pulse-animation {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* ========================================
+   LOADING ANIMATIONS
+   ======================================== */
+
+/* Shimmer Effect for Loading States */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+}
+
+/* ========================================
+   SCROLL PROGRESS INDICATOR
+   ======================================== */
+
+.scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 4px;
+    background: linear-gradient(90deg, #0057FF, #00c851);
+    z-index: 9999;
+    transition: width 0.1s ease;
+}
+
+/* ========================================
+   SMOOTH SCROLL BEHAVIOR
+   ======================================== */
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* ========================================
+   PAGE TRANSITION
+   ======================================== */
+
+body {
+    animation: pageLoad 0.6s ease-out;
+}
+
+@keyframes pageLoad {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ========================================
+   STAGGER ANIMATIONS FOR LISTS
+   ======================================== */
+
+.stagger-item {
+    opacity: 0;
+    animation: staggerFadeIn 0.6s ease-out forwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0.1s; }
+.stagger-item:nth-child(2) { animation-delay: 0.2s; }
+.stagger-item:nth-child(3) { animation-delay: 0.3s; }
+.stagger-item:nth-child(4) { animation-delay: 0.4s; }
+.stagger-item:nth-child(5) { animation-delay: 0.5s; }
+.stagger-item:nth-child(6) { animation-delay: 0.6s; }
+.stagger-item:nth-child(7) { animation-delay: 0.7s; }
+
+@keyframes staggerFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   RESPONSIVE ANIMATIONS
+   ======================================== */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Disable complex animations on mobile for performance */
+@media (max-width: 767px) {
+    .maincardbox::after,
+    .gridmaincard::before {
+        display: none;
+    }
+    
+    .herotoppngimg {
+        animation: none;
+    }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+.animate-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.animate-on-scroll.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.hover-scale {
+    transition: transform 0.3s ease;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+.hover-rotate {
+    transition: transform 0.3s ease;
+}
+
+.hover-rotate:hover {
+    transform: rotate(5deg);
+}
+
+/* ========================================
+   RIPPLE EFFECT
+   ======================================== */
+
+.ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    animation: ripple 0.6s ease-out;
+    pointer-events: none;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Ensure buttons have position relative for ripple */
+.fillbttn,
+.nonfillbtn,
+.quote-wizard-btn-nav {
+    position: relative;
+    overflow: hidden;
+}

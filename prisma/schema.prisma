@@ -1,0 +1,442 @@
+// THIS SCHEMA IS THE SOURCE OF TRUTH — Prisma owns the database via
+// `prisma migrate` (baseline in prisma/migrations/). Table/column names and
+// types mirror migration/01-database.md exactly so the ported logic and API
+// contracts (decimal-as-string R3, 422 shape, enums) hold unchanged.
+//
+// ⚠️ GATE: migrate-first is valid ONLY because production is empty/never used.
+// `prisma migrate deploy` targets a FRESH database at cutover — never
+// Laravel's live one. Before any production apply, the owner must confirm
+// every data table has ZERO rows and take a full backup. If any data exists,
+// revert to the introspect (`prisma db pull`) approach (see README).
+//
+// Deliberate deviations from the Laravel schema:
+//   * `packages` (orphaned, R2) and Laravel framework tables don't exist here.
+//   * vendors.ssn_number is AES-256-GCM ciphertext; the UNIQUE constraint
+//     moved to the deterministic ssn_number_hash column (R-PII, src/lib/pii.ts).
+//   * quote_contacts stays 1-N (Laravel's DB had no unique on quote_id);
+//     code reads the first row to model the hasOne.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Existing app tables (introspected — Laravel still reads/writes these)
+// ---------------------------------------------------------------------------
+
+model User {
+  id              BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  userTypeId      BigInt?   @map("user_type_id") @db.UnsignedBigInt
+  name            String
+  email           String    @unique(map: "users_email_unique")
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamp(0)
+  // Laravel-era bcrypt $2y$ hash. NULLABLE since C1: customers registered via
+  // Better Auth have no Laravel hash — their credential lives in Account.password.
+  password        String?
+  phone           String?   @db.VarChar(30) // C1 customer profile field (additive)
+  rememberToken   String?   @map("remember_token") @db.VarChar(100)
+  createdAt       DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt       DateTime? @map("updated_at") @db.Timestamp(0)
+  // Additive columns (db/migrations/001) — Better Auth core + role copy
+  emailVerified   Boolean   @default(false) @map("email_verified")
+  image           String?   @db.VarChar(255)
+  role            String? // copy of userType.slug for Better Auth; user_type_id stays Laravel's source of truth
+
+  userType        UserType?       @relation(fields: [userTypeId], references: [id], onUpdate: NoAction, map: "users_user_type_id_foreign")
+  sessions        Session[]
+  accounts        Account[]
+  vendorsAdded    Vendor[]        @relation("VendorAddedBy")
+  contactsCreated VendorContact[] @relation("ContactCreatedBy")
+  contactsUpdated VendorContact[] @relation("ContactUpdatedBy")
+  commentsCreated VendorComment[] @relation("CommentCreatedBy")
+  commentsUpdated VendorComment[] @relation("CommentUpdatedBy")
+  serviceAssigns  VendorService[] @relation("AssignedBy")
+
+  @@index([userTypeId], map: "users_user_type_id_index")
+  @@map("users")
+}
+
+model UserType {
+  id        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  name      String
+  slug      String    @unique(map: "user_types_slug_unique") // super-admin | admin | staff | user
+  createdAt DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @map("updated_at") @db.Timestamp(0)
+  users     User[]
+
+  @@map("user_types")
+}
+
+model Quote {
+  id                    BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  fromCountry           String      @map("from_country") @db.VarChar(50)
+  fromZip               String      @map("from_zip")
+  toCountry             String      @map("to_country") @db.VarChar(50)
+  toZip                 String      @map("to_zip")
+  isResidence           Boolean     @default(false) @map("is_residence")
+  packageType           String      @map("package_type") @db.VarChar(255) // CSV, e.g. "box,television" — FIND_IN_SET queries
+  name                  String?
+  email                 String?
+  mobileNumber          String?     @map("mobile_number")
+  boxData               Json?       @map("box_data")
+  televisionData        Json?       @map("television_data")
+  autoData              Json?       @map("auto_data")
+  status                QuoteStatus @default(pending)
+  totalChargeableWeight Decimal?    @map("total_chargeable_weight") @db.Decimal(10, 2) // serialize as "0.00" string (R3)
+  estimatedCost         Decimal?    @map("estimated_cost") @db.Decimal(10, 2) // serialize as "0.00" string (R3)
+  currency              String?     @db.VarChar(3)
+  createdAt             DateTime?   @map("created_at") @db.Timestamp(0)
+  updatedAt             DateTime?   @map("updated_at") @db.Timestamp(0)
+
+  packages       PackageDetail[]
+  contacts       QuoteContact[] // no DB unique on quote_id — treat first row as the contact
+  emailStatistic QuoteEmailStatistic?
+
+  @@index([fromCountry, toCountry], map: "idx_c_pair")
+  @@index([createdAt], map: "quotes_created_at_index")
+  @@index([status], map: "quotes_status_index")
+  @@map("quotes")
+}
+
+model PackageDetail {
+  id               BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  quoteId          BigInt      @map("quote_id") @db.UnsignedBigInt
+  packageType      String      @map("package_type") @db.VarChar(50) // single type per row: box | television | auto
+  quantity         Int         @default(1)
+  weight           Decimal?    @db.Decimal(10, 2)
+  weightUnit       WeightUnit? @map("weight_unit")
+  length           Decimal?    @db.Decimal(10, 2)
+  width            Decimal?    @db.Decimal(10, 2)
+  height           Decimal?    @db.Decimal(10, 2)
+  chargeableWeight Decimal?    @map("chargeable_weight") @db.Decimal(10, 2)
+  brandName        String?     @map("brand_name")
+  tvModel          String?     @map("tv_model")
+  carModel         String?     @map("car_model")
+  carYear          String?     @map("car_year") @db.VarChar(10) // string in DB (R8) — coerce in the API
+  createdAt        DateTime?   @map("created_at") @db.Timestamp(0)
+  updatedAt        DateTime?   @map("updated_at") @db.Timestamp(0)
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "package_details_quote_id_foreign")
+
+  @@index([packageType], map: "package_details_package_type_index")
+  @@index([quoteId], map: "package_details_quote_id_index")
+  @@map("package_details")
+}
+
+model QuoteContact {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  quoteId     BigInt    @map("quote_id") @db.UnsignedBigInt
+  name        String
+  email       String
+  countryCode String    @map("country_code")
+  phone       String
+  createdAt   DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime? @map("updated_at") @db.Timestamp(0)
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "quote_contacts_quote_id_foreign")
+
+  @@index([quoteId], map: "quote_contacts_quote_id_index")
+  @@map("quote_contacts")
+}
+
+model QuoteEmailStatistic {
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  quoteId       BigInt    @unique(map: "quote_email_statistics_quote_id_unique") @map("quote_id") @db.UnsignedBigInt
+  trackingToken String    @unique(map: "quote_email_statistics_tracking_token_unique") @map("tracking_token") @db.VarChar(64)
+  emailOpenedAt DateTime? @map("email_opened_at") @db.Timestamp(0)
+  lastOpenedAt  DateTime? @map("last_opened_at") @db.Timestamp(0)
+  openCount     Int       @default(0) @map("open_count")
+  createdAt     DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt     DateTime? @map("updated_at") @db.Timestamp(0)
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "quote_email_statistics_quote_id_foreign")
+
+  @@index([trackingToken], map: "quote_email_statistics_tracking_token_index")
+  @@map("quote_email_statistics")
+}
+
+model Service {
+  id         BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  name       String
+  systemName String        @unique(map: "services_system_name_unique") @map("system_name") // auto-slugged from name when blank (R11)
+  status     ServiceStatus @default(active)
+  createdAt  DateTime?     @map("created_at") @db.Timestamp(0)
+  updatedAt  DateTime?     @map("updated_at") @db.Timestamp(0)
+
+  vendorServices VendorService[]
+
+  @@index([status], map: "services_status_index")
+  @@map("services")
+}
+
+model VendorType {
+  id          BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  name        String         @unique(map: "vendor_types_name_unique")
+  description String?        @db.Text
+  status      ActiveInactive @default(active)
+  createdAt   DateTime?      @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime?      @map("updated_at") @db.Timestamp(0)
+
+  vendors Vendor[]
+
+  @@index([status], map: "vendor_types_status_index")
+  @@map("vendor_types")
+}
+
+model Vendor {
+  id           BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  name         String
+  vendorTypeId BigInt         @map("vendor_type_id") @db.UnsignedBigInt
+  email        String         @unique(map: "vendors_email_unique")
+  phoneNumber  String         @map("phone_number") @db.VarChar(20)
+  countryCode  String         @map("country_code") @db.VarChar(5)
+  website      String?        @db.VarChar(255)
+  einNumber     String?       @unique(map: "vendors_ein_number_unique") @map("ein_number") @db.VarChar(20)
+  ssnNumber     String?       @map("ssn_number") @db.VarChar(255) // AES-256-GCM ciphertext (R-PII) — encrypt/decrypt via src/lib/pii.ts only
+  ssnNumberHash String?       @unique(map: "vendors_ssn_number_hash_unique") @map("ssn_number_hash") @db.Char(64) // HMAC-SHA256 of the raw SSN — carries the unique constraint
+  addressLine1 String         @map("address_line_1") @db.VarChar(255)
+  addressLine2 String?        @map("address_line_2") @db.VarChar(255)
+  addressLine3 String?        @map("address_line_3") @db.VarChar(255)
+  city         String         @db.VarChar(100)
+  state        String         @db.VarChar(100)
+  country      String         @db.VarChar(100)
+  postalCode   String         @map("postal_code") @db.VarChar(20)
+  latitude     Decimal?       @db.Decimal(10, 7)
+  longitude    Decimal?       @db.Decimal(10, 7)
+  geocodedAt   DateTime?      @map("geocoded_at") @db.Timestamp(0)
+  status       ActiveInactive @default(active)
+  addedById    BigInt         @map("added_by") @db.UnsignedBigInt
+  createdAt    DateTime?      @map("created_at") @db.Timestamp(0)
+  updatedAt    DateTime?      @map("updated_at") @db.Timestamp(0)
+
+  vendorType     VendorType      @relation(fields: [vendorTypeId], references: [id], onUpdate: NoAction, map: "vendors_vendor_type_id_foreign")
+  addedBy        User            @relation("VendorAddedBy", fields: [addedById], references: [id], onUpdate: NoAction, map: "vendors_added_by_foreign")
+  contacts       VendorContact[]
+  comments       VendorComment[]
+  vendorServices VendorService[]
+
+  @@index([latitude, longitude], map: "idx_vendors_coordinates")
+  @@index([status, vendorTypeId, latitude, longitude], map: "idx_vendors_map_filters")
+  @@index([addedById], map: "vendors_added_by_index")
+  @@index([country], map: "vendors_country_index")
+  @@index([name], map: "vendors_name_index")
+  @@index([status], map: "vendors_status_index")
+  @@index([vendorTypeId], map: "vendors_vendor_type_id_index")
+  @@map("vendors")
+}
+
+model VendorContact {
+  id          BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  vendorId    BigInt         @map("vendor_id") @db.UnsignedBigInt
+  name        String         @db.VarChar(255)
+  title       String?        @db.VarChar(255)
+  city        String?        @db.VarChar(100)
+  state       String?        @db.VarChar(100)
+  email       String
+  workPhone   String?        @map("work_phone") @db.VarChar(20)
+  cellPhone   String?        @map("cell_phone") @db.VarChar(20)
+  status      ActiveInactive @default(active)
+  createdById BigInt?        @map("created_by") @db.UnsignedBigInt
+  updatedById BigInt?        @map("updated_by") @db.UnsignedBigInt
+  createdAt   DateTime?      @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime?      @map("updated_at") @db.Timestamp(0)
+  deletedAt   DateTime?      @map("deleted_at") @db.Timestamp(0) // soft delete — every query must filter deletedAt: null (R13)
+
+  vendor    Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "vendor_contacts_vendor_id_foreign")
+  createdBy User?  @relation("ContactCreatedBy", fields: [createdById], references: [id], onUpdate: NoAction, map: "vendor_contacts_created_by_foreign")
+  updatedBy User?  @relation("ContactUpdatedBy", fields: [updatedById], references: [id], onUpdate: NoAction, map: "vendor_contacts_updated_by_foreign")
+
+  @@unique([vendorId, email], map: "unique_vendor_email") // counts soft-deleted rows too (R7)
+  @@index([createdById], map: "vendor_contacts_created_by_foreign")
+  @@index([status], map: "vendor_contacts_status_index")
+  @@index([updatedById], map: "vendor_contacts_updated_by_foreign")
+  @@index([vendorId], map: "vendor_contacts_vendor_id_index")
+  @@map("vendor_contacts")
+}
+
+model VendorService {
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  vendorId   BigInt    @map("vendor_id") @db.UnsignedBigInt
+  serviceId  BigInt    @map("service_id") @db.UnsignedBigInt
+  assignedAt DateTime  @default(now()) @map("assigned_at") @db.Timestamp(0)
+  assignedBy BigInt    @map("assigned_by") @db.UnsignedBigInt
+  createdAt  DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt  DateTime? @map("updated_at") @db.Timestamp(0)
+
+  vendor       Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "vendor_services_vendor_id_foreign")
+  service      Service @relation(fields: [serviceId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "vendor_services_service_id_foreign")
+  assignedUser User    @relation("AssignedBy", fields: [assignedBy], references: [id], onUpdate: NoAction, map: "vendor_services_assigned_by_foreign")
+
+  @@unique([vendorId, serviceId], map: "unique_vendor_service")
+  @@index([assignedAt], map: "vendor_services_assigned_at_index")
+  @@index([assignedBy], map: "vendor_services_assigned_by_index")
+  @@index([serviceId], map: "vendor_services_service_id_index")
+  @@index([vendorId], map: "vendor_services_vendor_id_index")
+  @@map("vendor_services")
+}
+
+model VendorComment {
+  id          BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
+  vendorId    BigInt                @map("vendor_id") @db.UnsignedBigInt
+  title       String
+  content     String                @db.Text
+  category    VendorCommentCategory @default(general)
+  priority    VendorCommentPriority @default(normal)
+  createdById BigInt?               @map("created_by") @db.UnsignedBigInt
+  updatedById BigInt?               @map("updated_by") @db.UnsignedBigInt
+  createdAt   DateTime?             @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime?             @map("updated_at") @db.Timestamp(0)
+  deletedAt   DateTime?             @map("deleted_at") @db.Timestamp(0) // soft delete (R13)
+
+  vendor    Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "vendor_comments_vendor_id_foreign")
+  createdBy User?  @relation("CommentCreatedBy", fields: [createdById], references: [id], onUpdate: NoAction, map: "vendor_comments_created_by_foreign")
+  updatedBy User?  @relation("CommentUpdatedBy", fields: [updatedById], references: [id], onUpdate: NoAction, map: "vendor_comments_updated_by_foreign")
+
+  @@index([category], map: "vendor_comments_category_index")
+  @@index([createdAt], map: "vendor_comments_created_at_index")
+  @@index([createdById], map: "vendor_comments_created_by_foreign")
+  @@index([priority], map: "vendor_comments_priority_index")
+  @@index([updatedById], map: "vendor_comments_updated_by_foreign")
+  @@index([vendorId], map: "vendor_comments_vendor_id_index")
+  @@map("vendor_comments")
+}
+
+model Setting {
+  id        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  key       String    @unique(map: "settings_key_unique")
+  value     String?   @db.Text
+  createdAt DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @map("updated_at") @db.Timestamp(0)
+
+  @@map("settings")
+}
+
+// ---------------------------------------------------------------------------
+// Better Auth tables (new — created by db/migrations/001_nextjs_additive.sql)
+// Field names match Better Auth's defaults so no field mapping is needed in
+// the auth config; table names are mapped here to avoid colliding with
+// Laravel's `sessions` table.
+// ---------------------------------------------------------------------------
+
+model Session {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt   @map("user_id") @db.UnsignedBigInt
+  token     String   @unique(map: "auth_sessions_token_unique") @db.VarChar(255)
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  userAgent String?  @map("user_agent") @db.Text
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "auth_sessions_user_id_foreign")
+
+  @@index([userId], map: "auth_sessions_user_id_index")
+  @@map("auth_sessions")
+}
+
+model Account {
+  id                    BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  userId                BigInt    @map("user_id") @db.UnsignedBigInt
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id") // "credential" for email/password
+  accessToken           String?   @map("access_token") @db.Text
+  refreshToken          String?   @map("refresh_token") @db.Text
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?   @db.Text
+  idToken               String?   @map("id_token") @db.Text
+  password              String? // bcrypt $2y$ (backfilled) or Better Auth scrypt (new)
+  createdAt             DateTime  @map("created_at")
+  updatedAt             DateTime  @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "auth_accounts_user_id_foreign")
+
+  @@index([providerId, accountId], map: "auth_accounts_provider_lookup")
+  @@index([userId], map: "auth_accounts_user_id_index")
+  @@map("auth_accounts")
+}
+
+model Verification {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  identifier String
+  value      String   @db.Text
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @map("created_at")
+  updatedAt  DateTime @map("updated_at")
+
+  @@index([identifier], map: "auth_verifications_identifier_index")
+  @@map("auth_verifications")
+}
+
+// ---------------------------------------------------------------------------
+// Managed-hosting infra tables (new — replace Redis, ARCHITECTURE.md §7)
+// ---------------------------------------------------------------------------
+
+model CacheEntry {
+  key       String   @id
+  value     String   @db.MediumText
+  expiresAt DateTime @map("expires_at")
+
+  @@index([expiresAt], map: "app_cache_expires_at_index")
+  @@map("app_cache")
+}
+
+model CacheLock {
+  key         String   @id
+  lockedUntil DateTime @map("locked_until")
+
+  @@map("app_cache_locks")
+}
+
+model RateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime @map("expires_at")
+
+  @@index([expiresAt], map: "app_rate_limits_expires_at_index")
+  @@map("app_rate_limits")
+}
+
+// ---------------------------------------------------------------------------
+
+enum QuoteStatus {
+  pending
+  quoted
+  accepted
+  cancelled
+}
+
+enum WeightUnit {
+  lb
+  kg
+}
+
+enum ServiceStatus {
+  active
+  deactive // sic — live data depends on this exact value
+}
+
+enum ActiveInactive {
+  active
+  inactive
+}
+
+enum VendorCommentCategory {
+  general
+  performance
+  issues
+  compliance
+  communication
+}
+
+enum VendorCommentPriority {
+  low
+  normal
+  high
+  critical
+}
