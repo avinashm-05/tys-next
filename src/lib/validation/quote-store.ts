@@ -18,7 +18,10 @@ const num = (requiredMsg: string, min: number, minMsg: string) =>
   z.coerce.number({ error: () => requiredMsg }).min(min, minMsg);
 
 // Box row: every field required when box_details is present (required_with).
-const boxDetail = z.object({
+// Exported (along with the tv/auto/contact schemas below) so the public quote
+// wizard's client-side react-hook-form validation can share these exact rules
+// instead of re-declaring them — one source of truth for the messages.
+export const boxDetail = z.object({
   quantity: z.coerce
     .number({ error: () => "Package quantity is required." })
     .int("Package quantity must be at least 1.")
@@ -32,7 +35,7 @@ const boxDetail = z.object({
 });
 
 // Television row: brand/model required too; quantity optional.
-const televisionDetail = z.object({
+export const televisionDetail = z.object({
   quantity: z.coerce.number().int().min(1).nullish(),
   brand_name: requiredStr("TV brand name is required."),
   tv_model: requiredStr("TV model is required."),
@@ -46,7 +49,7 @@ const televisionDetail = z.object({
 
 // Auto row: make/model/year required; car_year is exactly 4 digits (digits:4),
 // kept as a STRING (R8).
-const autoDetail = z.object({
+export const autoDetail = z.object({
   brand_name: requiredStr("Please provide the vehicle make."),
   car_model: requiredStr("Please provide the car model."),
   car_year: z.coerce.string().regex(/^\d{4}$/, "Please enter a valid 4-digit car year."),
@@ -74,6 +77,21 @@ export function selectedPackageTypes(packageType: string | string[]): string[] {
   return arr.map((t) => t.toLowerCase().trim()).filter((t) => t !== "");
 }
 
+// Exported so the wizard's client-side schema shares these exact rules/messages.
+export const quoteContact = z.object({
+  name: z.string({ error: () => "Please enter your name." }).max(255).regex(/\S/, "Please enter a valid name."),
+  email: z
+    .string({ error: () => "Please enter your email address." })
+    .max(255)
+    .email("Please enter a valid email address."),
+  country_code: requiredStr("Please select a country code.", 10),
+  phone: z
+    .string({ error: () => "Please enter your phone number." })
+    .min(7, "Phone number must be at least 7 characters.")
+    .max(20)
+    .regex(/^[0-9\s\-()]+$/, "Phone number can only contain numbers, spaces, hyphens, and parentheses."),
+});
+
 export const quoteStoreInput = z
   .object({
     from_country: requiredStr("Please select the country you are sending from."),
@@ -92,19 +110,7 @@ export const quoteStoreInput = z
     television_details: z.array(televisionDetail).nullish(),
     auto_details: z.array(autoDetail).nullish(),
 
-    contact: z.object({
-      name: z.string({ error: () => "Please enter your name." }).max(255).regex(/\S/, "Please enter a valid name."),
-      email: z
-        .string({ error: () => "Please enter your email address." })
-        .max(255)
-        .email("Please enter a valid email address."),
-      country_code: requiredStr("Please select a country code.", 10),
-      phone: z
-        .string({ error: () => "Please enter your phone number." })
-        .min(7, "Phone number must be at least 7 characters.")
-        .max(20)
-        .regex(/^[0-9\s\-()]+$/, "Phone number can only contain numbers, spaces, hyphens, and parentheses."),
-    }),
+    contact: quoteContact,
   })
   // withValidator: allowed types + the envelope/furniture override.
   .superRefine((data, ctx) => {

@@ -48,6 +48,41 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Public-site (marketing) brand tokens — additive, only consumed by
+     (public)/* components (bg-brand, text-ink, etc). Distinct names from the
+     admin --primary/--tys-* tokens above, so this never collides with admin
+     styling even though both bundles share this one globals.css. */
+  --color-brand: var(--pub-blue);
+  --color-brand-dark: var(--pub-blue-dark);
+  --color-brand-light: var(--pub-blue-light);
+  --color-brand-pale: var(--pub-blue-pale);
+  --color-ink: var(--pub-ink);
+  --color-ink-muted: var(--pub-ink-muted);
+
+  /* Public brand fonts — new token names (not --font-sans/--font-mono) so
+     they never collide with admin's Geist tokens sharing this file. Actual
+     values are only set where (public)/layout.tsx applies the next/font
+     .variable classNames, so font-body/font-display silently no-op if ever
+     used outside the public tree. */
+  --font-body: var(--font-inter);
+  --font-display: var(--font-oldschool-grotesk);
+}
+
+:root {
+  --pub-blue: #0364ff;
+  --pub-blue-dark: #024bbf;
+  --pub-blue-light: #e6f0ff;
+  --pub-blue-pale: #f5f9ff;
+  --pub-ink: #101828;
+  --pub-ink-muted: #5b6474;
+}
+
+/* Display headings use Oldschool Grotesk within the public site (scoped via
+   the .font-body wrapper class the public layout applies). Regular weight
+   only — bold/extrabold headings synthetically embolden, which is expected. */
+.font-body :is(h1, h2, h3, h4) {
+  font-family: var(--font-display);
 }
 
 :root {
@@ -220,5 +255,70 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* Looping diagonal shine sweep for the public-site CTA banners
+   (.btn-shine). Self-contained overlay — pointer-events: none so it never
+   blocks the button's own click target. Single continuous linear sweep,
+   start and end points both pushed fully clear of the button — no held
+   keyframe segment anywhere in the cycle, so there's nothing to read as
+   "stuck": it's moving for the entire animation, and the wrap from the
+   off-screen-right endpoint back to the off-screen-left start is invisible
+   because neither point is ever on screen. */
+@keyframes btn-shine-sweep {
+  0% {
+    transform: translateX(-250%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(500%) skewX(-20deg);
+  }
+}
+
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 22%;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent,
+    rgba(255, 255, 255, 0.28),
+    transparent
+  );
+  animation: btn-shine-sweep 3.2s linear infinite;
+}
+
+/* About TYS stats grid (home page). Explicit grid-template-areas instead of
+   two independent flex columns + a divide-y each — with two separate
+   columns, a wrapping label (e.g. "Trusted Carrier Networks") only grows
+   *that* column's row, so its divider drifts out of sync with the other
+   column's divider at the same index. Naming every stat + the illustration
+   as its own grid area means every row's height is shared across both
+   columns by actual CSS grid layout, so the dividers always land at the
+   same y position no matter which side wraps to two lines. */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "img img"
+    "s1 s2"
+    "s3 s4"
+    "s5 s6";
+}
+
+@media (min-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-areas:
+      "s1 img s2"
+      "s3 img s4"
+      "s5 img s6";
   }
 }

@@ -1,81 +1,136 @@
-// Footer ported verbatim from welcome.blade.php.
+import Link from "next/link";
+import { InstagramLogoIcon, LinkedinLogoIcon, YoutubeLogoIcon } from "@phosphor-icons/react/dist/ssr";
+
+const SERVICES = [
+  { href: "/destinations", label: "Worldwide Shipping" },
+  { href: "/destinations#moving", label: "Worldwide Moving" },
+  { href: "/quotes", label: "Domestic Shipping" },
+  { href: "/quotes", label: "Domestic Moving" },
+  { href: "/quotes", label: "Auto Transport" },
+] as const;
+
+const RESOURCES = [
+  { href: "/destinations", label: "Worldwide Destinations" },
+  { href: "/quotes", label: "Small Business Shipping" },
+  { href: "/quotes", label: "Shop US and Ship Worldwide" },
+  { href: "/destinations", label: "Origin & Destination Services" },
+  { href: "#", label: "Blog" },
+] as const;
+
+const HELP = [
+  { href: "/tracking", label: "Track Shipment" },
+  { href: "/book-shipment", label: "Book Shipment" },
+  { href: "/quotes", label: "Get Quote" },
+  { href: "/contact-us", label: "Contact Us" },
+] as const;
+
+const LEGAL = [
+  { href: "#", label: "Terms" },
+  { href: "#", label: "Privacy Policy" },
+  { href: "#", label: "Security" },
+  { href: "#", label: "Sitemap" },
+] as const;
+
+// B1 redesign — measured directly off the published Figma Sites link (DOM
+// inspection, not a screenshot): the footer is a fully inset floating card
+// (24px margin on every side, not full-bleed), 24px radius on all 4 corners,
+// 48px padding, solid white text throughout (no opacity fades), Inter
+// 16px/600 headings, 14px/400 links, 12px/400 legal links.
 export function SiteFooter() {
   return (
-    <footer>
-      <div className="container">
-        <div className="row justify-content-start">
-          <div className="col-md-4 col-12">
-            <div className="footerleft">
-              <img
-                src="/frontend/logo/TYS_LOGO_25_6_Black.webp"
-                className="img-fluid"
-                alt="TYS Global Logistics"
-                style={{ width: "350px", height: "80px" }}
-              />
-              <div className="socialicons">
-                <div className="socialiconbg">
-                  <a
-                    href="https://www.instagram.com/tysgloballogistics"
-                    target="_blank"
-                    rel="noreferrer noopener"
-                  >
-                    <img
-                      src="/frontend/assets/images/instagram.svg"
-                      className="img-fluid"
-                      alt="Instagram"
-                    />
+    <footer className="mx-6 mb-6 rounded-3xl bg-brand p-12 text-white">
+      <div className="mx-auto max-w-7xl">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 md:grid-cols-4">
+          <div className="sm:col-span-2 md:col-span-1">
+            <img
+              src="/frontend/logo/TYS_GLOBAL_LOGISTICS_White.png"
+              alt="TYS Global Logistics"
+              className="h-14 w-auto"
+            />
+            <p className="mt-4 max-w-xs text-sm text-white">
+              Make shipping and moving easy with instant quotes and expert guidance!
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white">
+              {LEGAL.map((l, i) => (
+                <span key={l.label} className="flex items-center gap-2">
+                  <a href={l.href} className="hover:text-white/80">
+                    {l.label}
                   </a>
-                </div>
-                <div className="socialiconbg">
-                  <a
-                    href="https://www.linkedin.com/company/tys-global-logistics/"
-                    target="_blank"
-                    rel="noreferrer noopener"
-                  >
-                    <img
-                      src="/frontend/assets/images/facebook.svg"
-                      className="img-fluid"
-                      alt="LinkedIn"
-                    />
-                  </a>
-                </div>
-              </div>
+                  {i < LEGAL.length - 1 && <span aria-hidden>|</span>}
+                </span>
+              ))}
+            </div>
+            <div className="mt-4 flex gap-3">
+              <a
+                href="https://www.linkedin.com/company/tys-global-logistics/"
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="LinkedIn"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-brand hover:bg-brand-pale"
+              >
+                <LinkedinLogoIcon size={18} weight="fill" />
+              </a>
+              <a
+                href="https://www.instagram.com/tysgloballogistics"
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label="Instagram"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-brand hover:bg-brand-pale"
+              >
+                <InstagramLogoIcon size={18} weight="fill" />
+              </a>
+              <a
+                href="#"
+                aria-label="YouTube"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-brand hover:bg-brand-pale"
+              >
+                <YoutubeLogoIcon size={18} weight="fill" />
+              </a>
             </div>
           </div>
 
-          <div className="col-md-4 col-12">
-            <div className="footerlinks">
-              <h3>Quick Links</h3>
-              <div className="footerlinkitems">
-                <a href="#heroContent">Home</a>
-                <a href="#features">Services</a>
-                <a href="#whyus">About Us</a>
-                <a href="#faq">FAQs</a>
-                <a href="#bookShipmentForm">Track Shipment</a>
-              </div>
-            </div>
+          <div>
+            <h3 className="text-base font-semibold text-white">Services</h3>
+            <ul className="mt-4 space-y-3 text-sm text-white">
+              {SERVICES.map((l) => (
+                <li key={l.label}>
+                  <Link href={l.href} className="hover:text-white/80">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="col-md-4 col-12">
-            <div className="footercontact">
-              <h3>Contact</h3>
-              <div className="footercontactitem">+1 404 793 8759</div>
-              <div className="footercontactitem">
-                <a href="mailto:hello@tysgloballogistics.com">hello@tysgloballogistics.com</a>
-              </div>
-              <div className="footercontactitem">United States</div>
-            </div>
+          <div>
+            <h3 className="text-base font-semibold text-white">Resources</h3>
+            <ul className="mt-4 space-y-3 text-sm text-white">
+              {RESOURCES.map((l) => (
+                <li key={l.label}>
+                  <Link href={l.href} className="hover:text-white/80">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="col-12 copyrightfooter">
-            <div className="copyrightdata">
-              Copyright © 2026 TYS Global Logistics LLC. All rights reserved.
-            </div>
-            <div className="disclaimerdata">
-              TYS Global Logistics LLC provides reliable domestic and international logistics
-              services.
-            </div>
+          <div>
+            <h3 className="text-base font-semibold text-white">Help</h3>
+            <ul className="mt-4 space-y-3 text-sm text-white">
+              {HELP.map((l) => (
+                <li key={l.label}>
+                  <Link href={l.href} className="hover:text-white/80">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
+        </div>
+
+        <div className="mt-10 border-t border-white/20 pt-6 text-center text-sm text-white">
+          © 2026 TYS Global Logistics LLC. All Rights Reserved.
         </div>
       </div>
     </footer>

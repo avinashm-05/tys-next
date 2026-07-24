@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { CheckCircleIcon } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = {
   title: "Thank You - TYS Global Logistics",
 };
 
-// Faithful port of quotes/thank-you.blade.php. The (public) layout already
-// provides the header, footer, stylesheets, and scripts, so this page renders
-// only the hero band + the thank-you card. The card's page-specific CSS is a
-// scoped <style> (present only while on /thank-you), copied from the blade's
-// inline styles. `name` comes from the wizard redirect (?name=) — React
-// escapes it, so the interpolation is XSS-safe.
+// B1/B2 redesign — Tailwind rebuild (was a faithful Bootstrap port). `name`
+// comes from the wizard redirect (?name=); React escapes it, so the
+// interpolation is XSS-safe.
 export default async function ThankYouPage({
   searchParams,
 }: {
@@ -19,80 +18,32 @@ export default async function ThankYouPage({
   const customer = name?.trim() || "Customer";
 
   return (
-    <>
-      <style>{`
-        body { background-color: #f8fbff; }
-        .thank-you-card { background: #fff; border-radius: 20px; padding: 50px 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e9ecef; text-align: center; }
-        .thank-you-card .success-icon { font-size: 5rem; color: #00c851; margin-bottom: 25px; }
-        .thank-you-card h2 { font-family: "DM Sans", sans-serif; font-weight: 700; color: #2c3e50; margin-bottom: 20px; }
-        .thank-you-card p { font-family: "DM Sans", sans-serif; color: #6c757d; font-size: 1.1rem; line-height: 1.7; max-width: 600px; margin: 0 auto 15px auto; }
-        .thank-you-card .btn-container { display: flex; justify-content: center; gap: 15px; margin-top: 35px; flex-wrap: wrap; }
-        .thank-you-card .btn-container .fillbttn { min-width: 180px; text-decoration: none; }
-      `}</style>
-
-      {/* Hero band */}
-      <div
-        className="hero-bg"
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          backgroundPosition: "unset",
-          paddingTop: "160px",
-          paddingBottom: "60px",
-          backgroundColor: "#0d6efd",
-        }}
-      >
-        <img
-          src="/frontend/assets/images/herotop.png"
-          alt=""
-          className="herotoppngimg img-fluid"
-          style={{ top: "82%" }}
-        />
-        <div className="container herocontainercss text-center text-white">
-          <h1
-            className="header-text herosectitle"
-            id="heroContent"
-            style={{ fontSize: "clamp(32px, 5vw, 60px)", color: "white", margin: 0 }}
+    <section className="bg-brand-light px-4 py-20 md:px-8">
+      <div className="mx-auto max-w-2xl rounded-3xl bg-white p-10 text-center shadow-[0_20px_60px_rgba(16,24,40,0.08)] md:p-14">
+        <CheckCircleIcon size={72} weight="fill" className="mx-auto text-emerald-500" />
+        <h1 className="mt-6 text-2xl font-extrabold text-ink md:text-3xl">Dear {customer},</h1>
+        <p className="mt-4 text-ink-muted">
+          Thank you for requesting a shipping quote. We have received your request and our team
+          will review your details and get back to you within 24 hours with a custom quote.
+        </p>
+        <p className="mt-3 text-ink-muted">
+          If you have any urgent questions, please feel free to reach out to our customer support.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Link
+            href="/"
+            className="rounded-full border border-brand px-6 py-3 text-sm font-semibold text-brand hover:bg-brand-pale"
           >
-            Submission Success
-          </h1>
+            Back to Home
+          </Link>
+          <Link
+            href="/quotes"
+            className="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-dark"
+          >
+            Get New Quote
+          </Link>
         </div>
       </div>
-
-      {/* Main content */}
-      <main className="container my-5 py-4">
-        <div className="row justify-content-center">
-          <div className="col-lg-8 col-md-10 col-12">
-            <div className="thank-you-card">
-              <div className="success-icon">
-                <i className="fa-solid fa-circle-check"></i>
-              </div>
-
-              <h2>Dear {customer},</h2>
-
-              <p>
-                Thank you for requesting a shipping quote. We have received your request and our
-                team will review your details and get back to you within 24 hours with a custom
-                quote.
-              </p>
-
-              <p>
-                If you have any urgent questions, please feel free to reach out to our customer
-                support.
-              </p>
-
-              <div className="btn-container">
-                <a href="/" className="fillbttn">
-                  Back to Home
-                </a>
-                <a href="/#bookShipmentForm" className="fillbttn fillbttn2">
-                  Get New Quote
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-    </>
+    </section>
   );
 }

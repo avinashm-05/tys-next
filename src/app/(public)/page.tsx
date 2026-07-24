@@ -1,1010 +1,684 @@
-import { CountryOptions } from "@/components/public/country-options";
-import { QuoteWizard } from "@/components/public/quote-wizard";
-import { LearnMoreModal } from "@/components/public/learn-more-modal";
+import Link from "next/link";
+import {
+  ArrowRightIcon,
+  GlobeIcon,
+  HeadsetIcon,
+  StarIcon,
+} from "@phosphor-icons/react/dist/ssr";
+import { MiniQuoteForm } from "@/components/public/mini-quote-form";
+import { FaqAccordion } from "@/components/public/faq-accordion";
+import { GoogleLogo } from "@/components/public/google-logo";
+import { ScrollReveal } from "@/components/public/scroll-reveal";
+import { ReviewsCarousel } from "@/components/public/reviews-carousel";
+import { OfferCard } from "@/components/public/offer-card";
 
-// Home page — ported section-by-section from welcome.blade.php with the exact
-// markup/classes/assets. Bootstrap JS (loaded in the public layout) drives the
-// pill tabs and the FAQ accordion via their data-bs-* attributes, so behavior
-// matches the old site. The tracking box + "Track your Shipment" stay INERT
-// (Track B). The hero quick-quote (From/To + Get a Free Quote) and the embedded
-// wizard are wired in B2 via <QuoteWizard/> + the QuoteWizardManager class.
-
+// Home page — B1 redesign. Rebuilt section-by-section from the new Figma
+// design (see 03_Website/01_Home_and_form/Home_01.png). Copy is transcribed
+// from the mockup, except: FAQ answers reuse the site's existing real copy
+// (the mockup's own answer text was unrelated placeholder content), and the
+// testimonials are original placeholder copy (the mockup used generic stock
+// names/photos unrelated to TYS). Images are cropped directly from the
+// mockup — see public/frontend/images/redesign/.
 export default function HomePage() {
   return (
     <>
-      {/* Hero Section */}
-      <div className="hero-bg">
-        <img
-          src="/frontend/assets/images/herotop.png"
-          alt=""
-          className="herotoppngimg img-fluid"
-          data-aos="fade-in"
-          data-aos-duration="3000"
-          data-aos-delay="900"
-        />
-        <div className="container herocontainercss">
-          <div className="row justify-content-center">
-            <div className="col-lg-6 col-md-8 col-12">
-              <div className="text-center heder-text">
-                <p
-                  className="bold-text herosecsubtitle"
-                  id="heroContent"
-                  data-aos="fade-in"
-                  data-aos-duration="3000"
-                  data-aos-delay="100"
-                >
-                  Trusted Logistics Across the USA &amp; Worldwide
-                </p>
-                <h1
-                  className="header-text herosectitle"
-                  data-aos="fade-in"
-                  data-aos-duration="3000"
-                  data-aos-delay="400"
-                >
-                  Ship Anything, Anywhere On Time
-                </h1>
-                <p
-                  className="bold-text hreodec"
-                  data-aos="fade-in"
-                  data-aos-duration="3000"
-                  data-aos-delay="800"
-                >
-                  From the USA to anywhere in the world. Save time. Save money.
-                </p>
-              </div>
-              <div
-                className="form-main"
-                id="bookShipmentForm"
-                data-aos="fade-up"
-                data-aos-duration="1000"
-                data-aos-delay="1000"
-              >
-                <ul className="nav nav-pills mb-3" id="pills-tab" role="tablist">
-                  <li className="nav-item" role="presentation">
-                    <button
-                      className="nav-link active"
-                      id="pills-home-tab"
-                      data-bs-toggle="pill"
-                      data-bs-target="#pills-home"
-                      type="button"
-                      role="tab"
-                      aria-controls="pills-home"
-                      aria-selected="true"
-                    >
-                      Book Shipment
-                    </button>
-                  </li>
-                  <li className="nav-item ms-3" role="presentation">
-                    <button
-                      className="nav-link"
-                      id="pills-profile-tab"
-                      data-bs-toggle="pill"
-                      data-bs-target="#pills-profile"
-                      type="button"
-                      role="tab"
-                      aria-controls="pills-profile"
-                      aria-selected="false"
-                    >
-                      Tracking
-                    </button>
-                  </li>
-                </ul>
-                <div className="tab-content" id="pills-tabContent">
-                  {/* Book Shipment quick-quote — From/To prefill the wizard; #getQuoteBtn opens it (QuoteWizardManager). */}
-                  <div
-                    className="tab-pane fade show active"
-                    id="pills-home"
-                    role="tabpanel"
-                    aria-labelledby="pills-home-tab"
-                  >
-                    <form className=" row ">
-                      <div className="col-6 pe-md-2 pe-1">
-                        <label className="formlabelcss" htmlFor="select_page2">
-                          From
-                        </label>
-                        <div className="input-group quoteinputcss">
-                          <span className="input-group-text">
-                            <img
-                              src="/frontend/assets/images/MapPin.svg"
-                              className="img-fluid"
-                              alt=""
-                            />
-                          </span>
-                          <select id="select_page2" className="operator form-control">
-                            <CountryOptions placeholder="Select From" />
-                          </select>
-                        </div>
-                      </div>
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-brand-light px-4 pb-16 pt-8 md:px-8">
+        {/* One wrapping container for the whole text+card block. The Figma
+            source (published Figma Sites link, DOM-inspected directly) has
+            only 2 decorative images in the hero — truck top-left, plane
+            top-right — starting at the very top (level with the badge, not
+            the headline), no flatbed/ship pair. They're absolutely
+            positioned against this outer wrapper so they overlay the
+            badge/headline column's height rather than needing their own
+            spacing; the ~80px gap before the card happens naturally since
+            the text block is taller than the images. */}
+        <div className="relative mx-auto max-w-6xl">
+          <img
+            src="/frontend/images/redesign/hero-truck.png"
+            alt=""
+            aria-hidden
+            className="absolute left-0 top-0 hidden w-36 lg:block xl:w-40"
+          />
+          <img
+            src="/frontend/images/redesign/hero-plane.png"
+            alt=""
+            aria-hidden
+            className="absolute right-0 top-0 hidden w-40 lg:block xl:w-44"
+          />
 
-                      <div className="col-6 ps-md-2 ps-1">
-                        <label className="formlabelcss" htmlFor="select_page3">
-                          To
-                        </label>
-                        <div className="input-group quoteinputcss">
-                          <span className="input-group-text">
-                            <img
-                              src="/frontend/assets/images/MapPin.svg"
-                              className="img-fluid"
-                              alt=""
-                            />
-                          </span>
-                          <select id="select_page3" className="operator form-control">
-                            <CountryOptions placeholder="Select To" />
-                          </select>
-                        </div>
-                      </div>
-                      <div className="col-12">
-                        <div className="nav-bar-link-wrapper-item p-0 spaceakhover">
-                          {/* #getQuoteBtn — QuoteWizardManager opens the wizard with these selects prefilled. */}
-                          <button
-                            type="button"
-                            id="getQuoteBtn"
-                            className="fillbttn fillbttn2 w-100 mt-3"
-                            style={{ border: "none" }}
-                          >
-                            Get a Free Quote
-                            <img src="/frontend/assets/images/arrowright.svg" alt="" />
-                          </button>
-                        </div>
-                      </div>
-                    </form>
-                  </div>
-                  {/* Tracking box — INERT. TODO(Track B): wire the tracking lookup. */}
-                  <div
-                    className="tab-pane fade"
-                    id="pills-profile"
-                    role="tabpanel"
-                    aria-labelledby="pills-profile-tab"
-                  >
-                    <form className=" row ">
-                      <div className="col-12 pe-md-2 pe-1">
-                        <label className="formlabelcss" htmlFor="">
-                          Enter you 12 Digit Tracking/reference no.
-                        </label>
-                        <div className="">
-                          <input
-                            type="text"
-                            className="input-group quoteinputcss py-2 hero-input"
-                            placeholder="Enter Tracking Number"
-                          />
-                        </div>
-                      </div>
-                      <div className="col-12">
-                        <div className="nav-bar-link-wrapper-item p-0 spaceakhover">
-                          {/* TODO(Track B): perform the tracking lookup */}
-                          <a href="#" className="fillbttn fillbttn2 w-100 mt-3">
-                            Track your Shipment
-                            <img src="/frontend/assets/images/arrowright.svg" alt="" />
-                          </a>
-                        </div>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-
-              {/* Embedded quote wizard (+ success/rates siblings), driven by
-                  the ported QuoteWizardManager class. */}
-              <QuoteWizard />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <img src="/frontend/assets/images/herobottom.png" className="herobottomimg" alt="" />
-
-      {/* step */}
-      <section className="stepsssection" id="steps">
-        <div className="container ">
-          <div className="row ">
-            <div
-              className="col-12 secsmalltitle"
-              data-aos="fade-up"
-              data-aos-duration="1000"
-              data-aos-delay="-900"
-            >
-              <span>
-                <img src="/frontend/assets/images/diskblue.svg" className="img-fluid" alt="" />
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="mx-auto flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm">
+              <GoogleLogo size={18} />
+              <span className="flex gap-0.5">
+                <StarIcon size={16} weight="fill" className="text-amber-400" />
+                <StarIcon size={16} weight="fill" className="text-amber-400" />
+                <StarIcon size={16} weight="fill" className="text-amber-400" />
+                <StarIcon size={16} weight="fill" className="text-amber-400" />
+                <StarIcon size={16} weight="fill" className="text-amber-400" />
               </span>
-              steps
+              5 Reviews on Trustpilot
             </div>
+            <p className="mt-5 text-sm font-semibold uppercase tracking-wide text-brand">
+              Trusted Partner for Logistics &amp; Freight Forwarding
+            </p>
+            <h1 className="mt-3 text-[2rem] sm:text-[2.5rem] md:text-[2.75rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+              Your Trusted Global Shipping Partner
+            </h1>
+            <p className="mx-auto mt-4 max-w-[885px] text-base text-ink-muted">
+              Ship documents, parcels, freight, vehicles, and household goods with confidence. TYS
+              Global Logistics delivers secure domestic and international shipping backed by
+              competitive rates and dedicated support.
+            </p>
           </div>
 
-          <div className="row justify-content-center align-items-center">
-            <div
-              className="col-12 secmaintitle"
-              data-aos="fade-up"
-              data-aos-duration="1000"
-              data-aos-delay="200"
-            >
-              <h2>Shipping Made Simple in 3 Steps</h2>
-            </div>
-            <div className="col-md-6 col-12 secdcpart d-flex flex-column align-items-center">
-              <div
-                className="secdec"
-                data-aos="fade-up"
-                data-aos-duration="1000"
-                data-aos-delay="300"
-              >
-                As your trusted logistics service provide, we can help you and your customer with
-                all shipping and moving services within USA and worldwide.
-              </div>
-              <div
-                className="nav-bar-link-wrapper-item p-0 spaceakhover "
-                data-aos="fade-up"
-                data-aos-duration="1000"
-                data-aos-delay="400"
-              >
-                <a href="#quoteWizardContainer" data-open-quote-wizard className="fillbttn fillbttn2 ">
-                  Get a Free Quote
-                  <img src="/frontend/assets/images/arrowright.svg" alt="" />
-                </a>
-              </div>
-            </div>
+          <div className="relative mx-auto mt-10 w-full max-w-3xl rounded-3xl bg-white p-6 shadow-[0_20px_60px_rgba(16,24,40,0.08)]">
+            <MiniQuoteForm layout="columns" />
           </div>
         </div>
 
-        <div className="container">
-          <div className="row layoutbgcss">
-            <div
-              className="col-lg-4 col-md-6 col-12 mt-md-0 ps-2 pe-2"
-              data-aos="fade-up"
-              data-aos-duration="1000"
-              data-aos-delay="100"
+        <div className="relative mx-auto mt-14 grid max-w-6xl gap-4 md:grid-cols-3">
+          {[
+            {
+              icon: "/frontend/icons/redesign/quick-track.svg",
+              title: "Track A Shipment",
+              body: "Monitor your shipment in real time from pickup to final delivery.",
+              href: "/tracking",
+            },
+            {
+              icon: "/frontend/icons/redesign/quick-book.svg",
+              title: "Book Shipment",
+              body: "Save up to 70% on trusted domestic & international shipping.",
+              href: "/book-shipment",
+            },
+            {
+              icon: "/frontend/icons/redesign/quick-smart.svg",
+              title: "Smart Shipments",
+              body: "Shipping in bulk? Get personalized pricing & exclusive discounts.",
+              href: "/quotes",
+            },
+          ].map((card) => (
+            <Link
+              key={card.title}
+              href={card.href}
+              className="group flex flex-col items-start gap-2 rounded-3xl bg-white p-5 text-left transition hover:-translate-y-0.5"
             >
-              <div className="maincardbox">
-                <img
-                  src="/frontend/assets/images/cardimg/img12.png"
-                  className="img-fluid imgcardcss"
-                  alt="Logistics consultation for shipping quote"
+              <div className="flex w-full items-center gap-3">
+                <img src={card.icon} alt="" className="h-8 w-8 shrink-0" />
+                <span className="flex-1 text-xl font-medium leading-[30px] text-black">
+                  {card.title}
+                </span>
+                <ArrowRightIcon
+                  size={22}
+                  className="shrink-0 text-ink-muted transition group-hover:translate-x-1 group-hover:text-brand"
                 />
-                <div className="carddetails">
-                  <div className="cardsmalltitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                    Step-1
-                  </div>
-                  <div className="cardcontentcss">
-                    <div className="cardmiantitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      Tell Us What You Need to Ship
-                    </div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="200">
-                      Share your pickup location, destination, and shipment details. Our team
-                      reviews your requirements and prepares a customized shipping quote with
-                      delivery options.
-                    </div>
-                  </div>
-                </div>
               </div>
-            </div>
-            <div
-              className="col-lg-4 col-md-6 col-12 mt-md-0 mt-3 ps-2 pe-2"
-              data-aos="fade-up"
-              data-aos-duration="1000"
-              data-aos-delay="350"
-            >
-              <div className="maincardbox">
-                <img
-                  src="/frontend/assets/images/cardimg/img11.png"
-                  className="img-fluid imgcardcss"
-                  alt="Package pickup by TYS Global Logistics"
-                />
-                <div className="carddetails">
-                  <div className="cardsmalltitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                    Step-2
-                  </div>
-                  <div className="cardcontentcss">
-                    <div className="cardmiantitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      We Pick Up Your Shipment
-                    </div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="200">
-                      Once your booking is confirmed, our team schedules the pickup and securely
-                      processes your shipment for domestic or international transportation using
-                      trusted carrier networks.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div
-              className="col-lg-4 col-md-6 col-12 mt-lg-0 mt-3 ps-2 pe-2"
-              data-aos="fade-up"
-              data-aos-duration="1000"
-              data-aos-delay="450"
-            >
-              <div className="maincardbox">
-                <img
-                  src="/frontend/assets/images/cardimg/img10.png"
-                  className="img-fluid imgcardcss"
-                  alt="Safe cargo delivery by TYS Global Logistics"
-                />
-                <div className="carddetails">
-                  <div className="cardsmalltitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                    Step-3
-                  </div>
-                  <div className="cardcontentcss">
-                    <div className="cardmiantitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      We Deliver While You Stay Focused
-                    </div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="200">
-                      Sit back while we manage the transportation and delivery of your shipment with
-                      reliability, transparency, and professional logistics support from start to
-                      finish.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+              <span className="text-base leading-7 text-ink-muted">{card.body}</span>
+            </Link>
+          ))}
         </div>
       </section>
 
-      {/* features */}
-      <section className="featuresssection" id="features">
-        <div className="container ">
-          <div className="row ">
-            <div className="col-12 secsmalltitle" data-aos="fade-up" data-aos-duration="1000">
-              <span>
-                <img src="/frontend/assets/images/diskblue.svg" className="img-fluid" alt="" />
-              </span>
-              features
+      {/* What We Offer */}
+      <section className="px-4 py-20 md:px-8">
+      <ScrollReveal>
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-[2rem] sm:text-[2.5rem] md:text-[2.75rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+            What We <span className="text-brand">Offer</span>
+          </h2>
+          <p className="mt-3 text-ink-muted">
+            Expand your global reach with TYS Global Logistics&rsquo; reliable domestic and
+            international shipping solutions.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-3">
+          {[
+            {
+              icon: "/frontend/icons/redesign/offer-worldwide-shipping.svg",
+              title: "Worldwide Shipping",
+              body: "Save more with competitive shipping rates from leading courier partners, including FedEx, DHL, UPS, and USPS. Choose flexible shipping solutions that fit your schedule and budget.",
+            },
+            {
+              icon: "/frontend/icons/redesign/offer-worldwide-moving.svg",
+              title: "Worldwide Moving",
+              body: "Relocate your family, household belongings, and vehicles with confidence. Enjoy complete, reliable international moving solutions across 200+ destinations worldwide.",
+            },
+            {
+              icon: "/frontend/icons/redesign/offer-freight-forwarding.svg",
+              title: "Freight Forwarding",
+              body: "Ship containers, pallets, and commercial cargo with ease. Choose reliable freight services by air, ocean, rail, or road for shipments of every size, backed by trusted global partners.",
+            },
+          ].map((card) => (
+            <OfferCard key={card.title} icon={card.icon} title={card.title} body={card.body} />
+          ))}
+        </div>
+      </ScrollReveal>
+      </section>
+
+      {/* Relocation & Auto Transport */}
+      <section className="px-4 py-16 md:px-8">
+      <ScrollReveal>
+        <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+          <div>
+            <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+              For All Movers
+            </p>
+            <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+              Relocation
+              <br />
+              &amp; Auto Transport
+            </h2>
+            <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
+              From household furniture and personal belongings to cars and motorcycles, we handle
+              every move with care, precision, and dependable global logistics.
+            </p>
+            <div className="mt-6 flex gap-4 sm:gap-6">
+              {[
+                { icon: "/frontend/icons/redesign/badge-door-to-door.svg", label: "Door-to-Door", sub: "Service" },
+                { icon: "/frontend/icons/redesign/badge-customs.svg", label: "Customs", sub: "Assistance" },
+                { icon: "/frontend/icons/redesign/badge-destinations.svg", label: "200+", sub: "Destinations" },
+              ].map((s) => (
+                <div key={s.label} className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-light">
+                    <img src={s.icon} alt="" className="h-[27px] w-auto self-center" />
+                  </span>
+                  <span className="text-xs font-semibold">
+                    <span className="block font-semibold text-ink">{s.label}</span>
+                    <span className="text-ink-muted">{s.sub}</span>
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
+          <img
+            src="/frontend/images/redesign/feature-relocation.png"
+            alt="Relocation and auto transport"
+            className="w-full rounded-3xl"
+          />
+        </div>
 
-          <div className="row justify-content-center align-items-center">
-            <div className="col-12">
-              <div className="row justify-content-center align-items-center">
-                <div
-                  className="col-lg-6 col-12 secmaintitle"
-                  data-aos="fade-up"
-                  data-aos-duration="1000"
-                  data-aos-delay="200"
+        <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-2">
+          {[
+            {
+              icon: "/frontend/icons/redesign/card-international-relocation.svg",
+              title: "International Relocation",
+              body: "Seamless door-to-door relocation for your household, furniture, and personal belongings.",
+            },
+            {
+              icon: "/frontend/icons/redesign/card-auto-transport.svg",
+              title: "Auto Transport",
+              body: "Dependable, insured shipping for cars, motorcycles, and other vehicles anywhere in the world.",
+            },
+          ].map((c) => (
+            <div key={c.title} className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left">
+              <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-brand-light">
+                <img src={c.icon} alt="" className="h-8 w-auto self-center" />
+              </span>
+              <div className="flex flex-col items-center gap-1 sm:items-start">
+                <h3 className="text-2xl font-semibold leading-[30px] text-ink">{c.title}</h3>
+                <p className="text-base font-medium text-ink-muted">{c.body}</p>
+                <Link
+                  href="/quotes"
+                  className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
                 >
-                  Send docs, boxes, or full containers. We&rsquo;ll handle it all.
-                </div>
+                  Learn More <ArrowRightIcon size={16} />
+                </Link>
               </div>
             </div>
-            <div className="col-lg-6 col-12 secdcpart d-flex flex-column align-items-center">
-              <div
-                className="secdec"
-                data-aos="fade-up"
-                data-aos-duration="1000"
-                data-aos-delay="300"
-              >
-                As your trusted logistics service provide, we can help you and your customer with
-                all shipping and moving services within USA and worldwide.
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
-
-        <div className="container">
-          <div className="row ">
-            <div className="col-lg-7 col-md-6 col-12 mt-md-0  ps-2 pe-2">
-              <div className="maincardbox">
-                <img src="/frontend/assets/images/cardimg/img09.png" className="img-fluid imgcardcss" alt="" />
-                <div className="carddetails">
-                  <div className="cardcontentcss">
-                    <div className="cardmiantitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                      Domestic Shipping (US to US)
-                    </div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      Our domestic shipping service offers reliable door-to-door transportation
-                      across the United States for documents, parcels, freight, and commercial
-                      shipments. Whether you&rsquo;re sending personal packages or business
-                      inventory, we ensure timely pickups, secure handling, and dependable delivery
-                      through our trusted logistics network. Certain restricted items, including
-                      cash, firearms, explosives, hazardous materials, and illegal goods, cannot be
-                      shipped and must comply with applicable carrier regulations.
-                    </div>
-                  </div>
-                  <a href="#" target="_blank" className="textbtncss" data-aos="fade-in" data-aos-duration="1000" data-aos-delay="100">
-                    Learn More
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-5 col-md-6 col-12 mt-md-0 mt-3 ps-2 pe-2">
-              <div className="maincardbox">
-                <img src="/frontend/assets/images/cardimg/img08.png" className="img-fluid imgcardcss" alt="" />
-                <div className="carddetails">
-                  <div className="cardcontentcss" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                    <div className="cardmiantitle">International Shipping (US to Worldwide)</div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      Ship confidently from the United States to destinations across the globe with
-                      TYS Global Logistics LLC. Through our discounted FedEx international shipping
-                      solutions, you can save on express delivery for documents, parcels, excess
-                      baggage, and commercial shipments while enjoying reliable tracking and fast
-                      transit times. Our team also assists with shipping documentation ...
-                    </div>
-                  </div>
-                  <a href="#" target="_blank" className="textbtncss" data-aos="fade-in" data-aos-duration="1000" data-aos-delay="100">
-                    Learn More
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-6 col-12 mt-3  ps-2 pe-2">
-              <div className="maincardbox">
-                <img src="/frontend/assets/images/cardimg/img07.png" className="img-fluid imgcardcss" alt="" />
-                <div className="carddetails">
-                  <div className="cardcontentcss">
-                    <div className="cardmiantitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                      FedEx Envelope Shipping (Discounted)
-                    </div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      Our discounted FedEx Envelope service is designed for urgent documents such as
-                      contracts, legal paperwork, academic records, and business correspondence.
-                      This service is intended for documents only and should not be used to send
-                      cash, cheque, negotiable instruments, gift cards, or other prohibited
-                      valuables that violate carrier policies.
-                    </div>
-                  </div>
-                  <a href="#" target="_blank" className="textbtncss" data-aos="fade-in" data-aos-duration="1000" data-aos-delay="100">
-                    Learn More
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-6 col-12 mt-3 ps-2 pe-2">
-              <div className="maincardbox">
-                <img src="/frontend/assets/images/cardimg/img06.png" className="img-fluid imgcardcss" alt="" />
-                <div className="carddetails">
-                  <div className="cardcontentcss">
-                    <div className="cardmiantitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                      Packers &amp; Movers Across USA
-                    </div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      We provide professional packing and moving solutions for residential and
-                      commercial customers across the United States. From household furniture and
-                      office equipment to personal belongings and business inventory, our
-                      experienced team ensures every move is planned and executed with care. We
-                      bring high-quality professional packing materials and ...
-                    </div>
-                  </div>
-                  <a href="#" target="_blank" className="textbtncss" data-aos="fade-in" data-aos-duration="1000" data-aos-delay="100">
-                    Learn More
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div className="col-12 mt-3 ps-2 pe-2">
-              <div className="maincardbox  d-flex flex-lg-row flex-column align-items-center justify-content-center ">
-                <div className="carddetails carddetails2 justify-content-end order-lg-0 order-1">
-                  <div className="cardcontentcss">
-                    <div className="cardmiantitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                      LTL &amp; FTL Freight Shipping
-                    </div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      Our Less-Than-Truckload (LTL) and Full Truckload (FTL) freight services offer
-                      flexible transportation for pallets, machinery, inventory, and commercial
-                      cargo across the country.
-                    </div>
-                  </div>
-                  <a href="#" target="_blank" className="textbtncss" data-aos="fade-in" data-aos-duration="1000" data-aos-delay="100">
-                    Learn More
-                  </a>
-                </div>
-                <div className="imgcardcsss">
-                  <img src="/frontend/assets/images/cardimg/img05.png" className="img-fluid imgcardcss " alt="" />
-                </div>
-              </div>
-            </div>
-            <div className="col-md-6 col-12 mt-3  ps-2 pe-2">
-              <div className="maincardbox">
-                <img src="/frontend/assets/images/cardimg/img03.png" className="img-fluid imgcardcss" alt="" />
-                <div className="carddetails">
-                  <div className="cardcontentcss">
-                    <div className="cardmiantitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                      LCL &amp; FCL Door-to-Door Ocean Freight Shipping
-                    </div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      Our Less-than-Container Load (LCL) and Full Container Load (FCL) door-to-door
-                      ocean freight services provide seamless international shipping from pickup at
-                      the origin to final delivery at your destination. Whether you&rsquo;re
-                      transporting a small commercial consignment or a full container, TYS Global
-                      Logistics LLC manages ...
-                    </div>
-                  </div>
-                  <a href="#" target="_blank" className="textbtncss" data-aos="fade-in" data-aos-duration="1000" data-aos-delay="100">
-                    Learn More
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-6 col-12 mt-3 ps-2 pe-2">
-              <div className="maincardbox">
-                <img src="/frontend/assets/images/cardimg/img04.png" className="img-fluid imgcardcss" alt="" />
-                <div className="carddetails">
-                  <div className="cardcontentcss">
-                    <div className="cardmiantitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                      Residential House Moving
-                    </div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      Relocating your home is easier with our end-to-end moving services that
-                      include packing, loading, transportation, and unloading. We recommend keeping
-                      important documents, jewelry, cash, medications, and irreplaceable valuables
-                      with you during the move rather than packing them with household goods.
-                    </div>
-                  </div>
-                  <a href="#" target="_blank" className="textbtncss" data-aos="fade-in" data-aos-duration="1000" data-aos-delay="100">
-                    Learn More
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-7 col-md-6 col-12 mt-3  ps-2 pe-2">
-              <div className="maincardbox">
-                <img src="/frontend/assets/images/cardimg/img02.png" className="img-fluid imgcardcss" alt="" />
-                <div className="carddetails">
-                  <div className="cardcontentcss">
-                    <div className="cardmiantitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                      Vehicle Transport Services
-                    </div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      Our vehicle transportation solutions safely move cars, SUVs, motorcycles, and
-                      other eligible vehicles across the United States. Before shipment, vehicles
-                      should be prepared according to transport guidelines, including removing
-                      personal belongings and documenting their condition, to ensure a smooth pickup
-                      and delivery process.
-                    </div>
-                  </div>
-                  <a href="#" target="_blank" className="textbtncss" data-aos="fade-in" data-aos-duration="1000" data-aos-delay="100">
-                    Learn More
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-5 col-md-6 col-12 mt-3 ps-2 pe-2">
-              <div className="maincardbox">
-                <img src="/frontend/assets/images/cardimg/img01.png" className="img-fluid imgcardcss" alt="" />
-                <div className="carddetails">
-                  <div className="cardcontentcss">
-                    <div className="cardmiantitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="0">
-                      Warehouse &amp; Storage Facilities
-                    </div>
-                    <div className="carddec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="100">
-                      TYS Global Logistics LLC offers secure warehousing and storage solutions for
-                      personal belongings, business inventory, and commercial goods. Our facilities
-                      are designed to provide safe storage with organized inventory handling...
-                    </div>
-                  </div>
-                  <a href="#" target="_blank" className="textbtncss" data-aos="fade-in" data-aos-duration="1000" data-aos-delay="100">
-                    Learn More
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Link
+          href="/quotes"
+          className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
+        >
+          Get a Free Quote <ArrowRightIcon size={26} />
+        </Link>
+      </ScrollReveal>
       </section>
 
-      {/* Learn More modal — markup + open/close behavior in the client component. */}
-      <LearnMoreModal />
-
-      {/* why us */}
-      <section className="whyusssection" id="whyus">
-        <div className="container ">
-          <div className="row ">
-            <div className="col-12 secsmalltitle  justify-content-start">
-              <span>
-                <img src="/frontend/assets/images/diskblue.svg" className="img-fluid" alt="" />
-              </span>
-              Why Us
-            </div>
-          </div>
-
-          <div className="row justify-content-center align-items-center">
-            <div
-              className="col-lg-6 col-12 secmaintitle text-start"
-              data-aos="fade-up"
-              data-aos-duration="1000"
-              data-aos-delay="200"
-            >
-              Why Businesses Choose TYS Global Logistics LLC
-            </div>
-            <div className="col-lg-6 col-12 secdcpart d-flex flex-column align-items-start">
-              <div className="secdec text-start" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="300">
-                From local deliveries to international freight, TYS Global Logistics LLC is committed
-                to providing dependable, cost-effective, and customer-focused logistics solutions.
-                We combine industry expertise with reliable service to keep your shipments moving on
-                time.
-              </div>
-              <div className="nav-bar-link-wrapper-item p-0 spaceakhover " data-aos="fade-up" data-aos-duration="1000" data-aos-delay="400">
-                <a href="#quoteWizardContainer" data-open-quote-wizard className="fillbttn fillbttn2 ">
-                  Get a Free Quote
-                  <img src="/frontend/assets/images/arrowright.svg" alt="" />
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="container">
-          <div className="row layoutbgcss ">
-            <div className="col-12">
-              <div className="gridboxss">
-                <div className="div1 gridmaincard" data-aos="zoom-in" data-aos-duration="2000">
-                  <div className="iconboxbg gridimgbggreen">
-                    <img src="/frontend/assets/images/delivery.svg" className="img-fluid" alt="Delivery icon" />
-                  </div>
-                  <div className="gridcardcontentcss">
-                    <div className="gridcardmiantitle">Reliable &amp; On-Time Delivery</div>
-                    <div className="gridcarddec">
-                      We prioritize punctual pickups and timely deliveries, ensuring your shipments
-                      reach their destination safely and according to schedule.
-                    </div>
-                  </div>
-                </div>
-                <div className="div2 gridmaincard" data-aos="zoom-in" data-aos-duration="2000">
-                  <div className="iconboxbg gridimgbggreen">
-                    <img src="/frontend/assets/images/support.svg" className="img-fluid" alt="Support icon" />
-                  </div>
-                  <div className="gridcardcontentcss">
-                    <div className="gridcardmiantitle">Dedicated Customer Support</div>
-                    <div className="gridcarddec">
-                      Our experienced support team is available to assist you throughout the shipping
-                      process, providing updates and prompt resolutions.
-                    </div>
-                  </div>
-                </div>
-                <div className="div3 gridmaincard" data-aos="zoom-in" data-aos-duration="2000">
-                  <div className="iconboxbg gridimgbgred">
-                    <img src="/frontend/assets/images/secure.svg" className="img-fluid" alt="Secure icon" />
-                  </div>
-                  <div className="gridcardcontentcss">
-                    <div className="gridcardmiantitle">Secure Handling</div>
-                    <div className="gridcarddec">
-                      Every shipment is handled with care using professional packing, transportation,
-                      and tracking practices to minimize risk and ensure safety.
-                    </div>
-                  </div>
-                </div>
-                <div className="div4 gridmaincard" data-aos="zoom-in" data-aos-duration="2000">
-                  <div className="iconboxbg gridimgbgred">
-                    <img src="/frontend/assets/images/customized.svg" className="img-fluid" alt="Customized logistics icon" />
-                  </div>
-                  <div className="gridcardcontentcss">
-                    <div className="gridcardmiantitle">Customized Logistics Solutions</div>
-                    <div className="gridcarddec">
-                      From documents and parcels to freight, vehicle transport, warehousing, and
-                      relocations, we tailor our services to meet your unique business and personal
-                      shipping needs.
-                    </div>
-                  </div>
-                </div>
-                <div className="div6 gridmaincard" data-aos="zoom-in" data-aos-duration="2000">
-                  <div className="iconboxbg gridimgbggreen">
-                    <img src="/frontend/assets/images/pricing.svg" className="img-fluid" alt="Pricing icon" />
-                  </div>
-                  <div className="gridcardcontentcss">
-                    <div className="gridcardmiantitle">Competitive Pricing</div>
-                    <div className="gridcarddec">
-                      Get affordable shipping rates without compromising on service quality. Our
-                      transparent pricing helps you reduce logistics costs.
-                    </div>
-                  </div>
-                </div>
-                <div className="div7 gridmaincard" data-aos="zoom-in" data-aos-duration="2000">
-                  <div className="iconboxbg gridimgbgred">
-                    <img src="/frontend/assets/images/truckicon.svg" className="img-fluid" alt="Global reach icon" />
-                  </div>
-                  <div className="gridcardcontentcss">
-                    <div className="gridcardmiantitle">Domestic &amp; Global Reach</div>
-                    <div className="gridcarddec">
-                      Whether shipping across the United States or internationally, our extensive
-                      logistics network ensures seamless transportation worldwide.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Proofs */}
-      <section className="proofssection">
-        <div className="container ">
-          <div className="row ">
-            <div className="col-12 secsmalltitle  justify-content-start">
-              <span>
-                <img src="/frontend/assets/images/diskblue.svg" className="img-fluid" alt="" />
-              </span>
-              TRUSTED SHIPPING
-            </div>
-          </div>
-
-          <div className="row justify-content-start align-items-start">
-            <div className="col-lg-9 col-12 secmaintitle text-start">
-              As your trusted logistics service provide, we can help you and your customer with all
-              shipping and moving services within USA and worldwide.
-              <div className="nav-bar-link-wrapper-item p-0 spaceakhover">
-                <a href="#quoteWizardContainer" data-open-quote-wizard className="fillbttn fillbttn2 ">
-                  Get a Free Quote
-                  <img src="/frontend/assets/images/arrowright.svg" alt="" />
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="container">
-          <div className="row">
-            <div className="col-12 d-flex justify-content-center">
-              <div className="mapsvagproof">
-                <img src="/frontend/assets/images/fullmap.svg" className="img-fluid" alt="" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-3 col-md-6 col-12 ">
-              <div className="proofcard">
-                <div className="proofcount">24/7</div>
-                <div className="proofname">Customer Support</div>
-              </div>
-            </div>
-            <div className="col-lg-3 col-md-6 col-12 ">
-              <div className="proofcard">
-                <div className="proofcount">Transparent</div>
-                <div className="proofname">Pricing</div>
-              </div>
-            </div>
-            <div className="col-lg-3 col-md-6 col-12 ">
-              <div className="proofcard">
-                <div className="proofcount">Secure</div>
-                <div className="proofname">Shipment Handling</div>
-              </div>
-            </div>
-            <div className="col-lg-3 col-md-6 col-12 ">
-              <div className="proofcard">
-                <div className="proofcount">Worldwide</div>
-                <div className="proofname">Logistics Network</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* quote */}
-      <section className="quotesection">
-        <div className="container ">
-          <div className="row justify-content-center align-items-center">
-            <div className="col-lg-6 col-12 order-lg-0 order-1 ">
-              <div className="quotedetails">
-                <div className="secsmalltitle  justify-content-start ">GET AN INSTANT QUOTE</div>
-                <div className="secmaintitle text-start mt-0">
-                  Get Your Shipping <br /> Quote In Seconds
-                </div>
-                <div className="secdcpart d-flex flex-column align-items-start">
-                  <div className="secdec text-start">
-                    As your trusted logistics service provider, we can help you and your customer
-                    with all shipping and moving services within the USA and worldwide.
-                  </div>
-                </div>
-              </div>
-
-              {/* Instant-quote CTA — INERT. TODO(B2): wire to the wizard. */}
-              <form className="quoteformbox row ">
-                <div className="col-6 pe-md-2 pe-1">
-                  <label className="formlabelcss" htmlFor="select_page">
-                    From
-                  </label>
-                  <div className="input-group quoteinputcss">
-                    <span className="input-group-text">
-                      <img src="/frontend/assets/images/MapPin.svg" className="img-fluid" alt="" />
+      {/* Document & Parcel Shipping */}
+      <section className="px-4 py-16 md:px-8">
+      <ScrollReveal>
+        <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
+          <div className="grid items-center gap-10 md:grid-cols-2">
+            <img
+              src="/frontend/images/redesign/feature-docparcel.png"
+              alt="Document and parcel shipping"
+              className="w-full max-w-sm justify-self-center rounded-3xl md:order-1"
+            />
+            <div>
+              <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+                For All Shippers
+              </p>
+              <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+                Document and Parcel Shipping
+              </h2>
+              <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
+                Save up to 70% on domestic and international shipping with discounted rates from
+                trusted carriers like FedEx, DHL, UPS, and USPS.
+              </p>
+              <div className="mt-6 flex gap-4 sm:gap-6">
+                {[
+                  { icon: "/frontend/icons/redesign/badge-best-rates.svg", label: "Best Rates", sub: "Up to 70% Discount" },
+                  { icon: "/frontend/icons/redesign/badge-trusted-carriers.svg", label: "Trusted Carriers", sub: "FedEx, DHL, UPS, USPS" },
+                ].map((s) => (
+                  <div key={s.label} className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left">
+                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
+                      <img src={s.icon} alt="" className="h-[27px] w-auto self-center" />
                     </span>
-                    <select id="select_page" className="operator form-control">
-                      <CountryOptions placeholder="Select From" />
-                    </select>
-                  </div>
-                </div>
-
-                <div className="col-6 ps-md-2 ps-1">
-                  <label className="formlabelcss" htmlFor="select_page1">
-                    To
-                  </label>
-                  <div className="input-group quoteinputcss">
-                    <span className="input-group-text">
-                      <img src="/frontend/assets/images/MapPin.svg" className="img-fluid" alt="" />
+                    <span className="text-xs font-semibold">
+                      <span className="block font-semibold text-ink">{s.label}</span>
+                      <span className="text-ink-muted">{s.sub}</span>
                     </span>
-                    <select id="select_page1" className="operator form-control">
-                      <CountryOptions placeholder="Select To" />
-                    </select>
                   </div>
-                </div>
-                <div className="col-12">
-                  <div className="nav-bar-link-wrapper-item p-0 spaceakhover">
-                    <a
-                      href="#quoteWizardContainer"
-                      data-open-quote-wizard
-                      data-prefill-from="select_page"
-                      data-prefill-to="select_page1"
-                      className="fillbttn fillbttn2 w-100 mt-3"
-                    >
-                      Get a Free Quote
-                      <img src="/frontend/assets/images/arrowright.svg" alt="" />
-                    </a>
-                  </div>
-                </div>
-              </form>
-            </div>
-            <div className="col-lg-6 col-12 imgcolcss ">
-              <div className="quoteimgcssdiv">
-                <img src="/frontend/assets/images/cardimg/img14.png" className="img-fluid quoteimgcss" alt="" />
+                ))}
               </div>
             </div>
           </div>
+
+          <div className="mt-10 grid gap-6 md:grid-cols-2">
+            {[
+              {
+                icon: "/frontend/icons/redesign/card-document-shipping.svg",
+                title: "Document Shipping",
+                body: "Secure worldwide delivery for important documents with real-time tracking.",
+              },
+              {
+                icon: "/frontend/icons/redesign/card-parcel-shipping.svg",
+                title: "Parcel Shipping",
+                body: "Ship parcels of any size with fast, reliable, and cost-effective international delivery options.",
+              },
+            ].map((c) => (
+              <div key={c.title} className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left">
+                <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-brand-light">
+                  <img src={c.icon} alt="" className="h-8 w-auto self-center" />
+                </span>
+                <div className="flex flex-col items-center gap-1 sm:items-start">
+                  <h3 className="text-2xl font-semibold leading-[30px] text-ink">{c.title}</h3>
+                  <p className="text-base font-medium text-ink-muted">{c.body}</p>
+                  <Link
+                    href="/quotes"
+                    className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
+                  >
+                    Learn More <ArrowRightIcon size={16} />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Link
+            href="/quotes"
+            className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
+          >
+            Get a Free Quote <ArrowRightIcon size={26} />
+          </Link>
         </div>
+      </ScrollReveal>
       </section>
 
-      {/* faq */}
-      <section className="faqsection" id="faq">
-        <div className="container ">
-          <div className="row ">
-            <div
-              className="col-12 secsmalltitle"
-              data-aos="fade-up"
-              data-aos-duration="1000"
-              data-aos-delay="-900"
-            >
-              <span>
-                <img src="/frontend/assets/images/diskblue.svg" className="img-fluid" alt="" />
+      {/* Volume & Business Shipping */}
+      <section className="px-4 py-16 md:px-8">
+      <ScrollReveal>
+        <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+          <div>
+            <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+              Business Only
+            </p>
+            <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+              Volume &amp; Business Shipping
+            </h2>
+            <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
+              Power your global supply chain with integrated freight, customs, warehousing, and
+              transportation solutions.
+            </p>
+            <div className="mt-6 flex gap-4 sm:gap-6">
+              {[
+                { icon: "/frontend/icons/redesign/badge-priority-support.svg", label: "Priority Support", sub: "Dedicated support for businesses" },
+                { icon: "/frontend/icons/redesign/badge-business-accounts.svg", label: "Business Accounts", sub: "Manage all your shipments in one place" },
+              ].map((s) => (
+                <div key={s.label} className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-light">
+                    <img src={s.icon} alt="" className="h-[27px] w-auto self-center" />
+                  </span>
+                  <span className="text-xs font-semibold">
+                    <span className="block font-semibold text-ink">{s.label}</span>
+                    <span className="text-ink-muted">{s.sub}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <img
+            src="/frontend/images/redesign/feature-volume-truck.png"
+            alt="Volume and business shipping"
+            className="w-full rounded-3xl"
+          />
+        </div>
+
+        <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-2">
+          {[
+            {
+              icon: "/frontend/icons/redesign/card-volume-shipping.svg",
+              title: "Volume Shipping",
+              body: "Exclusive pricing and flexible shipping solutions for businesses with high-volume shipments.",
+            },
+            {
+              icon: "/frontend/icons/redesign/card-retailer-shipping.svg",
+              title: "Retailer Shipping",
+              body: "Customized logistics solutions designed for retailers and e-commerce businesses of every size.",
+            },
+          ].map((c) => (
+            <div key={c.title} className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left">
+              <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-brand-light">
+                <img src={c.icon} alt="" className="h-8 w-auto self-center" />
               </span>
-              FAQ
+              <div className="flex flex-col items-center gap-1 sm:items-start">
+                <h3 className="text-2xl font-semibold leading-[30px] text-ink">{c.title}</h3>
+                <p className="text-base font-medium text-ink-muted">{c.body}</p>
+                <Link
+                  href="/quotes"
+                  className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
+                >
+                  Learn More <ArrowRightIcon size={16} />
+                </Link>
+              </div>
             </div>
-          </div>
+          ))}
+        </div>
+        <Link
+          href="/quotes"
+          className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
+        >
+          Get a Free Quote <ArrowRightIcon size={26} />
+        </Link>
+      </ScrollReveal>
+      </section>
 
-          <div className="row justify-content-center align-items-center">
-            <div className="col-12 secmaintitle" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="200">
-              FAQs
-            </div>
-            <div className="col-md-6 col-12 secdcpart d-flex flex-column align-items-center">
-              <div className="secdec" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="300">
-                Find answers to the most common questions about shipping, moving, freight, and
-                logistics services offered by TYS Global Logistics LLC.
+      {/* Enterprise Logistics Solution */}
+      <section className="px-4 py-16 md:px-8">
+      <ScrollReveal>
+        <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
+          <div className="grid items-center gap-10 md:grid-cols-2">
+            <img
+              src="/frontend/images/redesign/feature-enterprise-ship.png"
+              alt="Enterprise logistics solution"
+              className="w-full max-w-sm justify-self-center rounded-3xl md:order-1"
+            />
+            <div>
+              <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+                For All Freight
+              </p>
+              <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+                Enterprise Logistics Solution
+              </h2>
+              <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
+                End-to-end freight and supply chain solutions for imports, exports, and commercial
+                cargo, backed by reliable global logistics expertise.
+              </p>
+              <div className="mt-6 flex gap-4 sm:gap-6">
+                {[
+                  { icon: HeadsetIcon, label: "Dedicated Manager", sub: "One point of contact" },
+                  { icon: GlobeIcon, label: "Global Reach", sub: "Import & export coverage" },
+                ].map((s) => (
+                  <div key={s.label} className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left">
+                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
+                      <s.icon size={27} className="text-brand" />
+                    </span>
+                    <span className="text-xs font-semibold">
+                      <span className="block font-semibold text-ink">{s.label}</span>
+                      <span className="text-ink-muted">{s.sub}</span>
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
+          <Link
+            href="/quotes"
+            className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
+          >
+            Get a Free Quote <ArrowRightIcon size={26} />
+          </Link>
         </div>
+      </ScrollReveal>
+      </section>
 
-        <div className="container">
-          <div className="row justify-content-center">
-            <div className="col-md-10 col-12">
-              <div className="accordion accordion-flush" id="accordionFlushExample">
-                <div className="accordion-item">
-                  <h2 className="accordion-header" id="flush-headingOne">
-                    <button
-                      className="accordion-button collapsed"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#flush-collapseOne"
-                      aria-expanded="false"
-                      aria-controls="flush-collapseOne"
-                    >
-                      How do I get a shipping quote?
-                    </button>
-                  </h2>
-                  <div
-                    id="flush-collapseOne"
-                    className="accordion-collapse collapse"
-                    aria-labelledby="flush-headingOne"
-                    data-bs-parent="#accordionFlushExample"
-                  >
-                    <div className="accordion-body">
-                      Simply fill out our quote request form or contact our team with your shipment
-                      details. We&rsquo;ll provide a customized quote based on your requirements.
-                    </div>
-                  </div>
-                </div>
-                <div className="accordion-item">
-                  <h2 className="accordion-header" id="flush-headingTwo">
-                    <button
-                      className="accordion-button collapsed"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#flush-collapseTwo"
-                      aria-expanded="false"
-                      aria-controls="flush-collapseTwo"
-                    >
-                      Do you offer international shipping?
-                    </button>
-                  </h2>
-                  <div
-                    id="flush-collapseTwo"
-                    className="accordion-collapse collapse"
-                    aria-labelledby="flush-headingTwo"
-                    data-bs-parent="#accordionFlushExample"
-                  >
-                    <div className="accordion-body">
-                      Yes. We provide reliable international shipping solutions from the United States
-                      to destinations worldwide, including documents, parcels, freight, and
-                      commercial cargo.
-                    </div>
-                  </div>
-                </div>
-                <div className="accordion-item">
-                  <h2 className="accordion-header" id="flush-headingThree">
-                    <button
-                      className="accordion-button collapsed"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#flush-collapseThree"
-                      aria-expanded="false"
-                      aria-controls="flush-collapseThree"
-                    >
-                      Can I ship documents and small parcels?
-                    </button>
-                  </h2>
-                  <div
-                    id="flush-collapseThree"
-                    className="accordion-collapse collapse"
-                    aria-labelledby="flush-headingThree"
-                    data-bs-parent="#accordionFlushExample"
-                  >
-                    <div className="accordion-body">
-                      Absolutely. We offer secure and cost-effective document and parcel shipping
-                      services, including discounted express options for time-sensitive deliveries.
-                    </div>
-                  </div>
-                </div>
-                <div className="accordion-item">
-                  <h2 className="accordion-header" id="flush-headingFour">
-                    <button
-                      className="accordion-button collapsed"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#flush-collapseFour"
-                      aria-expanded="false"
-                      aria-controls="flush-collapseFour"
-                    >
-                      Do you provide vehicle transportation services?
-                    </button>
-                  </h2>
-                  <div
-                    id="flush-collapseFour"
-                    className="accordion-collapse collapse"
-                    aria-labelledby="flush-headingThree"
-                    data-bs-parent="#accordionFlushExample"
-                  >
-                    <div className="accordion-body">
-                      Yes. We arrange safe and dependable transport for cars, SUVs, motorcycles, and
-                      other vehicles across the United States.
-                    </div>
-                  </div>
-                </div>
-                <div className="accordion-item">
-                  <h2 className="accordion-header" id="flush-headingFive">
-                    <button
-                      className="accordion-button collapsed"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#flush-collapseFive"
-                      aria-expanded="false"
-                      aria-controls="flush-collapseFive"
-                    >
-                      Do you offer packing, moving, and storage services?
-                    </button>
-                  </h2>
-                  <div
-                    id="flush-collapseFive"
-                    className="accordion-collapse collapse"
-                    aria-labelledby="flush-headingThree"
-                    data-bs-parent="#accordionFlushExample"
-                  >
-                    <div className="accordion-body">
-                      Yes. TYS Global Logistics LLC provides residential moving, commercial
-                      relocation, professional packing, and secure warehousing and storage solutions
-                      to meet a wide range of logistics needs.
-                    </div>
-                  </div>
-                </div>
-              </div>
+      {/* Global Shopper */}
+      <section className="px-4 py-16 md:px-8">
+      <ScrollReveal>
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+            Shop US Stores and Ship Worldwide
+          </p>
+          <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">Global Shopper</h2>
+          <p className="mt-3 text-ink-muted">
+            Receive a free U.S. address, shop from trusted brands, and let TYS Global Logistics
+            consolidate and deliver your purchases worldwide.
+          </p>
+        </div>
+        <div className="mx-auto mt-8 grid max-w-5xl grid-cols-3 gap-4 sm:grid-cols-5 sm:gap-5 md:grid-cols-9 md:gap-4">
+          {[
+            "amazon",
+            "walmart",
+            "apple",
+            "zappos",
+            "disney",
+            "carters",
+            "boots",
+            "oshkosh",
+            "mands",
+            "6pm",
+            "ebay",
+            "shein",
+            "ipsy",
+            "ae",
+            "asos",
+            "forever21",
+            "johnlewis",
+            "gap",
+          ].map((name) => (
+            <div
+              key={name}
+              className="flex aspect-square items-center justify-center rounded-2xl bg-white p-3 shadow-[0_2px_8px_rgba(16,24,40,0.06)]"
+            >
+              <img
+                src={`/frontend/images/redesign/brand-logos/${name}.png`}
+                alt=""
+                className="h-full w-full object-contain"
+              />
             </div>
+          ))}
+        </div>
+      </ScrollReveal>
+      </section>
+
+      {/* About TYS stats + Need a Quote */}
+      <section className="px-4 py-8 md:px-8">
+      <ScrollReveal>
+        <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
+          <div className="text-center">
+            <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+              Why Shippers Choose Us
+            </p>
+            <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+              About TYS Global Logistics
+            </h2>
+            <p className="mt-2 text-ink-muted">
+              Our name reflects our commitment: Trust Your Shipment, every step of the way.
+            </p>
+          </div>
+
+          <div className="stats-grid mt-10 items-center gap-x-6 gap-y-8 sm:gap-x-12 md:gap-x-10 md:gap-y-0">
+            <img
+              src="/frontend/images/redesign/about-stats-illustration.png"
+              alt=""
+              aria-hidden
+              className="w-40 [grid-area:img] justify-self-center sm:w-52 md:w-64 lg:w-80"
+            />
+            <Stat
+              value="200+"
+              label="Countries Worldwide"
+              className="border-b border-[#dedede] pb-4 [grid-area:s1] sm:pb-6"
+            />
+            <Stat
+              value="900+"
+              label="Trusted Carrier Networks"
+              className="border-b border-[#dedede] pb-4 [grid-area:s2] sm:pb-6"
+            />
+            <Stat
+              value="70%"
+              label="Shipping Savings"
+              className="border-b border-[#dedede] py-4 [grid-area:s3] sm:py-6"
+            />
+            <Stat
+              value="100%"
+              label="Shipment Visibility"
+              className="border-b border-[#dedede] py-4 [grid-area:s4] sm:py-6"
+            />
+            <Stat value="24/7" label="Expert Support" className="pt-4 [grid-area:s5] sm:pt-6" />
+            <Stat
+              value="500+"
+              label="Shipments Delivered"
+              className="pt-4 [grid-area:s6] sm:pt-6"
+            />
           </div>
         </div>
+      </ScrollReveal>
+      </section>
+
+      <section className="px-4 py-16 md:px-8">
+      <ScrollReveal>
+        <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+          <div>
+            <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+              500+ Shipments Delivered
+            </p>
+            <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+              Need A Quote? Takes 30 Seconds.
+            </h2>
+            <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
+              As your trusted logistics service provider, we can help you and your customer with
+              all shipping and moving services within the USA and worldwide.
+            </p>
+            <div className="mt-6 max-w-sm rounded-2xl border border-brand-light p-5">
+              <MiniQuoteForm />
+            </div>
+          </div>
+          <img
+            src="/frontend/images/redesign/need-quote-photo.png"
+            alt="Courier handing a package to a customer"
+            className="w-full rounded-3xl"
+          />
+        </div>
+      </ScrollReveal>
+      </section>
+
+      {/* Video placeholder */}
+      <section className="px-4 pb-16 md:px-8">
+      <ScrollReveal>
+        <div className="relative mx-auto flex h-72 max-w-6xl items-center justify-center overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-ink to-brand-dark md:h-96">
+          <button
+            type="button"
+            aria-label="Play video"
+            className="flex h-20 w-20 items-center justify-center rounded-full bg-white/95 shadow-lg transition hover:scale-105"
+          >
+            <span
+              className="ml-1 border-y-[14px] border-l-[22px] border-y-transparent border-l-brand"
+              aria-hidden
+            />
+          </button>
+        </div>
+      </ScrollReveal>
+      </section>
+
+      {/* Reviews */}
+      <section className="px-4 py-16 md:px-8">
+      <ScrollReveal>
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+            See Our <span className="text-brand">Trusted</span> Reviews
+          </h2>
+          <p className="mt-3 text-ink-muted">
+            Every shipment tells a story. Read what our customers have to say about their
+            experience with TYS Global Logistics.
+          </p>
+        </div>
+        <div className="mt-10">
+          <ReviewsCarousel
+            reviews={[
+              {
+                name: "M. Alvarez",
+                role: "Small Business Owner",
+                quote:
+                  "Our freight arrived faster than the original estimate and the team kept us updated the whole way. Booking again for our next shipment.",
+              },
+              {
+                name: "J. Whitfield",
+                role: "Relocating Customer",
+                quote:
+                  "Moving overseas felt overwhelming until TYS took over. Door-to-door pickup, clear pricing, and everything arrived intact.",
+              },
+              {
+                name: "R. Okafor",
+                role: "E-commerce Retailer",
+                quote:
+                  "Volume shipping rates saved us real money this quarter, and their support team answers fast whenever we have a question.",
+              },
+              {
+                name: "D. Martins",
+                role: "Auto Import Dealer",
+                quote:
+                  "Shipped three vehicles across two continents without a single delay. Clear communication at every step of the process.",
+              },
+              {
+                name: "S. Park",
+                role: "Online Store Owner",
+                quote:
+                  "Parcel shipping used to eat into our margins. TYS cut our rates and our customers still get tracking updates in real time.",
+              },
+            ]}
+          />
+        </div>
+      </ScrollReveal>
+      </section>
+
+      {/* FAQ */}
+      <section className="px-4 pb-20 md:px-8">
+      <ScrollReveal>
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+            Frequently Asked Questions
+          </h2>
+          <p className="mt-3 text-ink-muted">
+            As your trusted logistics service provider, we can help you and your customer with all
+            shipping and moving services.
+          </p>
+        </div>
+        <div className="mx-auto mt-10 max-w-3xl">
+          <FaqAccordion />
+        </div>
+      </ScrollReveal>
       </section>
     </>
+  );
+}
+
+function Stat({
+  value,
+  label,
+  className = "",
+}: {
+  value: string;
+  label: string;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <div className="text-[28px] font-medium leading-[36px] text-ink sm:text-[34px] sm:leading-[44px] md:text-[40px] md:leading-[64px]">
+        {value}
+      </div>
+      <div className="text-sm font-medium text-ink-muted sm:text-base">{label}</div>
+    </div>
   );
 }
