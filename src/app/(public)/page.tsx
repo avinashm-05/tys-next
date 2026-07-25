@@ -78,7 +78,7 @@ export default function HomePage() {
               </span>
               5 Reviews on Trustpilot
             </div>
-            <p className="mt-5 text-sm font-semibold uppercase tracking-wide text-brand">
+            <p className="mt-5 text-sm font-semibold uppercase tracking-wide text-brand-dark">
               Trusted Partner for Logistics &amp; Freight Forwarding
             </p>
             <h1 className="mt-3 text-[2rem] sm:text-[2.5rem] md:text-[2.75rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
@@ -246,7 +246,7 @@ export default function HomePage() {
                   href={c.href}
                   className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
                 >
-                  Learn More <ArrowRightIcon size={16} />
+                  Learn More <span className="sr-only"> about {c.title}</span> <ArrowRightIcon size={16} />
                 </Link>
               </div>
             </div>
@@ -327,7 +327,7 @@ export default function HomePage() {
                     href={c.href}
                     className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
                   >
-                    Learn More <ArrowRightIcon size={16} />
+                    Learn More <span className="sr-only"> about {c.title}</span> <ArrowRightIcon size={16} />
                   </Link>
                 </div>
               </div>
@@ -408,7 +408,7 @@ export default function HomePage() {
                   href={c.href}
                   className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
                 >
-                  Learn More <ArrowRightIcon size={16} />
+                  Learn More <span className="sr-only"> about {c.title}</span> <ArrowRightIcon size={16} />
                 </Link>
               </div>
             </div>

@@ -45,6 +45,8 @@ export function SiteFooter() {
             <img
               src="/frontend/logo/TYS_GLOBAL_LOGISTICS_White.png"
               alt="TYS Global Logistics"
+              width={480}
+              height={177}
               draggable={false}
               className="h-14 w-auto select-none"
             />

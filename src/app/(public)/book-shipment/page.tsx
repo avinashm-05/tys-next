@@ -36,6 +36,8 @@ export default async function BookShipmentPage() {
         <img
           src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png"
           alt="TYS Global Logistics"
+          width={480}
+          height={177}
           draggable={false}
           className="mx-auto h-12 w-auto select-none"
         />

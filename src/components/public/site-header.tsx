@@ -74,6 +74,8 @@ export function SiteHeader() {
           <img
             src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png"
             alt="TYS Global Logistics"
+            width={480}
+            height={177}
             draggable={false}
             className="h-11 w-auto select-none"
           />
@@ -170,6 +172,8 @@ export function SiteHeader() {
           <img
             src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png"
             alt="TYS Global Logistics"
+            width={480}
+            height={177}
             draggable={false}
             className="h-9 w-auto select-none"
           />

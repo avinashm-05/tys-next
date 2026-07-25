@@ -46,7 +46,7 @@ export function OfferCard({
         href={href}
         className="relative z-10 mt-auto inline-flex w-fit items-center gap-1 text-base font-bold uppercase tracking-[0.4px] text-brand transition-colors duration-500 group-hover:text-white"
       >
-        Read More <ArrowRightIcon size={16} />
+        Read More <span className="sr-only"> about {title}</span> <ArrowRightIcon size={16} />
       </Link>
     </div>
   );
