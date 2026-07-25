@@ -23,7 +23,7 @@ export default async function QuotesPage({
       {/* Colored band stops after the title/subtitle, with a circular curve
           cut into its bottom edge (an SVG arc, not a hard edge) — everything
           from the step wizard down lives on plain white. */}
-      <section className="relative overflow-hidden bg-brand-light px-4 pb-20 pt-14 md:px-8 md:pb-28">
+      <section className="relative overflow-hidden bg-brand-light px-4 pb-20 pt-6 md:px-8 md:pb-28 md:pt-8">
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="text-3xl font-extrabold text-ink md:text-4xl">Get a Free Quote</h1>
           <p className="mt-2 text-ink-muted">

@@ -3,18 +3,18 @@ import { InstagramLogoIcon, LinkedinLogoIcon, YoutubeLogoIcon } from "@phosphor-
 
 const SERVICES = [
   { href: "/destinations", label: "Worldwide Shipping" },
-  { href: "/destinations#moving", label: "Worldwide Moving" },
-  { href: "/quotes", label: "Domestic Shipping" },
-  { href: "/quotes", label: "Domestic Moving" },
-  { href: "/quotes", label: "Auto Transport" },
+  { href: "/destinations/moving", label: "Worldwide Moving" },
+  { href: "/services/domestic-shipping", label: "Domestic Shipping" },
+  { href: "/services/domestic-moving", label: "Domestic Moving" },
+  { href: "/services/auto-transport", label: "Auto Transport" },
 ] as const;
 
 const RESOURCES = [
   { href: "/destinations", label: "Worldwide Destinations" },
-  { href: "/quotes", label: "Small Business Shipping" },
-  { href: "/quotes", label: "Shop US and Ship Worldwide" },
-  { href: "/destinations", label: "Origin & Destination Services" },
-  { href: "#", label: "Blog" },
+  { href: "/services/retailer-shipping", label: "Small Business Shipping" },
+  { href: "/services/global-shopper", label: "Shop US and Ship Worldwide" },
+  { href: "/services/freight-forwarding", label: "Origin & Destination Services" },
+  { href: "/blog", label: "Blog" },
 ] as const;
 
 const HELP = [
@@ -25,10 +25,10 @@ const HELP = [
 ] as const;
 
 const LEGAL = [
-  { href: "#", label: "Terms" },
-  { href: "#", label: "Privacy Policy" },
-  { href: "#", label: "Security" },
-  { href: "#", label: "Sitemap" },
+  { href: "/terms", label: "Terms" },
+  { href: "/privacy-policy", label: "Privacy Policy" },
+  { href: "/security", label: "Security" },
+  { href: "/sitemap", label: "Sitemap" },
 ] as const;
 
 // B1 redesign — measured directly off the published Figma Sites link (DOM
@@ -45,7 +45,8 @@ export function SiteFooter() {
             <img
               src="/frontend/logo/TYS_GLOBAL_LOGISTICS_White.png"
               alt="TYS Global Logistics"
-              className="h-14 w-auto"
+              draggable={false}
+              className="h-14 w-auto select-none"
             />
             <p className="mt-4 max-w-xs text-sm text-white">
               Make shipping and moving easy with instant quotes and expert guidance!
@@ -53,9 +54,9 @@ export function SiteFooter() {
             <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white">
               {LEGAL.map((l, i) => (
                 <span key={l.label} className="flex items-center gap-2">
-                  <a href={l.href} className="hover:text-white/80">
+                  <Link href={l.href} className="hover:text-white/80">
                     {l.label}
-                  </a>
+                  </Link>
                   {i < LEGAL.length - 1 && <span aria-hidden>|</span>}
                 </span>
               ))}

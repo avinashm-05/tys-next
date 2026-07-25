@@ -18,9 +18,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = (process.env.APP_URL ?? "https://tysgloballogistics.com").replace(/\/+$/, "");
+
 export const metadata: Metadata = {
-  title: "TYS Global Logistics",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "TYS Global Logistics",
+    template: "%s",
+  },
   description: "International shipping quotes and logistics services.",
+  openGraph: {
+    type: "website",
+    siteName: "TYS Global Logistics",
+    title: "TYS Global Logistics",
+    description: "International shipping quotes and logistics services.",
+    url: siteUrl,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title: "TYS Global Logistics",
+    description: "International shipping quotes and logistics services.",
+  },
 };
 
 export default function RootLayout({

@@ -64,9 +64,13 @@ export const STEP_FIELDS = {
   4: ["contact"],
 } as const;
 
+// Only these package types have a details sub-section on step 3 — envelope
+// and furniture never do, no matter what else is selected alongside them.
+const DETAIL_PACKAGE_TYPES = ["boxes", "television", "auto"];
+
 /** True when step 3 (package details) should be skipped for the current selection. */
 export function skipDetailsStep(packageTypes: string[]): boolean {
-  return packageTypes.includes("envelope") || packageTypes.includes("furniture");
+  return !packageTypes.some((t) => DETAIL_PACKAGE_TYPES.includes(t));
 }
 
 /** Builds the exact POST /api/quotes payload quoteStoreInput validates. */

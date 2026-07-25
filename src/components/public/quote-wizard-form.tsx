@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Controller,
@@ -33,6 +33,7 @@ import { DIAL_CODES } from "@/lib/dial-codes";
 import { flagEmoji } from "@/lib/flag-emoji";
 import { calculateChargeableWeight } from "@/lib/chargeable-weight";
 import { SearchableSelect } from "@/components/public/searchable-select";
+import { PostalCodeInput } from "@/components/public/postal-code-input";
 import {
   PACKAGE_TYPES,
   quoteWizardSchema,
@@ -75,11 +76,6 @@ const PACKAGE_CARD_ICON: Record<string, typeof PackageIcon> = {
 
 const inputClass =
   "w-full rounded-xl border border-brand-light bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand disabled:bg-brand-pale disabled:text-ink-muted";
-// Larger variant for the Step 1 "Sending From / Sending To" location fields
-// only — the rest of the wizard's inputs (contact info, box/tv/auto detail
-// rows) keep the compact `inputClass` size.
-const locationInputClass =
-  "w-full rounded-full border border-brand-light bg-white px-4 py-4 text-base text-ink outline-none focus:border-brand";
 const labelClass = "block text-sm font-medium text-ink";
 const errorClass = "mt-1 text-xs text-red-600";
 
@@ -111,6 +107,33 @@ export function QuoteWizardForm({
 }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  // Guards against a real race: the Next (type="button") and Submit
+  // (type="submit") controls share the exact same slot, swapping based on
+  // `step`. Next's own handler is async (it awaits trigger() before calling
+  // setStep()), so the re-render that mounts Submit in Next's place can land
+  // *after* the browser has already begun a click gesture — mousedown on
+  // Next, then mouseup landing on the freshly-mounted Submit sitting at the
+  // same coordinates, since click targeting resolves from mouseup. That
+  // silently fires a real form submission before the user ever sees the
+  // Contact step, which is what produced "errors show before I've touched
+  // anything" — confirmed by reproducing it only with real, timed clicks,
+  // never with an instant synthetic .click(). A brief pointer-events-none
+  // window on the button row closes that gap. It's set in the same render
+  // that changes `step` (React's documented "adjust state during render"
+  // pattern — re-renders once more before painting) rather than via a
+  // useEffect, which would let one guard-less frame slip through between the
+  // step change committing and the effect reacting to it.
+  const [justTransitioned, setJustTransitioned] = useState(false);
+  const [guardedStep, setGuardedStep] = useState(step);
+  if (guardedStep !== step) {
+    setGuardedStep(step);
+    setJustTransitioned(true);
+  }
+  useEffect(() => {
+    if (!justTransitioned) return;
+    const timer = setTimeout(() => setJustTransitioned(false), 300);
+    return () => clearTimeout(timer);
+  }, [justTransitioned]);
   const [skippedStep3, setSkippedStep3] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResult | null>(null);
@@ -133,7 +156,7 @@ export function QuoteWizardForm({
       from_zip: "",
       to_country: defaultToCountry || "",
       to_zip: "",
-      is_residence: true,
+      is_residence: false,
       package_types: [],
       box_details: [],
       television_details: [],
@@ -141,8 +164,21 @@ export function QuoteWizardForm({
       contact: { name: "", email: "", country_code: "+1", phone: "" },
     },
   });
-  const { control, register, watch, setValue, trigger, handleSubmit, formState } = form;
-  const { errors, isSubmitting } = formState;
+  const { control, register, watch, setValue, trigger, handleSubmit, formState, reset, getValues } = form;
+  const { errors, isSubmitting, isSubmitted } = formState;
+
+  // Belt-and-suspenders alongside the pointer-events-none transition guard
+  // above: if a phantom submit ever still slips through that race (or any
+  // other path we haven't thought of), this forcibly clears isSubmitted
+  // every time OUR OWN code moves the wizard to a new step — which a real
+  // user-initiated submit never does on its own (submitting doesn't change
+  // `step`). So this can never mask a genuine "clicked Submit with empty
+  // fields while already on the Contact step" case, only a false positive
+  // picked up in transit to it.
+  useEffect(() => {
+    reset(getValues(), { keepValues: true, keepDirty: true, keepTouched: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   const boxes = useFieldArray({ control, name: "box_details" });
   const tvs = useFieldArray({ control, name: "television_details" });
@@ -157,6 +193,19 @@ export function QuoteWizardForm({
     };
     const valid = await trigger(fieldsByStep[step]);
     if (!valid) return;
+    // Next (type="button") and Submit (type="submit") share one slot,
+    // swapping on `step`. Since this function is async, the swap can land
+    // *after* the browser has already begun the click gesture that got us
+    // here — mousedown on Next, then mouseup resolving against whatever now
+    // sits at that same screen position, which is the freshly-mounted
+    // Submit if the transition already committed. That's a real click on a
+    // real submit-typed button, so it fires a genuine (if accidental) form
+    // submission — silently, before the user has ever seen the Contact
+    // step, which is what produced errors appearing before it was touched.
+    // This buffer holds the swap until well after any in-flight click has
+    // finished resolving against the button that was actually visible when
+    // the gesture started.
+    await new Promise((resolve) => setTimeout(resolve, 120));
 
     if (step === 2) {
       const skip = skipDetailsStep(packageTypes);
@@ -183,6 +232,10 @@ export function QuoteWizardForm({
 
   function back() {
     if (step === 4 && skippedStep3) {
+      // Back to the step-2 decision point — un-collapse the stepper right
+      // away rather than leaving it showing 3 steps until skippedStep3 gets
+      // recomputed by a future Next click (or, previously, a page refresh).
+      setSkippedStep3(false);
       setStep(2);
       return;
     }
@@ -241,7 +294,9 @@ export function QuoteWizardForm({
       if (data.show_fedex_rates) {
         setResult(data as SubmitResult);
       } else {
-        router.push(`/thank-you?name=${encodeURIComponent(values.contact.name)}`);
+        const params = new URLSearchParams({ name: values.contact.name });
+        if (data.quote_id) params.set("quote_id", String(data.quote_id));
+        router.push(`/thank-you?${params.toString()}`);
       }
     } catch {
       setSubmitError("Network error. Please try again.");
@@ -252,10 +307,41 @@ export function QuoteWizardForm({
     return <RatesResult result={result} />;
   }
 
+  // The stepper always starts at the full 4 steps — it only collapses once
+  // `skippedStep3` is actually confirmed by clicking Next off step 2 (not
+  // live as package types are checked/unchecked), so nothing shifts while
+  // the user is still mid-decision on steps 1–2. Once confirmed, step 3 is
+  // dropped from the row and Contact Information is relabeled down to
+  // "Step 3" rather than leaving a numbering gap for a step that won't show.
+  const visibleSteps = skippedStep3 ? STEPS.filter((s) => s.n !== 3) : STEPS;
+  const activeIndex = visibleSteps.findIndex((s) => s.n === step);
+  const activeStep = visibleSteps[activeIndex] ?? visibleSteps[0];
+
   return (
     <div>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {STEPS.map((s) => (
+      {/* Mobile: only the current step's card, matching the reference —
+          the full 4-up grid is reserved for md+ where it fits comfortably. */}
+      <div className="flex items-center gap-3 rounded-2xl border-b-2 border-brand bg-white p-4 shadow-sm md:hidden">
+        {activeStep.n === 3 ? (
+          <span className="relative inline-flex shrink-0">
+            <activeStep.icon size={28} className="text-brand" />
+            <InfoIcon
+              size={14}
+              weight="fill"
+              className="absolute -bottom-0.5 -left-0.5 rounded-full bg-white text-brand"
+            />
+          </span>
+        ) : (
+          <activeStep.icon size={28} className="shrink-0 text-brand" />
+        )}
+        <div>
+          <div className="text-xs text-ink-muted">Step {activeIndex + 1}</div>
+          <div className="text-sm font-semibold text-brand">{activeStep.label}</div>
+        </div>
+      </div>
+
+      <div className={`hidden gap-4 md:grid ${skippedStep3 ? "grid-cols-3" : "grid-cols-4"}`}>
+        {visibleSteps.map((s, i) => (
           <div
             key={s.n}
             className={`flex items-center gap-3 rounded-2xl border-b-2 bg-white p-4 shadow-sm md:p-5 ${step === s.n ? "border-brand" : "border-transparent"}`}
@@ -273,7 +359,7 @@ export function QuoteWizardForm({
               <s.icon size={28} className={`shrink-0 ${step >= s.n ? "text-brand" : "text-ink-muted"}`} />
             )}
             <div>
-              <div className="text-xs text-ink-muted">Step {s.n}</div>
+              <div className="text-xs text-ink-muted">Step {i + 1}</div>
               <div className="text-sm font-semibold text-ink md:text-base">{s.label}</div>
             </div>
           </div>
@@ -306,15 +392,20 @@ export function QuoteWizardForm({
             </div>
             <div>
               <label className={labelClass}>From Zip Code</label>
-              <div className="relative mt-1.5">
-                <MapPinIcon
-                  size={18}
-                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted"
-                />
-                <input
-                  className={`${locationInputClass} pl-11`}
-                  placeholder="From Zip Code"
-                  {...register("from_zip")}
+              <div className="mt-1.5">
+                <Controller
+                  control={control}
+                  name="from_zip"
+                  render={({ field }) => (
+                    <PostalCodeInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      countryCode={watch("from_country")}
+                      placeholder="From Zip Code"
+                      invalid={!!errors.from_zip}
+                    />
+                  )}
                 />
               </div>
               {errors.from_zip && <p className={errorClass}>{errors.from_zip.message}</p>}
@@ -344,15 +435,20 @@ export function QuoteWizardForm({
             </div>
             <div>
               <label className={labelClass}>To Zip Code</label>
-              <div className="relative mt-1.5">
-                <MapPinIcon
-                  size={18}
-                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted"
-                />
-                <input
-                  className={`${locationInputClass} pl-11`}
-                  placeholder="To Zip Code"
-                  {...register("to_zip")}
+              <div className="mt-1.5">
+                <Controller
+                  control={control}
+                  name="to_zip"
+                  render={({ field }) => (
+                    <PostalCodeInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      countryCode={watch("to_country")}
+                      placeholder="To Zip Code"
+                      invalid={!!errors.to_zip}
+                    />
+                  )}
                 />
               </div>
               {errors.to_zip && <p className={errorClass}>{errors.to_zip.message}</p>}
@@ -374,7 +470,7 @@ export function QuoteWizardForm({
 
         {step === 2 && (
           <div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+            <div className="grid grid-cols-2 gap-5 md:grid-cols-5">
               {PACKAGE_TYPES.map((pt) => {
                 const Icon = PACKAGE_CARD_ICON[pt.value];
                 const selected = packageTypes.includes(pt.value);
@@ -383,16 +479,16 @@ export function QuoteWizardForm({
                     type="button"
                     key={pt.value}
                     onClick={() => togglePackageType(pt.value)}
-                    className={`flex flex-col items-center gap-3 rounded-2xl border p-6 text-center transition ${
-                      selected ? "border-brand bg-brand-pale" : "border-brand-light bg-white"
+                    className={`flex flex-col items-center gap-4 rounded-2xl border-2 bg-white p-8 text-center transition ${
+                      selected ? "border-brand" : "border-brand-light"
                     }`}
                   >
                     <span
-                      className={`flex h-12 w-12 items-center justify-center rounded-xl ${selected ? "bg-brand text-white" : "bg-brand-pale text-brand"}`}
+                      className={`flex h-16 w-16 items-center justify-center rounded-2xl ${selected ? "bg-brand text-white" : "bg-gray-100 text-ink-muted"}`}
                     >
-                      <Icon size={22} />
+                      <Icon size={28} />
                     </span>
-                    <span className="text-sm font-medium text-ink">{pt.label}</span>
+                    <span className="text-base font-medium text-ink">{pt.label}</span>
                   </button>
                 );
               })}
@@ -445,12 +541,16 @@ export function QuoteWizardForm({
             <div>
               <label className={labelClass}>Name</label>
               <input className={`mt-1.5 ${inputClass}`} placeholder="Enter name" {...register("contact.name")} />
-              {errors.contact?.name && <p className={errorClass}>{errors.contact.name.message}</p>}
+              {isSubmitted && errors.contact?.name && (
+                <p className={errorClass}>{errors.contact.name.message}</p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Email Address</label>
               <input className={`mt-1.5 ${inputClass}`} placeholder="Enter Email" {...register("contact.email")} />
-              {errors.contact?.email && <p className={errorClass}>{errors.contact.email.message}</p>}
+              {isSubmitted && errors.contact?.email && (
+                <p className={errorClass}>{errors.contact.email.message}</p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Country Code</label>
@@ -467,24 +567,30 @@ export function QuoteWizardForm({
                         field.onChange(DIAL_BY_ISO.get(iso) ?? "");
                       }}
                       placeholder="Select Country Code"
-                      invalid={!!errors.contact?.country_code}
+                      invalid={isSubmitted && !!errors.contact?.country_code}
                     />
                   )}
                 />
               </div>
-              {errors.contact?.country_code && <p className={errorClass}>{errors.contact.country_code.message}</p>}
+              {isSubmitted && errors.contact?.country_code && (
+                <p className={errorClass}>{errors.contact.country_code.message}</p>
+              )}
             </div>
             <div>
               <label className={labelClass}>Phone Number</label>
               <input className={`mt-1.5 ${inputClass}`} placeholder="Enter Phone Number" {...register("contact.phone")} />
-              {errors.contact?.phone && <p className={errorClass}>{errors.contact.phone.message}</p>}
+              {isSubmitted && errors.contact?.phone && (
+                <p className={errorClass}>{errors.contact.phone.message}</p>
+              )}
             </div>
           </div>
         )}
 
         {submitError && <p className={`${errorClass} mt-4`}>{submitError}</p>}
 
-        <div className="mt-10 flex items-center justify-between">
+        <div
+          className={`mt-10 flex items-center justify-between ${justTransitioned ? "pointer-events-none" : ""}`}
+        >
           {step > 1 ? (
             <button
               type="button"
@@ -559,6 +665,26 @@ type FormBag = {
   onRecalc: (kind: "box_details" | "television_details", index: number) => void;
 };
 
+// L/W/H input for the dimensions row — the letter is a fixed prefix inside
+// the field (not a placeholder), so it stays visible once a real value
+// (including 0) is entered instead of disappearing like a placeholder would.
+function DimensionInput({
+  prefix,
+  ...inputProps
+}: { prefix: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="flex flex-1 items-center rounded-xl border border-brand-light bg-white pl-3 focus-within:border-brand">
+      <span className="mr-1 shrink-0 text-xs font-medium text-ink-muted">{prefix}</span>
+      <input
+        type="number"
+        step="0.01"
+        className="w-full min-w-0 bg-transparent py-3 pr-3 text-sm text-ink outline-none"
+        {...inputProps}
+      />
+    </div>
+  );
+}
+
 function BoxRow({
   index,
   onRemove,
@@ -569,6 +695,7 @@ function BoxRow({
 }: FormBag & { index: number; onRemove: () => void }) {
   const base = `box_details.${index}` as const;
   const chargeable = watch(`${base}.chargeable_weight`);
+  const unit = watch(`${base}.weight_unit`);
   const rowErrors = errors.box_details?.[index];
 
   function recalc() {
@@ -576,43 +703,56 @@ function BoxRow({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 rounded-xl border border-brand-light p-4 md:grid-cols-6">
-      <Field label="No. of Boxes">
-        <input type="number" min={1} className={inputClass} {...register(`${base}.quantity`, { valueAsNumber: true })} />
-        {rowErrors?.quantity && <p className={errorClass}>{rowErrors.quantity.message}</p>}
-      </Field>
-      <Field label="Weight">
-        <div className="flex gap-1">
-          <input
-            type="number"
-            step="0.01"
-            className={inputClass}
-            {...register(`${base}.weight`, { valueAsNumber: true, onChange: recalc })}
-          />
-          <select className={`${inputClass} w-20`} {...register(`${base}.weight_unit`, { onChange: recalc })}>
-            <option value="lb">LB</option>
-            <option value="kg">KG</option>
-          </select>
-        </div>
-        {rowErrors?.weight && <p className={errorClass}>{rowErrors.weight.message}</p>}
-      </Field>
-      <Field label="L">
-        <input type="number" step="0.01" className={inputClass} {...register(`${base}.length`, { valueAsNumber: true, onChange: recalc })} />
-      </Field>
-      <Field label="W">
-        <input type="number" step="0.01" className={inputClass} {...register(`${base}.width`, { valueAsNumber: true, onChange: recalc })} />
-      </Field>
-      <Field label="H">
-        <input type="number" step="0.01" className={inputClass} {...register(`${base}.height`, { valueAsNumber: true, onChange: recalc })} />
-      </Field>
-      <Field label="Chargeable Weight">
-        <div className="flex items-center gap-2">
-          <input disabled className={inputClass} value={Number(chargeable) || 0} readOnly />
-          <button type="button" onClick={onRemove} aria-label="Remove box">
-            <MinusCircleIcon size={20} className="text-red-500" />
-          </button>
-        </div>
-      </Field>
+    <div className="rounded-xl border border-brand-light p-4">
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="No. of Boxes">
+          <input type="number" min={1} className={inputClass} {...register(`${base}.quantity`, { valueAsNumber: true })} />
+          {rowErrors?.quantity && <p className={errorClass}>{rowErrors.quantity.message}</p>}
+        </Field>
+        <Field label="Weight">
+          <div className="flex gap-1">
+            <input
+              type="number"
+              step="0.01"
+              className={inputClass}
+              {...register(`${base}.weight`, { valueAsNumber: true, onChange: recalc })}
+            />
+            <select className={`${inputClass} w-20`} {...register(`${base}.weight_unit`, { onChange: recalc })}>
+              <option value="lb">LB/IN</option>
+              <option value="kg">KG/CM</option>
+            </select>
+          </div>
+          {rowErrors?.weight && <p className={errorClass}>{rowErrors.weight.message}</p>}
+        </Field>
+      </div>
+
+      <div className="mt-3">
+        <Field label={`Dimensions (${unit === "kg" ? "CM" : "IN"})`}>
+          <div className="flex items-center gap-2">
+            <DimensionInput prefix="L" {...register(`${base}.length`, { valueAsNumber: true, onChange: recalc })} />
+            <span className="shrink-0 text-ink-muted">×</span>
+            <DimensionInput prefix="W" {...register(`${base}.width`, { valueAsNumber: true, onChange: recalc })} />
+            <span className="shrink-0 text-ink-muted">×</span>
+            <DimensionInput prefix="H" {...register(`${base}.height`, { valueAsNumber: true, onChange: recalc })} />
+          </div>
+        </Field>
+      </div>
+
+      <div className="mt-3">
+        <Field label="Chargeable Weight">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <input disabled className={`${inputClass} pr-9`} value={Number(chargeable) || 0} readOnly />
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                <ChargeableWeightInfo />
+              </span>
+            </div>
+            <button type="button" onClick={onRemove} aria-label="Remove box">
+              <MinusCircleIcon size={20} className="text-red-500" />
+            </button>
+          </div>
+        </Field>
+      </div>
     </div>
   );
 }
@@ -627,6 +767,7 @@ function TvRow({
 }: FormBag & { index: number; onRemove: () => void }) {
   const base = `television_details.${index}` as const;
   const chargeable = watch(`${base}.chargeable_weight`);
+  const unit = watch(`${base}.weight_unit`);
   const rowErrors = errors.television_details?.[index];
 
   function recalc() {
@@ -634,43 +775,58 @@ function TvRow({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 rounded-xl border border-brand-light p-4 md:grid-cols-6">
-      <Field label="Brand Name">
-        <input className={inputClass} placeholder="Brand Name" {...register(`${base}.brand_name`)} />
-        {rowErrors?.brand_name && <p className={errorClass}>{rowErrors.brand_name.message}</p>}
-      </Field>
-      <Field label="Model">
-        <input className={inputClass} placeholder="Model" {...register(`${base}.tv_model`)} />
-        {rowErrors?.tv_model && <p className={errorClass}>{rowErrors.tv_model.message}</p>}
-      </Field>
-      <Field label="Weight">
-        <div className="flex gap-1">
-          <input
-            type="number"
-            step="0.01"
-            className={inputClass}
-            {...register(`${base}.weight`, { valueAsNumber: true, onChange: recalc })}
-          />
-          <select className={`${inputClass} w-20`} {...register(`${base}.weight_unit`, { onChange: recalc })}>
-            <option value="lb">LB</option>
-            <option value="kg">KG</option>
-          </select>
-        </div>
-      </Field>
-      <Field label="Dimensions">
-        <div className="flex gap-1">
-          <input type="number" step="0.01" className={inputClass} placeholder="L" {...register(`${base}.length`, { valueAsNumber: true, onChange: recalc })} />
-          <input type="number" step="0.01" className={inputClass} placeholder="W" {...register(`${base}.width`, { valueAsNumber: true, onChange: recalc })} />
-          <input type="number" step="0.01" className={inputClass} placeholder="H" {...register(`${base}.height`, { valueAsNumber: true, onChange: recalc })} />
-        </div>
-      </Field>
-      <Field label="Chargeable Weight">
-        <input disabled className={inputClass} value={Number(chargeable) || 0} readOnly />
-      </Field>
-      <div className="flex items-end justify-end">
-        <button type="button" onClick={onRemove} aria-label="Remove television">
-          <MinusCircleIcon size={20} className="text-red-500" />
-        </button>
+    <div className="rounded-xl border border-brand-light p-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        <Field label="Brand Name">
+          <input className={inputClass} placeholder="Brand Name" {...register(`${base}.brand_name`)} />
+          {rowErrors?.brand_name && <p className={errorClass}>{rowErrors.brand_name.message}</p>}
+        </Field>
+        <Field label="Model">
+          <input className={inputClass} placeholder="Model" {...register(`${base}.tv_model`)} />
+          {rowErrors?.tv_model && <p className={errorClass}>{rowErrors.tv_model.message}</p>}
+        </Field>
+        <Field label="Weight">
+          <div className="flex gap-1">
+            <input
+              type="number"
+              step="0.01"
+              className={inputClass}
+              {...register(`${base}.weight`, { valueAsNumber: true, onChange: recalc })}
+            />
+            <select className={`${inputClass} w-20`} {...register(`${base}.weight_unit`, { onChange: recalc })}>
+              <option value="lb">LB/IN</option>
+              <option value="kg">KG/CM</option>
+            </select>
+          </div>
+        </Field>
+      </div>
+
+      <div className="mt-3">
+        <Field label={`Dimensions (${unit === "kg" ? "CM" : "IN"})`}>
+          <div className="flex items-center gap-2">
+            <DimensionInput prefix="L" {...register(`${base}.length`, { valueAsNumber: true, onChange: recalc })} />
+            <span className="shrink-0 text-ink-muted">×</span>
+            <DimensionInput prefix="W" {...register(`${base}.width`, { valueAsNumber: true, onChange: recalc })} />
+            <span className="shrink-0 text-ink-muted">×</span>
+            <DimensionInput prefix="H" {...register(`${base}.height`, { valueAsNumber: true, onChange: recalc })} />
+          </div>
+        </Field>
+      </div>
+
+      <div className="mt-3">
+        <Field label="Chargeable Weight">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <input disabled className={`${inputClass} pr-9`} value={Number(chargeable) || 0} readOnly />
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                <ChargeableWeightInfo />
+              </span>
+            </div>
+            <button type="button" onClick={onRemove} aria-label="Remove television">
+              <MinusCircleIcon size={20} className="text-red-500" />
+            </button>
+          </div>
+        </Field>
       </div>
     </div>
   );
@@ -717,6 +873,44 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div>
       <label className="mb-1 block text-xs font-medium text-ink-muted">{label}</label>
       {children}
+    </div>
+  );
+}
+
+// Click-to-toggle (not hover-only, so it works on touch) explainer for how
+// carriers actually bill a shipment — the greater of actual vs. dimensional
+// weight — since "chargeable weight" reads as jargon without it.
+function ChargeableWeightInfo() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="What is chargeable weight?"
+        aria-expanded={open}
+        className="flex h-5 w-5 items-center justify-center rounded-full bg-ink-muted/70 text-white"
+      >
+        <InfoIcon size={13} weight="bold" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-20 mt-2 w-64 rounded-xl border border-brand-light bg-white p-3 text-xs leading-relaxed text-ink-muted shadow-lg">
+          Chargeable weight is whichever is greater: your package&rsquo;s actual weight, or its
+          dimensional (volumetric) weight — length × width × height ÷ the carrier&rsquo;s
+          divisor. Carriers bill by the larger number, since a bulky-but-light package still
+          takes up the same space in a truck or plane.
+        </div>
+      )}
     </div>
   );
 }

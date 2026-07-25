@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "../globals.css";
 import { SiteHeader } from "@/components/public/site-header";
 import { ConditionalFooter } from "@/components/public/conditional-footer";
+import { OrganizationJsonLd } from "@/components/public/organization-json-ld";
 
 // Public brand fonts (B1 redesign) — Inter for body/UI, Oldschool Grotesk for
 // display headings. Scoped to this layout only (via the .variable className
@@ -33,6 +34,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <div
       className={`flex min-h-full flex-col bg-white font-body text-ink ${inter.variable} ${oldschoolGrotesk.variable}`}
     >
+      <OrganizationJsonLd />
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <ConditionalFooter />

@@ -322,3 +322,27 @@
       "s5 img s6";
   }
 }
+
+/* Hero decorative illustrations (truck/plane/ship). Slow, small-amplitude
+   bob so the four corner illustrations feel alive without competing with
+   the hero copy for attention. Two variants offset in duration/direction
+   so illustrations sharing a row don't bob in visible lockstep. */
+@keyframes hero-float-a {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes hero-float-b {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(7px); }
+}
+.hero-float-a {
+  animation: hero-float-a 5.5s ease-in-out infinite;
+}
+.hero-float-b {
+  animation: hero-float-b 6.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-float-a, .hero-float-b {
+    animation: none;
+  }
+}

@@ -1,34 +1,66 @@
 import type { Metadata } from "next";
-import { HeadsetIcon, EnvelopeSimpleIcon, PhoneIcon } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
+import { HeadsetIcon, WalletIcon, ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
+import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 
 export const metadata: Metadata = { title: "Contact Us — TYS Global Logistics" };
 
-// Placeholder for now — real contact/help/payment sub-pages land in a later
-// phase (04_Contact_us in the Figma set). This gives the nav a working link
-// with the real, existing contact channels in the meantime.
 export default function ContactUsPage() {
   return (
-    <section className="bg-brand-light px-4 py-24 md:px-8">
-      <div className="mx-auto max-w-lg rounded-3xl bg-white p-10 text-center shadow-[0_20px_60px_rgba(16,24,40,0.08)]">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-pale">
-          <HeadsetIcon size={26} className="text-brand" />
-        </span>
-        <h1 className="mt-5 text-2xl font-extrabold text-ink">Contact Us</h1>
-        <p className="mt-3 text-ink-muted">
-          Our full support center is on its way. For now, reach us directly:
-        </p>
-        <div className="mt-6 flex flex-col items-center gap-3 text-sm">
-          <a href="tel:+14047938759" className="flex items-center gap-2 font-semibold text-brand">
-            <PhoneIcon size={16} /> +1 (404) 793-8759
-          </a>
-          <a
-            href="mailto:hello@tysgloballogistics.com"
-            className="flex items-center gap-2 font-semibold text-brand"
-          >
-            <EnvelopeSimpleIcon size={16} /> hello@tysgloballogistics.com
-          </a>
+    <>
+      <section className="bg-gray-50 px-4 py-16 md:px-8">
+        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+          <ContactCard
+            icon={HeadsetIcon}
+            title="Help & Support"
+            body="Need an update on your shipment or have a question about an existing booking? Contact our team or request a callback from one of our logistics experts."
+            href="/contact-us/support"
+            cta="Contact Support"
+          />
+          <ContactCard
+            icon={WalletIcon}
+            title="Pay"
+            body="Need to make a payment? Complete your transaction securely in just a few clicks. We accept all major credit cards, Zelle, and ACH payments."
+            href="/contact-us/pay"
+            cta="Pay Online"
+          />
         </div>
+      </section>
+
+      <TrustedReviewsSection />
+    </>
+  );
+}
+
+function ContactCard({
+  icon: Icon,
+  title,
+  body,
+  href,
+  cta,
+}: {
+  icon: typeof HeadsetIcon;
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
+}) {
+  return (
+    <div className="rounded-3xl border border-brand-light bg-white p-8 shadow-[0_2px_16px_rgba(16,24,40,0.04)]">
+      <div className="flex items-center gap-3">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-pale">
+          <Icon size={22} className="text-brand" />
+        </span>
+        <h2 className="text-lg font-bold text-ink">{title}</h2>
       </div>
-    </section>
+      <hr className="mt-5 border-brand-light" />
+      <p className="mt-5 text-ink-muted">{body}</p>
+      <Link
+        href={href}
+        className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-brand hover:text-brand-dark"
+      >
+        {cta} <ArrowRightIcon size={14} weight="bold" />
+      </Link>
+    </div>
   );
 }

@@ -7,6 +7,8 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { MiniQuoteForm } from "@/components/public/mini-quote-form";
 import { FaqAccordion } from "@/components/public/faq-accordion";
+import { FaqJsonLd } from "@/components/public/faq-json-ld";
+import { DEFAULT_FAQS } from "@/lib/default-faqs";
 import { GoogleLogo } from "@/components/public/google-logo";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { ReviewsCarousel } from "@/components/public/reviews-carousel";
@@ -28,23 +30,40 @@ export default function HomePage() {
             source (published Figma Sites link, DOM-inspected directly) has
             only 2 decorative images in the hero — truck top-left, plane
             top-right — starting at the very top (level with the badge, not
-            the headline), no flatbed/ship pair. They're absolutely
-            positioned against this outer wrapper so they overlay the
-            badge/headline column's height rather than needing their own
-            spacing; the ~80px gap before the card happens naturally since
-            the text block is taller than the images. */}
+            the headline). Container ship + container truck were added at
+            the bottom corners (client-supplied SVGs, same design family) so
+            all four vehicles frame the hero content and point inward toward
+            the center. They're absolutely positioned against this outer
+            wrapper so they overlay the badge/headline column's height
+            rather than needing their own spacing. */}
         <div className="relative mx-auto max-w-6xl">
           <img
-            src="/frontend/images/redesign/hero-truck.png"
+            src="/frontend/images/redesign/hero-truck.webp"
             alt=""
             aria-hidden
-            className="absolute left-0 top-0 hidden w-36 lg:block xl:w-40"
+            draggable={false}
+            className="pointer-events-none absolute left-0 top-0 hidden w-36 -scale-x-100 select-none lg:block xl:w-40"
           />
           <img
-            src="/frontend/images/redesign/hero-plane.png"
+            src="/frontend/images/redesign/hero-plane.webp"
             alt=""
             aria-hidden
-            className="absolute right-0 top-0 hidden w-40 lg:block xl:w-44"
+            draggable={false}
+            className="pointer-events-none absolute right-0 top-0 hidden w-40 select-none lg:block xl:w-44"
+          />
+          <img
+            src="/frontend/images/redesign/hero-container-truck.svg"
+            alt=""
+            aria-hidden
+            draggable={false}
+            className="hero-float-a pointer-events-none absolute bottom-0 left-0 hidden w-32 select-none lg:block xl:w-36"
+          />
+          <img
+            src="/frontend/images/redesign/hero-container-ship.svg"
+            alt=""
+            aria-hidden
+            draggable={false}
+            className="hero-float-b pointer-events-none absolute bottom-0 right-0 hidden w-40 select-none opacity-60 lg:block xl:w-44"
           />
 
           <div className="mx-auto max-w-4xl text-center">
@@ -95,7 +114,7 @@ export default function HomePage() {
               icon: "/frontend/icons/redesign/quick-smart.svg",
               title: "Smart Shipments",
               body: "Shipping in bulk? Get personalized pricing & exclusive discounts.",
-              href: "/quotes",
+              href: "/services/retailer-shipping",
             },
           ].map((card) => (
             <Link
@@ -120,7 +139,7 @@ export default function HomePage() {
       </section>
 
       {/* What We Offer */}
-      <section className="px-4 py-20 md:px-8">
+      <section id="services" className="scroll-mt-28 px-4 py-20 md:px-8">
       <ScrollReveal>
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-[2rem] sm:text-[2.5rem] md:text-[2.75rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
@@ -138,19 +157,22 @@ export default function HomePage() {
               icon: "/frontend/icons/redesign/offer-worldwide-shipping.svg",
               title: "Worldwide Shipping",
               body: "Save more with competitive shipping rates from leading courier partners, including FedEx, DHL, UPS, and USPS. Choose flexible shipping solutions that fit your schedule and budget.",
+              href: "/services/parcel-shipping",
             },
             {
               icon: "/frontend/icons/redesign/offer-worldwide-moving.svg",
               title: "Worldwide Moving",
               body: "Relocate your family, household belongings, and vehicles with confidence. Enjoy complete, reliable international moving solutions across 200+ destinations worldwide.",
+              href: "/services/international-relocation",
             },
             {
               icon: "/frontend/icons/redesign/offer-freight-forwarding.svg",
               title: "Freight Forwarding",
               body: "Ship containers, pallets, and commercial cargo with ease. Choose reliable freight services by air, ocean, rail, or road for shipments of every size, backed by trusted global partners.",
+              href: "/services/freight-forwarding",
             },
           ].map((card) => (
-            <OfferCard key={card.title} icon={card.icon} title={card.title} body={card.body} />
+            <OfferCard key={card.title} icon={card.icon} title={card.title} body={card.body} href={card.href} />
           ))}
         </div>
       </ScrollReveal>
@@ -192,7 +214,7 @@ export default function HomePage() {
             </div>
           </div>
           <img
-            src="/frontend/images/redesign/feature-relocation.png"
+            src="/frontend/images/redesign/feature-relocation.webp"
             alt="Relocation and auto transport"
             className="w-full rounded-3xl"
           />
@@ -204,11 +226,13 @@ export default function HomePage() {
               icon: "/frontend/icons/redesign/card-international-relocation.svg",
               title: "International Relocation",
               body: "Seamless door-to-door relocation for your household, furniture, and personal belongings.",
+              href: "/services/international-relocation",
             },
             {
               icon: "/frontend/icons/redesign/card-auto-transport.svg",
               title: "Auto Transport",
               body: "Dependable, insured shipping for cars, motorcycles, and other vehicles anywhere in the world.",
+              href: "/services/auto-transport",
             },
           ].map((c) => (
             <div key={c.title} className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left">
@@ -219,7 +243,7 @@ export default function HomePage() {
                 <h3 className="text-2xl font-semibold leading-[30px] text-ink">{c.title}</h3>
                 <p className="text-base font-medium text-ink-muted">{c.body}</p>
                 <Link
-                  href="/quotes"
+                  href={c.href}
                   className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
                 >
                   Learn More <ArrowRightIcon size={16} />
@@ -243,7 +267,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
           <div className="grid items-center gap-10 md:grid-cols-2">
             <img
-              src="/frontend/images/redesign/feature-docparcel.png"
+              src="/frontend/images/redesign/feature-docparcel.webp"
               alt="Document and parcel shipping"
               className="w-full max-w-sm justify-self-center rounded-3xl md:order-1"
             />
@@ -283,11 +307,13 @@ export default function HomePage() {
                 icon: "/frontend/icons/redesign/card-document-shipping.svg",
                 title: "Document Shipping",
                 body: "Secure worldwide delivery for important documents with real-time tracking.",
+                href: "/services/document-shipping",
               },
               {
                 icon: "/frontend/icons/redesign/card-parcel-shipping.svg",
                 title: "Parcel Shipping",
                 body: "Ship parcels of any size with fast, reliable, and cost-effective international delivery options.",
+                href: "/services/parcel-shipping",
               },
             ].map((c) => (
               <div key={c.title} className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left">
@@ -298,7 +324,7 @@ export default function HomePage() {
                   <h3 className="text-2xl font-semibold leading-[30px] text-ink">{c.title}</h3>
                   <p className="text-base font-medium text-ink-muted">{c.body}</p>
                   <Link
-                    href="/quotes"
+                    href={c.href}
                     className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
                   >
                     Learn More <ArrowRightIcon size={16} />
@@ -350,7 +376,7 @@ export default function HomePage() {
             </div>
           </div>
           <img
-            src="/frontend/images/redesign/feature-volume-truck.png"
+            src="/frontend/images/redesign/feature-volume-truck.webp"
             alt="Volume and business shipping"
             className="w-full rounded-3xl"
           />
@@ -362,11 +388,13 @@ export default function HomePage() {
               icon: "/frontend/icons/redesign/card-volume-shipping.svg",
               title: "Volume Shipping",
               body: "Exclusive pricing and flexible shipping solutions for businesses with high-volume shipments.",
+              href: "/services/volume-shipping",
             },
             {
               icon: "/frontend/icons/redesign/card-retailer-shipping.svg",
               title: "Retailer Shipping",
               body: "Customized logistics solutions designed for retailers and e-commerce businesses of every size.",
+              href: "/services/retailer-shipping",
             },
           ].map((c) => (
             <div key={c.title} className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left">
@@ -377,7 +405,7 @@ export default function HomePage() {
                 <h3 className="text-2xl font-semibold leading-[30px] text-ink">{c.title}</h3>
                 <p className="text-base font-medium text-ink-muted">{c.body}</p>
                 <Link
-                  href="/quotes"
+                  href={c.href}
                   className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
                 >
                   Learn More <ArrowRightIcon size={16} />
@@ -401,7 +429,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
           <div className="grid items-center gap-10 md:grid-cols-2">
             <img
-              src="/frontend/images/redesign/feature-enterprise-ship.png"
+              src="/frontend/images/redesign/feature-enterprise-ship.webp"
               alt="Enterprise logistics solution"
               className="w-full max-w-sm justify-self-center rounded-3xl md:order-1"
             />
@@ -459,42 +487,50 @@ export default function HomePage() {
         </div>
         <div className="mx-auto mt-8 grid max-w-5xl grid-cols-3 gap-4 sm:grid-cols-5 sm:gap-5 md:grid-cols-9 md:gap-4">
           {[
-            "amazon",
-            "walmart",
-            "apple",
-            "zappos",
-            "disney",
-            "carters",
-            "boots",
-            "oshkosh",
-            "mands",
-            "6pm",
-            "ebay",
-            "shein",
-            "ipsy",
-            "ae",
-            "asos",
-            "forever21",
-            "johnlewis",
-            "gap",
-          ].map((name) => (
+            { slug: "amazon", label: "Amazon" },
+            { slug: "walmart", label: "Walmart" },
+            { slug: "apple", label: "Apple" },
+            { slug: "zappos", label: "Zappos" },
+            { slug: "disney", label: "Disney" },
+            { slug: "carters", label: "Carter's" },
+            { slug: "boots", label: "Boots" },
+            { slug: "oshkosh", label: "OshKosh" },
+            { slug: "mands", label: "M&S" },
+            { slug: "6pm", label: "6pm" },
+            { slug: "ebay", label: "eBay" },
+            { slug: "shein", label: "Shein" },
+            { slug: "ipsy", label: "Ipsy" },
+            { slug: "ae", label: "American Eagle" },
+            { slug: "asos", label: "ASOS" },
+            { slug: "forever21", label: "Forever 21" },
+            { slug: "johnlewis", label: "John Lewis" },
+            { slug: "gap", label: "Gap" },
+          ].map(({ slug, label }) => (
             <div
-              key={name}
+              key={slug}
               className="flex aspect-square items-center justify-center rounded-2xl bg-white p-3 shadow-[0_2px_8px_rgba(16,24,40,0.06)]"
             >
               <img
-                src={`/frontend/images/redesign/brand-logos/${name}.png`}
-                alt=""
+                src={`/frontend/images/redesign/brand-logos/${slug}.png`}
+                alt={label}
                 className="h-full w-full object-contain"
               />
             </div>
           ))}
         </div>
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="/services/global-shopper"
+            className="inline-flex items-center gap-2 rounded-full bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-dark"
+          >
+            Sign Up &amp; Get Free US Address <ArrowRightIcon size={16} />
+          </Link>
+        </div>
       </ScrollReveal>
       </section>
 
       {/* About TYS stats + Need a Quote */}
-      <section className="px-4 py-8 md:px-8">
+      <section id="about" className="scroll-mt-28 px-4 py-8 md:px-8">
       <ScrollReveal>
         <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
           <div className="text-center">
@@ -511,7 +547,7 @@ export default function HomePage() {
 
           <div className="stats-grid mt-10 items-center gap-x-6 gap-y-8 sm:gap-x-12 md:gap-x-10 md:gap-y-0">
             <img
-              src="/frontend/images/redesign/about-stats-illustration.png"
+              src="/frontend/images/redesign/about-stats-illustration.webp"
               alt=""
               aria-hidden
               className="w-40 [grid-area:img] justify-self-center sm:w-52 md:w-64 lg:w-80"
@@ -566,7 +602,7 @@ export default function HomePage() {
             </div>
           </div>
           <img
-            src="/frontend/images/redesign/need-quote-photo.png"
+            src="/frontend/images/redesign/need-quote-photo.webp"
             alt="Courier handing a package to a customer"
             className="w-full rounded-3xl"
           />
@@ -644,7 +680,8 @@ export default function HomePage() {
       </section>
 
       {/* FAQ */}
-      <section className="px-4 pb-20 md:px-8">
+      <section id="faq" className="scroll-mt-28 px-4 pb-20 md:px-8">
+      <FaqJsonLd faqs={DEFAULT_FAQS} />
       <ScrollReveal>
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
