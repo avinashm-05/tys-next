@@ -18,6 +18,11 @@
 
 generator client {
   provider = "prisma-client-js"
+  // "native" keeps local dev (macOS) working; the rest cover the most likely
+  // Linux server configurations for the Hostinger deploy, since the exact
+  // distro/libc isn't known from here — harmless to over-include, each
+  // unused engine just doesn't get shipped in that particular build.
+  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {

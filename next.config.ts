@@ -36,6 +36,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Standalone output: `next build` also emits .next/standalone, a
+  // self-contained server (server.js + only the production node_modules it
+  // actually needs) — the whole point being a manual-upload deploy target
+  // that doesn't need `npm install` or a Git connection on the host at all.
+  // Doesn't affect `next dev` or a normal `next start` deploy either.
+  output: "standalone",
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
