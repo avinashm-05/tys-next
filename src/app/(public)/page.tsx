@@ -1,15 +1,8 @@
 import Link from "next/link";
-import {
-  ArrowRightIcon,
-  GlobeIcon,
-  HeadsetIcon,
-  StarIcon,
-} from "@phosphor-icons/react/dist/ssr";
+import { ArrowRightIcon, GlobeIcon, HeadsetIcon } from "@phosphor-icons/react/dist/ssr";
 import { MiniQuoteForm } from "@/components/public/mini-quote-form";
 import { FaqAccordion } from "@/components/public/faq-accordion";
-import { FaqJsonLd } from "@/components/public/faq-json-ld";
-import { DEFAULT_FAQS } from "@/lib/default-faqs";
-import { GoogleLogo } from "@/components/public/google-logo";
+import { TrustpilotFullLogo } from "@/components/public/trustpilot-logo";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { ReviewsCarousel } from "@/components/public/reviews-carousel";
 import { OfferCard } from "@/components/public/offer-card";
@@ -67,16 +60,9 @@ export default function HomePage() {
           />
 
           <div className="mx-auto max-w-4xl text-center">
-            <div className="mx-auto flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm">
-              <GoogleLogo size={18} />
-              <span className="flex gap-0.5">
-                <StarIcon size={16} weight="fill" className="text-amber-400" />
-                <StarIcon size={16} weight="fill" className="text-amber-400" />
-                <StarIcon size={16} weight="fill" className="text-amber-400" />
-                <StarIcon size={16} weight="fill" className="text-amber-400" />
-                <StarIcon size={16} weight="fill" className="text-amber-400" />
-              </span>
-              5 Reviews on Trustpilot
+            <div className="mx-auto flex w-fit items-center gap-2.5 rounded-full bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm">
+              <span className="font-semibold text-ink">Excellent</span>
+              <TrustpilotFullLogo />
             </div>
             <p className="mt-5 text-sm font-semibold uppercase tracking-wide text-brand-dark">
               Trusted Partner for Logistics &amp; Freight Forwarding
@@ -96,19 +82,15 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="relative mx-auto mt-14 grid max-w-6xl gap-4 md:grid-cols-3">
+        {/* "Book Shipment" card temporarily hidden — see the matching note in
+            site-header.tsx. Grid drops to 2 columns while it's out. */}
+        <div className="relative mx-auto mt-14 grid max-w-4xl gap-4 sm:grid-cols-2">
           {[
             {
               icon: "/frontend/icons/redesign/quick-track.svg",
               title: "Track A Shipment",
               body: "Monitor your shipment in real time from pickup to final delivery.",
               href: "/tracking",
-            },
-            {
-              icon: "/frontend/icons/redesign/quick-book.svg",
-              title: "Book Shipment",
-              body: "Save up to 70% on trusted domestic & international shipping.",
-              href: "/book-shipment",
             },
             {
               icon: "/frontend/icons/redesign/quick-smart.svg",
@@ -610,24 +592,6 @@ export default function HomePage() {
       </ScrollReveal>
       </section>
 
-      {/* Video placeholder */}
-      <section className="px-4 pb-16 md:px-8">
-      <ScrollReveal>
-        <div className="relative mx-auto flex h-72 max-w-6xl items-center justify-center overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-ink to-brand-dark md:h-96">
-          <button
-            type="button"
-            aria-label="Play video"
-            className="flex h-20 w-20 items-center justify-center rounded-full bg-white/95 shadow-lg transition hover:scale-105"
-          >
-            <span
-              className="ml-1 border-y-[14px] border-l-[22px] border-y-transparent border-l-brand"
-              aria-hidden
-            />
-          </button>
-        </div>
-      </ScrollReveal>
-      </section>
-
       {/* Reviews */}
       <section className="px-4 py-16 md:px-8">
       <ScrollReveal>
@@ -679,9 +643,12 @@ export default function HomePage() {
       </ScrollReveal>
       </section>
 
-      {/* FAQ */}
+      {/* FAQ — same DEFAULT_FAQS content as /faqs (a homepage teaser of the
+          full FAQ page), but the FAQPage JSON-LD is only emitted on /faqs
+          itself. Two pages emitting identical FAQPage structured data is
+          duplicate content for rich-result purposes; /faqs is the canonical
+          page for that eligibility. */}
       <section id="faq" className="scroll-mt-28 px-4 pb-20 md:px-8">
-      <FaqJsonLd faqs={DEFAULT_FAQS} />
       <ScrollReveal>
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">

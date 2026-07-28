@@ -1,5 +1,4 @@
-import { StarIcon } from "@phosphor-icons/react/dist/ssr";
-import { GoogleLogo } from "@/components/public/google-logo";
+import { TrustpilotFullLogo } from "@/components/public/trustpilot-logo";
 import { ReviewsCarousel } from "@/components/public/reviews-carousel";
 
 const REVIEWS = [
@@ -53,25 +52,12 @@ export function TrustedReviewsSection() {
       <div className="mt-10">
         <ReviewsCarousel reviews={REVIEWS} />
       </div>
-      <div className="mx-auto mt-10 flex max-w-6xl flex-col items-center justify-between gap-4 px-4 sm:flex-row md:px-8">
-        <div>
-          <p className="font-semibold text-ink">Customer reviews on Google</p>
-          <div className="mt-1 flex items-center gap-2 text-sm text-ink-muted">
-            <span className="flex gap-0.5 text-amber-400">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <StarIcon key={i} size={16} weight="fill" />
-              ))}
-            </span>
-            5.0 rating of 12 reviews
-          </div>
+      <div className="mx-auto mt-10 flex max-w-6xl flex-col items-center gap-4 px-4 text-center md:px-8">
+        <p className="font-semibold text-ink">Customer reviews on Trustpilot</p>
+        <div className="flex items-center gap-2 text-sm text-ink-muted">
+          <span className="font-semibold text-ink">Excellent</span>
+          <TrustpilotFullLogo />
         </div>
-        <a
-          href="#"
-          className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-dark"
-        >
-          <GoogleLogo size={16} />
-          View all Reviews →
-        </a>
       </div>
     </section>
   );

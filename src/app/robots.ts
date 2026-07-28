@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = (process.env.APP_URL ?? "https://tysgloballogistics.com").replace(/\/+$/, "");
+const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(/\/+$/, "");
 
 export default function robots(): MetadataRoute.Robots {
   return {

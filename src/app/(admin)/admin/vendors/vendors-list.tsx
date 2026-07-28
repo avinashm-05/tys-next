@@ -1,16 +1,33 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
+import {
+  CaretDownIcon,
+  CheckIcon,
+  ListChecksIcon,
+  MapPinIcon,
+  PlusIcon,
+  StorefrontIcon,
+  TagIcon,
+} from "@phosphor-icons/react";
 import { adminApi } from "@/lib/admin-api";
-import { formatDateTime } from "@/lib/format";
 import { useAdminList } from "@/hooks/use-admin-list";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { DataTable, sortableHeader } from "@/components/shared/data-table";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { DataTable, sortableHeader, type ColumnFilterConfig } from "@/components/shared/data-table";
 import { ConfirmDeleteDialog } from "@/components/admin/confirm-delete-dialog";
 import { RowActions } from "@/components/admin/row-actions";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -25,11 +42,15 @@ export type VendorRow = {
   state: string;
   country: string;
   createdAt: string | null;
+  createdByName?: string;
+  serviceNames?: string[];
   vendorType: { id: number; name: string };
   // Dependent rows a hard delete would cascade away (includes soft-deleted
   // contacts/comments — they are destroyed too).
   counts: { contacts: number; comments: number; services: number };
 };
+
+type Option = { id: number; name: string };
 
 function deleteDescription(vendor: VendorRow | null): string {
   if (!vendor) return "";
@@ -47,13 +68,244 @@ function deleteDescription(vendor: VendorRow | null): string {
   return `Deleting "${vendor.name}" will also permanently delete ${listed}. This cannot be undone.`;
 }
 
+// A purely visual checkbox square (not a real <button>) — the enclosing
+// DropdownMenuItem is what's actually clickable/keyboard-selectable. A real
+// nested Checkbox button here swallowed clicks before they reached the item.
+function FilterCheckMark({ checked }: { checked: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "flex size-4 shrink-0 items-center justify-center rounded-sm border border-input",
+        checked && "border-primary bg-primary text-primary-foreground",
+      )}
+    >
+      {checked && <CheckIcon size={11} weight="bold" />}
+    </span>
+  );
+}
+
+/** Shared shape for the Services and Vendor Type checkbox-multiselect filter dropdowns. */
+function CheckboxFilterDropdown({
+  label,
+  icon: Icon,
+  options,
+  selected,
+  onToggle,
+  onToggleAll,
+  className,
+}: {
+  label: string;
+  icon: React.ComponentType<{ size?: number; weight?: "bold" }>;
+  options: Option[];
+  selected: Set<number>;
+  onToggle: (id: number, on: boolean) => void;
+  onToggleAll: (on: boolean) => void;
+  className: string;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button className={className}>
+          <Icon size={16} weight="bold" />
+          {label}
+          {selected.size > 0 ? ` (${selected.size})` : ""}
+          <CaretDownIcon size={14} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="max-h-80 w-64 overflow-y-auto">
+        <DropdownMenuLabel>Filter by {label.toLowerCase()}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {options.length === 0 ? (
+          <div className="px-2 py-1.5 text-xs text-muted-foreground">Nothing yet.</div>
+        ) : (
+          <>
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                onToggleAll(!(selected.size > 0 && selected.size === options.length));
+              }}
+              className="gap-2.5"
+            >
+              <FilterCheckMark checked={selected.size > 0 && selected.size === options.length} />
+              <span className="whitespace-nowrap">All</span>
+            </DropdownMenuItem>
+            {options.map((o) => (
+              <DropdownMenuItem
+                key={o.id}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  onToggle(o.id, !selected.has(o.id));
+                }}
+                className="gap-2.5"
+              >
+                <FilterCheckMark checked={selected.has(o.id)} />
+                <span className="whitespace-nowrap">{o.name}</span>
+              </DropdownMenuItem>
+            ))}
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function VendorsList() {
   const router = useRouter();
-  const list = useAdminList<VendorRow>("/api/admin/vendors", [{ id: "createdAt", desc: true }]);
+  const [serviceOptions, setServiceOptions] = useState<Option[]>([]);
+  const [vendorTypeOptions, setVendorTypeOptions] = useState<Option[]>([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<Set<number>>(new Set());
+  const [selectedVendorTypeIds, setSelectedVendorTypeIds] = useState<Set<number>>(new Set());
+  // Per-column search boxes under the header row (SETU reference) — this is
+  // the only search UI on this page now; no separate global search box.
+  const [nameFilter, setNameFilter] = useState("");
+  const [vendorTypeFilter, setVendorTypeFilter] = useState("");
+  const [serviceNameFilter, setServiceNameFilter] = useState("");
+  const [countryFilter, setCountryFilter] = useState("");
+  const [createdByFilter, setCreatedByFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const list = useAdminList<VendorRow>("/api/admin/vendors", [{ id: "createdAt", desc: true }], {
+    ...(selectedServiceIds.size > 0 ? { serviceIds: [...selectedServiceIds].join(",") } : {}),
+    ...(selectedVendorTypeIds.size > 0
+      ? { vendorTypeIds: [...selectedVendorTypeIds].join(",") }
+      : {}),
+    ...(nameFilter ? { name: nameFilter } : {}),
+    ...(vendorTypeFilter ? { vendorType: vendorTypeFilter } : {}),
+    ...(serviceNameFilter ? { serviceName: serviceNameFilter } : {}),
+    ...(countryFilter ? { country: countryFilter } : {}),
+    ...(createdByFilter ? { createdBy: createdByFilter } : {}),
+    ...(statusFilter ? { status: statusFilter } : {}),
+  });
   const [toDelete, setToDelete] = useState<VendorRow | null>(null);
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+
+  function columnFilter(setter: (v: string) => void) {
+    return (v: string) => {
+      setter(v);
+      list.setPage(1);
+    };
+  }
+
+  const columnFilters: ColumnFilterConfig[] = [
+    {
+      id: "name",
+      value: nameFilter,
+      onChange: columnFilter(setNameFilter),
+      placeholder: "Search name…",
+    },
+    {
+      id: "vendorType",
+      value: vendorTypeFilter,
+      onChange: columnFilter(setVendorTypeFilter),
+      placeholder: "Search type…",
+    },
+    {
+      id: "services",
+      value: serviceNameFilter,
+      onChange: columnFilter(setServiceNameFilter),
+      placeholder: "Search services…",
+    },
+    {
+      id: "city",
+      value: countryFilter,
+      onChange: columnFilter(setCountryFilter),
+      placeholder: "Search country…",
+    },
+    {
+      id: "createdBy",
+      value: createdByFilter,
+      onChange: columnFilter(setCreatedByFilter),
+      placeholder: "Search…",
+    },
+    {
+      id: "status",
+      value: statusFilter,
+      onChange: columnFilter(setStatusFilter),
+      placeholder: "active…",
+    },
+  ];
+
+  useEffect(() => {
+    adminApi<{ rows: Option[] }>("/api/admin/services?pageSize=100")
+      .then((res) => setServiceOptions(res.rows))
+      .catch(() => {
+        /* filter just won't populate — list itself still works */
+      });
+    adminApi<{ rows: Option[] }>("/api/admin/vendor-types?pageSize=100")
+      .then((res) => setVendorTypeOptions(res.rows))
+      .catch(() => {
+        /* filter just won't populate — list itself still works */
+      });
+  }, []);
+
+  function toggleService(id: number, on: boolean) {
+    setSelectedServiceIds((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+    list.setPage(1);
+  }
+
+  function toggleAllServices(on: boolean) {
+    setSelectedServiceIds(on ? new Set(serviceOptions.map((s) => s.id)) : new Set());
+    list.setPage(1);
+  }
+
+  function toggleVendorType(id: number, on: boolean) {
+    setSelectedVendorTypeIds((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+    list.setPage(1);
+  }
+
+  function toggleAllVendorTypes(on: boolean) {
+    setSelectedVendorTypeIds(on ? new Set(vendorTypeOptions.map((t) => t.id)) : new Set());
+    list.setPage(1);
+  }
+
+  const pageIds = list.rows.map((r) => r.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedRows.has(id));
 
   const columns = useMemo<ColumnDef<VendorRow>[]>(
     () => [
+      {
+        id: "select",
+        header: () => (
+          <Checkbox
+            aria-label="Select all on this page"
+            checked={allPageSelected}
+            onCheckedChange={(on) =>
+              setSelectedRows((prev) => {
+                const next = new Set(prev);
+                for (const id of pageIds) {
+                  if (on) next.add(id);
+                  else next.delete(id);
+                }
+                return next;
+              })
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            aria-label={`Select ${row.original.name}`}
+            checked={selectedRows.has(row.original.id)}
+            onCheckedChange={(on) =>
+              setSelectedRows((prev) => {
+                const next = new Set(prev);
+                if (on === true) next.add(row.original.id);
+                else next.delete(row.original.id);
+                return next;
+              })
+            }
+          />
+        ),
+      },
       {
         accessorKey: "name",
         header: sortableHeader("Name"),
@@ -70,9 +322,19 @@ export function VendorsList() {
         cell: ({ row }) => row.original.vendorType.name,
       },
       {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+        id: "services",
+        header: "Services",
+        cell: ({ row }) => {
+          const names = row.original.serviceNames ?? [];
+          if (names.length === 0) return <span className="text-muted-foreground">N/A</span>;
+          const extra = row.original.counts.services - names.length;
+          return (
+            <span>
+              {names.join(", ")}
+              {extra > 0 ? ` +${extra}` : ""}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "city",
@@ -80,9 +342,14 @@ export function VendorsList() {
         cell: ({ row }) => `${row.original.city}, ${row.original.country}`,
       },
       {
-        accessorKey: "createdAt",
-        header: sortableHeader("Created"),
-        cell: ({ row }) => formatDateTime(row.original.createdAt),
+        id: "createdBy",
+        header: "Created By",
+        cell: ({ row }) => row.original.createdByName ?? "—",
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
       },
       {
         id: "actions",
@@ -102,32 +369,67 @@ export function VendorsList() {
         ),
       },
     ],
-    [router],
+    [router, allPageSelected, pageIds, selectedRows],
   );
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-h2">Vendors</h1>
-        <Button asChild className="bg-tys-orange text-white hover:bg-tys-orange/90">
-          <Link href="/admin/vendors/new">Add vendor</Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-tys-indigo text-white">
+            <StorefrontIcon size={22} weight="bold" />
+          </div>
+          <h1 className="text-h2">Vendor list</h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            asChild
+            className="bg-tys-indigo text-white uppercase hover:bg-tys-indigo/90"
+          >
+            <Link href="/admin/vendors/map">
+              <MapPinIcon size={16} weight="bold" />
+              Map view
+            </Link>
+          </Button>
+          <CheckboxFilterDropdown
+            label="Vendor Type"
+            icon={TagIcon}
+            options={vendorTypeOptions}
+            selected={selectedVendorTypeIds}
+            onToggle={toggleVendorType}
+            onToggleAll={toggleAllVendorTypes}
+            className="bg-tys-teal text-white uppercase hover:bg-tys-teal/90"
+          />
+          <CheckboxFilterDropdown
+            label="Services"
+            icon={ListChecksIcon}
+            options={serviceOptions}
+            selected={selectedServiceIds}
+            onToggle={toggleService}
+            onToggleAll={toggleAllServices}
+            className="bg-tys-rose text-white uppercase hover:bg-tys-rose/90"
+          />
+          <Button asChild className="bg-tys-blue text-white uppercase hover:bg-tys-blue/90">
+            <Link href="/admin/vendors/new">
+              <PlusIcon size={16} weight="bold" />
+              Add vendor
+            </Link>
+          </Button>
+        </div>
       </div>
-      <Input
-        value={list.search}
-        onChange={(e) => list.setSearch(e.target.value)}
-        placeholder="Search vendors…"
-        className="max-w-xs"
-        aria-label="Search vendors"
-      />
+      {selectedRows.size > 0 && (
+        <div className="flex items-center gap-2 border border-tys-mist bg-muted/40 px-3 py-2 text-xs font-medium">
+          {selectedRows.size} selected
+          <Button variant="ghost" size="sm" onClick={() => setSelectedRows(new Set())}>
+            Clear
+          </Button>
+        </div>
+      )}
       <DataTable
         columns={columns}
         data={list.rows}
-        emptyMessage={
-          list.search
-            ? `No vendors match "${list.search}".`
-            : "No vendors yet. Add your first vendor."
-        }
+        columnFilters={columnFilters}
+        emptyMessage="No vendors match the current filters."
         server={{
           total: list.total,
           page: list.page,

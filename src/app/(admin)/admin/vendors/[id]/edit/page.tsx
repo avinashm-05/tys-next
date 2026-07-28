@@ -3,10 +3,8 @@ import { notFound } from "next/navigation";
 import { requireAdminPage } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { parseId } from "@/lib/list-query";
-import { VendorForm, type VendorTypeOption } from "../../vendor-form";
-import { ContactsSection } from "../../contacts-section";
-import { CommentsSection } from "../../comments-section";
-import { ServicesSection } from "../../services-section";
+import type { VendorTypeOption } from "../../vendor-form";
+import { VendorEditClient } from "./vendor-edit-client";
 
 export const metadata: Metadata = { title: "Edit vendor — TYS Global Logistics" };
 
@@ -19,7 +17,10 @@ export default async function EditVendorPage({
   const id = parseId((await params).id);
   const row =
     id !== null
-      ? await db.vendor.findUnique({ where: { id }, include: { vendorType: true } })
+      ? await db.vendor.findUnique({
+          where: { id },
+          include: { vendorType: true, addedBy: { select: { name: true } } },
+        })
       : null;
   if (!row) notFound();
 
@@ -42,8 +43,9 @@ export default async function EditVendorPage({
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <VendorForm
+    <div className="mx-auto w-full max-w-5xl">
+      <VendorEditClient
+        vendorId={Number(row.id)}
         typeOptions={typeOptions}
         vendor={{
           id: Number(row.id),
@@ -53,6 +55,7 @@ export default async function EditVendorPage({
           phoneNumber: row.phoneNumber,
           countryCode: row.countryCode,
           website: row.website,
+          addedByName: row.addedBy?.name ?? null,
           einNumber: row.einNumber,
           hasSsn: row.ssnNumber != null, // plaintext SSN never reaches the form (R-PII)
           addressLine1: row.addressLine1,
@@ -65,9 +68,6 @@ export default async function EditVendorPage({
           status: row.status,
         }}
       />
-      <ContactsSection vendorId={Number(row.id)} />
-      <CommentsSection vendorId={Number(row.id)} />
-      <ServicesSection vendorId={Number(row.id)} />
     </div>
   );
 }

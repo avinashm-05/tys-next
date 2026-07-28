@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import zipcodes from "zipcodes";
 import { cacheGet, cacheSet } from "@/lib/cache";
 
 /**
@@ -42,30 +43,81 @@ function strategies(address: string): string[] {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export async function geocodeAddress(address: string): Promise<Coordinates | null> {
+// Bare numeric postal code (US 5-digit, optional +4; also covers most other
+// countries' all-digit formats). Deliberately narrow — anything with a
+// street name, city, or comma falls through to the free-text path below.
+const BARE_POSTAL_CODE = /^\d{4,10}(-\d{3,4})?$/;
+const US_ZIP = /^\d{5}(-\d{4})?$/;
+
+async function fetchNominatim(params: Record<string, string>): Promise<Coordinates | null> {
+  const res = await fetch(`${BASE_URL}/search?${new URLSearchParams({ format: "json", limit: "1", ...params })}`, {
+    headers: { "User-Agent": USER_AGENT },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (!res.ok) return null;
+  const results = (await res.json()) as Array<{ lat?: string; lon?: string }>;
+  const hit = results?.[0];
+  if (!hit?.lat || !hit?.lon) return null;
+  const coords = { latitude: Number(hit.lat), longitude: Number(hit.lon) };
+  return Number.isFinite(coords.latitude) && Number.isFinite(coords.longitude) ? coords : null;
+}
+
+/**
+ * `countryCode`, when passed, biases the search to that country (Nominatim's
+ * `countrycodes`) — needed for bare postal codes like "10001", which are
+ * valid in more than one country and otherwise resolve to whichever one
+ * Nominatim's free-text search happens to rank first (confirmed: unbiased,
+ * that exact ZIP landed in Algeria, not New York). Left unset for vendor
+ * onboarding, where the address's own country field already disambiguates
+ * it — only the map's pincode search needs the hint.
+ *
+ * A bare US ZIP is looked up in the bundled `zipcodes` package first — a
+ * static USPS-derived table, instant, no network call, and correct for
+ * EVERY assigned ZIP (including PO-Box-only ones like Atlanta's 30301,
+ * which OpenStreetMap simply has no boundary for at all — confirmed: its
+ * structured Nominatim search came back empty, and free-text search, even
+ * with a country hint, matched it to Minnesota). Nominatim is the fallback
+ * for anything the static table doesn't cover — a non-US postal code, or a
+ * ZIP few enough people have queried that it's genuinely missing.
+ */
+export async function geocodeAddress(
+  address: string,
+  countryCode?: string,
+): Promise<Coordinates | null> {
   const trimmed = address.trim();
   if (!trimmed) return null;
+  const cc = countryCode?.trim().toLowerCase();
 
-  const cacheKey = `geocode:${crypto.createHash("md5").update(trimmed).digest("hex")}`;
+  const cacheKey = `geocode:${cc ?? "any"}:${crypto.createHash("md5").update(trimmed).digest("hex")}`;
   const cached = await cacheGet<Coordinates>(cacheKey);
   if (cached) return cached;
+
+  if (US_ZIP.test(trimmed) && (!cc || cc === "us")) {
+    const hit = zipcodes.lookup(trimmed.slice(0, 5));
+    if (hit) {
+      const coords = { latitude: hit.latitude, longitude: hit.longitude };
+      await cacheSet(cacheKey, coords, CACHE_TTL_SECONDS);
+      return coords;
+    }
+  }
+
+  if (BARE_POSTAL_CODE.test(trimmed) && cc) {
+    try {
+      const coords = await fetchNominatim({ postalcode: trimmed, countrycodes: cc });
+      if (coords) await cacheSet(cacheKey, coords, CACHE_TTL_SECONDS);
+      return coords;
+    } catch {
+      return null;
+    }
+  }
 
   const deadline = Date.now() + OVERALL_BUDGET_MS;
   for (const [i, q] of strategies(trimmed).entries()) {
     if (Date.now() >= deadline) break;
     if (i > 0) await sleep(1_000); // Nominatim etiquette: max 1 req/s
     try {
-      const params = new URLSearchParams({ q, format: "json", limit: "1" });
-      const res = await fetch(`${BASE_URL}/search?${params}`, {
-        headers: { "User-Agent": USER_AGENT },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      });
-      if (!res.ok) continue;
-      const results = (await res.json()) as Array<{ lat?: string; lon?: string }>;
-      const hit = results?.[0];
-      if (!hit?.lat || !hit?.lon) continue;
-      const coords = { latitude: Number(hit.lat), longitude: Number(hit.lon) };
-      if (!Number.isFinite(coords.latitude) || !Number.isFinite(coords.longitude)) continue;
+      const coords = await fetchNominatim({ q, ...(cc ? { countrycodes: cc } : {}) });
+      if (!coords) continue;
       await cacheSet(cacheKey, coords, CACHE_TTL_SECONDS);
       return coords;
     } catch {
@@ -73,6 +125,51 @@ export async function geocodeAddress(address: string): Promise<Coordinates | nul
     }
   }
   return null;
+}
+
+/**
+ * Postal code → city, for the Get Rates form's auto-fill (server-side so the
+ * browser never needs a third-party fetch host added to the CSP). Same
+ * Nominatim host/User-Agent/cache pattern as geocodeAddress, just a
+ * structured search instead of a free-text one.
+ */
+export async function lookupCityByPostalCode(
+  postalCode: string,
+  countryCode: string,
+): Promise<string | null> {
+  const trimmedZip = postalCode.trim();
+  const cc = countryCode.trim().toUpperCase();
+  if (!trimmedZip || !cc) return null;
+
+  const cacheKey = `ziplookup:${cc}:${trimmedZip.toLowerCase()}`;
+  const cached = await cacheGet<string>(cacheKey);
+  if (cached !== null) return cached;
+
+  try {
+    const params = new URLSearchParams({
+      postalcode: trimmedZip,
+      countrycodes: cc,
+      format: "json",
+      addressdetails: "1",
+      limit: "1",
+    });
+    const res = await fetch(`${BASE_URL}/search?${params}`, {
+      headers: { "User-Agent": USER_AGENT },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    if (!res.ok) return null;
+    const results = (await res.json()) as Array<{
+      address?: Record<string, string>;
+    }>;
+    const address = results?.[0]?.address;
+    const city =
+      address?.city ?? address?.town ?? address?.village ?? address?.county ?? null;
+    if (!city) return null;
+    await cacheSet(cacheKey, city, CACHE_TTL_SECONDS);
+    return city;
+  } catch {
+    return null;
+  }
 }
 
 /** The 7 address fields the VendorObserver watches (Vendor.php full_address). */

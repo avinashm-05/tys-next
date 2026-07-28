@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { BLOG_POSTS } from "@/lib/blog-posts";
 
-const siteUrl = (process.env.APP_URL ?? "https://tysgloballogistics.com").replace(/\/+$/, "");
+const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(/\/+$/, "");
 
 // Real, public, indexable marketing routes only — /account/*, /thank-you,
 // and everything under /admin + /api are excluded (see robots.ts).
@@ -9,7 +9,8 @@ const STATIC_ROUTES: { path: string; priority: number; changeFrequency: Metadata
   { path: "/", priority: 1, changeFrequency: "weekly" },
   { path: "/about-us", priority: 0.6, changeFrequency: "monthly" },
   { path: "/blog", priority: 0.7, changeFrequency: "weekly" },
-  { path: "/book-shipment", priority: 0.7, changeFrequency: "monthly" },
+  // /book-shipment temporarily excluded — see the matching note in
+  // site-header.tsx. Re-add when the page is linked again.
   { path: "/carriers", priority: 0.5, changeFrequency: "monthly" },
   { path: "/contact-us", priority: 0.6, changeFrequency: "monthly" },
   { path: "/contact-us/pay", priority: 0.3, changeFrequency: "yearly" },

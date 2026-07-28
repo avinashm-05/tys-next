@@ -148,6 +148,14 @@ export class FedExRateQuoteService {
         shipDateStamp: shipment.ship_date ?? new Date().toISOString().slice(0, 10),
         pickupType: shipment.pickup_type ?? this.cfg.pickupType,
         rateRequestType: this.cfg.rateRequestTypes,
+        // Required by FedEx production (sandbox never enforced it, confirmed
+        // via a live production rate call returning ACCOUNT.NUMBER.MISMATCH
+        // without this) — SENDER-pay must name the payor account explicitly,
+        // and it has to match accountNumber above.
+        shippingChargesPayment: {
+          paymentType: "SENDER",
+          payor: { responsibleParty: { accountNumber: { value: accountNumber } } },
+        },
         requestedPackageLineItems: lineItems,
       },
     };
@@ -229,15 +237,20 @@ export class FedExRateQuoteService {
 
   private buildDimensionalLineItems(detail: Detail, packagingType: string): LineItem[] {
     const quantity = Math.max(Math.trunc(Number(detail.quantity ?? 1)), 1);
+    const isMetric = String(detail.weight_unit ?? "lb").toLowerCase() === "kg";
     const weightLb = this.convertWeightToPounds(
       Number(detail.weight ?? 0),
       String(detail.weight_unit ?? "lb"),
     );
+    // The combined unit toggle (kg/cm vs lb/in, matching the public quote
+    // wizard) means dimensions ride the same weight_unit — FedEx's Rate API
+    // accepts either "IN" or "CM" for dimensions.units directly, so this only
+    // needs the right label, not a numeric conversion.
     const dimensions = {
       length: Math.floor(Number(detail.length ?? 0)),
       width: Math.floor(Number(detail.width ?? 0)),
       height: Math.floor(Number(detail.height ?? 0)),
-      units: "IN",
+      units: isMetric ? "CM" : "IN",
     };
 
     let lineItems: LineItem[] = [];

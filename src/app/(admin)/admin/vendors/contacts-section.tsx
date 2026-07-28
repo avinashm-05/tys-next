@@ -3,23 +3,16 @@
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
+import { UsersIcon } from "@phosphor-icons/react";
 import { adminApi } from "@/lib/admin-api";
-import { formatDateTime } from "@/lib/format";
 import { useAdminList } from "@/hooks/use-admin-list";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardAction, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DataTable, sortableHeader } from "@/components/shared/data-table";
 import { ConfirmDeleteDialog } from "@/components/admin/confirm-delete-dialog";
 import { RowActions } from "@/components/admin/row-actions";
-import { StatusBadge } from "@/components/admin/status-badge";
+import { SectionIconBadge } from "@/components/admin/section-icon-badge";
 import { ContactDialog } from "./contact-dialog";
 
 export type ContactRow = {
@@ -38,6 +31,9 @@ export type ContactRow = {
 
 // No CSV here on purpose: Laravel's contact controller has no CSV routes
 // (02-routes) — export/import would be invented features.
+// Columns match the SETU reference (Name/Title/City/State/Email/Work
+// Phone/Cell Phone, single edit action) — Status and Added-by still live in
+// the edit dialog, just not shown as their own table columns here.
 export function ContactsSection({ vendorId }: { vendorId: number }) {
   const list = useAdminList<ContactRow>(`/api/admin/vendors/${vendorId}/contacts`, [
     { id: "createdAt", desc: true },
@@ -47,58 +43,36 @@ export function ContactsSection({ vendorId }: { vendorId: number }) {
 
   const columns = useMemo<ColumnDef<ContactRow>[]>(
     () => [
+      { accessorKey: "name", header: sortableHeader("Name") },
       {
-        accessorKey: "name",
-        header: sortableHeader("Name"),
-        cell: ({ row }) => (
-          <div>
-            <span className="block font-medium">{row.original.name}</span>
-            {row.original.title && (
-              <span className="block text-xs text-muted-foreground">{row.original.title}</span>
-            )}
-          </div>
-        ),
-      },
-      { accessorKey: "email", header: sortableHeader("Email") },
-      {
-        id: "phones",
-        header: "Phone",
-        cell: ({ row }) => (
-          <div className="text-xs">
-            {row.original.workPhone && <span className="block">W: {row.original.workPhone}</span>}
-            {row.original.cellPhone && <span className="block">C: {row.original.cellPhone}</span>}
-            {!row.original.workPhone && !row.original.cellPhone && "—"}
-          </div>
-        ),
+        accessorKey: "title",
+        header: "Title",
+        cell: ({ row }) => row.original.title ?? "—",
       },
       {
         accessorKey: "city",
-        header: "Location",
-        cell: ({ row }) =>
-          [row.original.city, row.original.state].filter(Boolean).join(", ") || "—",
+        header: "City",
+        cell: ({ row }) => row.original.city ?? "—",
       },
       {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+        accessorKey: "state",
+        header: "State",
+        cell: ({ row }) => row.original.state ?? "—",
+      },
+      { accessorKey: "email", header: sortableHeader("Email") },
+      {
+        accessorKey: "workPhone",
+        header: "Work phone",
+        cell: ({ row }) => row.original.workPhone ?? "—",
       },
       {
-        accessorKey: "createdAt",
-        header: sortableHeader("Added"),
-        cell: ({ row }) => (
-          <div className="text-xs">
-            <span className="block">{formatDateTime(row.original.createdAt)}</span>
-            {row.original.createdBy && (
-              <span className="block text-muted-foreground">
-                by {row.original.createdBy.name}
-              </span>
-            )}
-          </div>
-        ),
+        accessorKey: "cellPhone",
+        header: "Cell phone",
+        cell: ({ row }) => row.original.cellPhone ?? "—",
       },
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
+        header: () => <span className="sr-only">Action</span>,
         cell: ({ row }) => (
           <div className="text-right">
             <RowActions
@@ -115,17 +89,22 @@ export function ContactsSection({ vendorId }: { vendorId: number }) {
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Contacts</CardTitle>
-        <CardDescription>People at this vendor. Deleted contacts are kept for the audit trail but hidden.</CardDescription>
-        <CardAction>
-          <Button variant="outline" onClick={() => setDialog("new")}>
-            Add contact
-          </Button>
-        </CardAction>
-      </CardHeader>
+    <Card className="overflow-visible">
       <CardContent className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <SectionIconBadge icon={UsersIcon} />
+            <h2 className="font-heading text-lg font-semibold">Contact list</h2>
+          </div>
+          <CardAction>
+            <Button
+              className="bg-tys-blue text-white hover:bg-tys-blue/90"
+              onClick={() => setDialog("new")}
+            >
+              Add
+            </Button>
+          </CardAction>
+        </div>
         <Input
           value={list.search}
           onChange={(e) => list.setSearch(e.target.value)}

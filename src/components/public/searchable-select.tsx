@@ -150,7 +150,14 @@ export function SearchableSelect({
           }}
           onKeyDown={onSearchKeyDown}
           placeholder="Search country"
-          className="w-full text-sm text-ink outline-none placeholder:text-ink-muted"
+          // text-base (16px), not text-sm (14px): iOS Safari auto-zooms the
+          // whole page on focusing any input under 16px, which then desyncs
+          // this panel's position:fixed coords (captured pre-zoom in
+          // updateRect) from the trigger button — reproduced as "zooms in,
+          // dropdown moves away" on iPhone Safari, absent on desktop Safari
+          // (no focus-zoom there). Staying at 16px+ prevents the zoom
+          // entirely rather than chasing a reposition after the fact.
+          className="w-full text-base text-ink outline-none placeholder:text-ink-muted"
         />
       </div>
       <ul ref={listRef} className="max-h-64 overflow-y-auto py-1">

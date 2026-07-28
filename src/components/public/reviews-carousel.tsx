@@ -64,6 +64,14 @@ export function ReviewsCarousel({ reviews }: { reviews: Review[] }) {
       onMouseLeave={() => (pausedRef.current = false)}
       onTouchStart={() => (pausedRef.current = true)}
       onTouchEnd={() => (pausedRef.current = false)}
+      // iOS Safari: a vertical page-scroll swipe that starts over this
+      // horizontal carousel fires touchcancel, not touchend, once its
+      // gesture recognizer takes over — without this the pause from
+      // onTouchStart above never clears, permanently stalling the
+      // marquee after the very first scroll-past (reproduced: works in
+      // Safari macOS, which never touch-pauses at all; broke in Safari
+      // iOS on any touch-scroll near the section).
+      onTouchCancel={() => (pausedRef.current = false)}
     >
       <div
         ref={trackRef}
@@ -73,6 +81,14 @@ export function ReviewsCarousel({ reviews }: { reviews: Review[] }) {
           <div
             key={`${r.name}-${i}`}
             data-review-card
+            // The second half of `looped` is a pixel-identical copy that only
+            // exists so the scrollLeft wrap in the rAF loop above is
+            // seamless — it's not distinct content. Hidden from crawlers/AT
+            // (aria-hidden + inert) so search engines and screen readers see
+            // each testimonial exactly once, while sighted/mouse users still
+            // get the infinite-scroll illusion.
+            aria-hidden={i >= reviews.length}
+            inert={i >= reviews.length}
             className="flex w-[85%] shrink-0 flex-col rounded-2xl bg-brand-pale p-6 transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(16,24,40,0.1)] sm:w-[60%] md:w-[calc(33.333%-16px)]"
           >
             <div className="flex gap-0.5 text-amber-400">

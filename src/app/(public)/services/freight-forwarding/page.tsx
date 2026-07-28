@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeroBand } from "@/components/public/page-hero-band";
+import { ServiceJsonLd } from "@/components/public/service-json-ld";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 import {
   ServiceIntro,
   ServiceCardGrid,
@@ -18,6 +20,14 @@ export const metadata: Metadata = {
 export default function FreightForwardingPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Services", path: "/services" },
+          { name: "Freight Forwarding", path: "/services/freight-forwarding" },
+        ]}
+      />
+      <ServiceJsonLd name="Freight Forwarding" description="Origin and destination freight services for household, auto, and commercial cargo." slug="freight-forwarding" />
       <PageHeroBand
         title="Freight Forwarding"
         subtitle="Ship containers, pallets, and commercial cargo with dependable origin and destination services — from pickup to final delivery."

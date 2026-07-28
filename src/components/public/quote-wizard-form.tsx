@@ -25,6 +25,7 @@ import {
   MapPinIcon,
   MinusCircleIcon,
   PackageIcon,
+  PhoneCallIcon,
   PlusCircleIcon,
   TelevisionIcon,
 } from "@phosphor-icons/react/dist/ssr";
@@ -58,6 +59,17 @@ const DIAL_CODE_OPTIONS = DIAL_CODES.map(([code, dial, name]) => ({
   flag: flagEmoji(code),
 }));
 const DIAL_BY_ISO = new Map(DIAL_CODES.map(([code, dial]) => [code, dial]));
+
+// Temporarily off: land every submission on the simple Thank You page
+// instead of the inline live-FedEx-rates results screen, even for the
+// domestic quotes the server flags with show_fedex_rates. Flip back to true
+// to restore it.
+const SHOW_LIVE_RATES_RESULT = false;
+
+// Same support channels used site-wide (site-header.tsx, contact-us/support).
+const SUPPORT_PHONE_DISPLAY = "+1 (404) 793-8759";
+const SUPPORT_PHONE_TEL = "tel:+14047938759";
+const SUPPORT_EMAIL = "sales@tysgloballogistics.com";
 
 const STEPS = [
   { n: 1, label: "Location", icon: MapPinIcon },
@@ -97,6 +109,29 @@ type SubmitResult = {
   rates?: Rate[];
   rates_error?: string | null;
 };
+
+// The colored band + curve used to live as static markup in page.tsx, but the
+// title needs to change once results are showing (and show what the customer
+// actually submitted, not the generic pitch) — that state only exists inside
+// this client component, so the hero moved in here with it.
+function QuoteHero({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <section className="relative overflow-hidden bg-brand-light px-4 pb-20 pt-6 md:px-8 md:pb-28 md:pt-8">
+      <div className="mx-auto max-w-2xl text-center">
+        <h1 className="text-3xl font-extrabold text-ink md:text-4xl">{title}</h1>
+        {subtitle && <p className="mt-2 text-ink-muted">{subtitle}</p>}
+      </div>
+      <svg
+        aria-hidden
+        viewBox="0 0 1440 100"
+        preserveAspectRatio="none"
+        className="absolute inset-x-0 bottom-0 h-16 w-full text-white md:h-24"
+      >
+        <path d="M0,70 Q720,-30 1440,70 L1440,100 L0,100 Z" fill="currentColor" />
+      </svg>
+    </section>
+  );
+}
 
 export function QuoteWizardForm({
   defaultFromCountry,
@@ -143,6 +178,10 @@ export function QuoteWizardForm({
   // nation — this local state is the real selection; the dial code is
   // derived from it on change.
   const [countryCodeIso, setCountryCodeIso] = useState("US");
+  // Once the customer manually picks a phone country code, the step-4
+  // from_country auto-fill (below) stops overwriting it — even if they go
+  // back and change from_country again.
+  const phoneCountryTouchedRef = useRef(false);
 
   // Input/output split: the box/tv rows use z.coerce.number() (shared with
   // the server schema), so RHF's field values (pre-coercion, TQuoteWizardInput)
@@ -177,6 +216,22 @@ export function QuoteWizardForm({
   // picked up in transit to it.
   useEffect(() => {
     reset(getValues(), { keepValues: true, keepDirty: true, keepTouched: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  // Default the Contact step's phone country code from the shipment's
+  // "from" country (nicer starting point than always US) — only on first
+  // arrival at step 4 and only if the customer hasn't already picked their
+  // own phone country code (phoneCountryTouchedRef), so it never clobbers a
+  // manual choice when navigating back and forth.
+  useEffect(() => {
+    if (step !== 4 || phoneCountryTouchedRef.current) return;
+    const fromIso = getValues("from_country");
+    const dial = fromIso && DIAL_BY_ISO.get(fromIso);
+    if (dial) {
+      setCountryCodeIso(fromIso);
+      setValue("contact.country_code", dial);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
@@ -291,7 +346,7 @@ export function QuoteWizardForm({
         }
         return;
       }
-      if (data.show_fedex_rates) {
+      if (SHOW_LIVE_RATES_RESULT && data.show_fedex_rates) {
         setResult(data as SubmitResult);
       } else {
         const params = new URLSearchParams({ name: values.contact.name });
@@ -304,7 +359,23 @@ export function QuoteWizardForm({
   }
 
   if (result?.show_fedex_rates) {
-    return <RatesResult result={result} />;
+    return (
+      <>
+        <QuoteHero
+          title="Your Shipping Quote"
+          subtitle={
+            result.summary
+              ? `${result.summary.route} · ${result.summary.package_label} · ${result.summary.weight_lb} lb`
+              : undefined
+          }
+        />
+        <section className="bg-white px-4 pb-16 md:px-8">
+          <div className="mx-auto max-w-5xl">
+            <RatesResult result={result} />
+          </div>
+        </section>
+      </>
+    );
   }
 
   // The stepper always starts at the full 4 steps — it only collapses once
@@ -318,6 +389,13 @@ export function QuoteWizardForm({
   const activeStep = visibleSteps[activeIndex] ?? visibleSteps[0];
 
   return (
+    <>
+      <QuoteHero
+        title="Get a Free Quote"
+        subtitle="Tell us about your shipment and we'll get you a rate in minutes."
+      />
+      <section className="bg-white px-4 pb-16 md:px-8">
+        <div className="mx-auto max-w-5xl">
     <div>
       {/* Mobile: only the current step's card, matching the reference —
           the full 4-up grid is reserved for md+ where it fits comfortably. */}
@@ -563,6 +641,7 @@ export function QuoteWizardForm({
                       options={DIAL_CODE_OPTIONS}
                       value={countryCodeIso}
                       onChange={(iso) => {
+                        phoneCountryTouchedRef.current = true;
                         setCountryCodeIso(iso);
                         field.onChange(DIAL_BY_ISO.get(iso) ?? "");
                       }}
@@ -587,6 +666,12 @@ export function QuoteWizardForm({
         )}
 
         {submitError && <p className={`${errorClass} mt-4`}>{submitError}</p>}
+
+        {isSubmitting && (
+          <p className="mt-4 text-sm text-ink-muted">
+            Getting live rates from FedEx — this can take up to 15 seconds, please don&rsquo;t close this page.
+          </p>
+        )}
 
         <div
           className={`mt-10 flex items-center justify-between ${justTransitioned ? "pointer-events-none" : ""}`}
@@ -622,6 +707,9 @@ export function QuoteWizardForm({
         </div>
       </form>
     </div>
+        </div>
+      </section>
+    </>
   );
 }
 
@@ -923,11 +1011,6 @@ function RatesResult({ result }: { result: SubmitResult }) {
           <CheckIcon size={18} weight="bold" />
           <span className="text-sm font-semibold">{result.message}</span>
         </div>
-        {result.summary && (
-          <p className="mt-2 text-sm text-ink-muted">
-            {result.summary.route} · {result.summary.package_label} · {result.summary.weight_lb} lb
-          </p>
-        )}
       </div>
 
       {result.rates_error && <p className="mt-4 text-sm text-red-600">{result.rates_error}</p>}
@@ -952,14 +1035,32 @@ function RatesResult({ result }: { result: SubmitResult }) {
                 Save {rate.save_percent}%
               </span>
             )}
-            <button
-              type="button"
-              className="mt-4 w-full rounded-full bg-brand py-2.5 text-sm font-semibold text-white hover:bg-brand-dark"
-            >
-              Book Now
-            </button>
+            {/* "Book Now" temporarily hidden — see the matching note in
+                site-header.tsx. It was a non-functional stub either way. */}
           </div>
         ))}
+      </div>
+
+      <div className="mt-6 flex flex-col items-center gap-2 rounded-2xl border border-brand-light bg-brand-pale/40 p-5 text-center sm:flex-row sm:justify-center sm:gap-6 sm:text-left">
+        <p className="text-sm font-medium text-ink">
+          Need help picking a rate or have questions about your shipment?
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <a
+            href={SUPPORT_PHONE_TEL}
+            className="flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-brand-dark"
+          >
+            <PhoneCallIcon size={16} weight="bold" />
+            {SUPPORT_PHONE_DISPLAY}
+          </a>
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-brand-dark"
+          >
+            <EnvelopeSimpleIcon size={16} weight="bold" />
+            {SUPPORT_EMAIL}
+          </a>
+        </div>
       </div>
     </div>
   );

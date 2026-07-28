@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeroBand } from "@/components/public/page-hero-band";
+import { ServiceJsonLd } from "@/components/public/service-json-ld";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 import {
   ServiceIntro,
   ServiceChecklist,
@@ -27,6 +29,14 @@ export const metadata: Metadata = {
 export default function InternationalRelocationPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Services", path: "/services" },
+          { name: "International Relocation", path: "/services/international-relocation" },
+        ]}
+      />
+      <ServiceJsonLd name="International Relocation" description="Door-to-door international relocation for your household, family, and belongings." slug="international-relocation" />
       <PageHeroBand
         title="International Relocation"
         subtitle="Moving your life to a new country? We handle the logistics so you can focus on the move itself."

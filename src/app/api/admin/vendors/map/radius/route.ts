@@ -19,6 +19,18 @@ type RadiusRow = {
  * searchByRadius (03-logic §VendorMapService): raw Haversine ordered by
  * distance, miles→km ×1.60934. Tagged-template $queryRaw only — every value
  * is a bound parameter, nothing is string-interpolated.
+ *
+ * Optimization: HAVING distance <= radius can't use an index — MySQL still
+ * has to compute the trig expression for every row matching status/type
+ * before it can filter, which gets slow as the vendor table grows. A
+ * bounding-box WHERE clause (cheap min/max lat/lng around the search point)
+ * lets it use idx_vendors_coordinates as a range scan first, so the
+ * expensive Haversine math only ever runs on the small set of vendors that
+ * could plausibly be in range — the box is a superset of the real circle
+ * (wider at the corners), so the exact HAVING check afterward still trims it
+ * to the true radius. Longitude degrees shrink toward the poles, hence the
+ * cos(latitude) term; clamped away from 0 so a search near the equator can't
+ * divide by (near) zero.
  */
 export const POST = adminRoute(async (req, _ctx, session) => {
   await throttleOr429(`vendor-map:radius:${session.user.id}`, 60);
@@ -36,16 +48,24 @@ export const POST = adminRoute(async (req, _ctx, session) => {
       ? Prisma.sql`AND v.vendor_type_id = ${BigInt(data.vendor_type_id)}`
       : Prisma.empty;
 
+  const KM_PER_DEGREE_LAT = 111.045;
+  const latDelta = radiusKm / KM_PER_DEGREE_LAT;
+  const lngDelta =
+    radiusKm / (KM_PER_DEGREE_LAT * Math.max(Math.cos((data.lat * Math.PI) / 180), 0.01));
+
   const rows = await db.$queryRaw<RadiusRow[]>`
     SELECT v.id, v.name, v.latitude, v.longitude, v.status, vt.name AS vendor_type,
       (6371 * ACOS(
-        COS(RADIANS(${data.lat})) * COS(RADIANS(v.latitude)) *
-        COS(RADIANS(v.longitude) - RADIANS(${data.lng})) +
-        SIN(RADIANS(${data.lat})) * SIN(RADIANS(v.latitude))
+        LEAST(1, GREATEST(-1,
+          COS(RADIANS(${data.lat})) * COS(RADIANS(v.latitude)) *
+          COS(RADIANS(v.longitude) - RADIANS(${data.lng})) +
+          SIN(RADIANS(${data.lat})) * SIN(RADIANS(v.latitude))
+        ))
       )) AS distance
     FROM vendors v
     JOIN vendor_types vt ON vt.id = v.vendor_type_id
-    WHERE v.latitude IS NOT NULL AND v.longitude IS NOT NULL
+    WHERE v.latitude BETWEEN ${data.lat - latDelta} AND ${data.lat + latDelta}
+      AND v.longitude BETWEEN ${data.lng - lngDelta} AND ${data.lng + lngDelta}
       ${statusSql}
       ${typeSql}
     HAVING distance <= ${radiusKm}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -10,7 +9,6 @@ import "leaflet.markercluster";
 import { Circle, MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { toast } from "sonner";
 import { adminApi, ApiError } from "@/lib/admin-api";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,15 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { StatusBadge } from "@/components/admin/status-badge";
 
 // Self-contained marker icon: Leaflet's default icon images don't resolve
 // under Turbopack, so the pin is an inline SVG in a divIcon — no image files,
@@ -151,7 +140,6 @@ export function VendorMap() {
   const [address, setAddress] = useState("");
   const [nameQuery, setNameQuery] = useState("");
   const [suggestions, setSuggestions] = useState<MapVendor[]>([]);
-  const [view, setView] = useState<"map" | "list">("map");
   const [busy, setBusy] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
   // Filters live in a ref too so BoundsWatcher's debounced callback sees
@@ -194,17 +182,19 @@ export function VendorMap() {
     if (map) void fetchInBounds(map.getBounds());
   }
 
-  async function runRadiusSearch() {
+  // Shared by both the manual "Search radius" button (centered on wherever
+  // the map's been panned to) and the pincode search below (centered on the
+  // geocoded point directly — NOT map.getCenter(), which wouldn't yet
+  // reflect an in-flight flyTo animation).
+  async function runRadiusSearchAt(lat: number, lng: number) {
     const map = mapRef.current;
-    if (!map) return;
-    const center = map.getCenter();
     setBusy(true);
     try {
       const res = await adminApi<{ vendors: MapVendor[] }>("/api/admin/vendors/map/radius", {
         method: "POST",
         body: JSON.stringify({
-          lat: center.lat,
-          lng: center.lng,
+          lat,
+          lng,
           radius: Number(radius),
           unit,
           status: filtersRef.current.status,
@@ -217,13 +207,19 @@ export function VendorMap() {
       const meters = Number(radius) * (unit === "miles" ? 1609.34 : 1000);
       // ponytail: radius mode suspends the moveend refresh until cleared —
       // otherwise the next pan silently replaces the radius results.
-      setCircle({ lat: center.lat, lng: center.lng, meters });
-      map.fitBounds(L.latLng(center.lat, center.lng).toBounds(meters * 2), { padding: [24, 24] });
+      setCircle({ lat, lng, meters });
+      map?.fitBounds(L.latLng(lat, lng).toBounds(meters * 2), { padding: [24, 24] });
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "The radius search failed.");
     } finally {
       setBusy(false);
     }
+  }
+
+  function runRadiusSearch() {
+    const center = mapRef.current?.getCenter();
+    if (!center) return;
+    void runRadiusSearchAt(center.lat, center.lng);
   }
 
   function clearRadius() {
@@ -253,33 +249,25 @@ export function VendorMap() {
   function flyToVendor(v: MapVendor) {
     setSuggestions([]);
     setNameQuery(v.name);
-    setView("map");
     mapRef.current?.flyTo([v.latitude, v.longitude], 15);
   }
 
-  async function runAddressSearch() {
+  // One action for "type a pincode, see every vendor within N miles of it" —
+  // previously this only recentered the map, leaving the vendor filtering as
+  // a separate "Search radius" click most people would never find.
+  async function runPincodeSearch() {
     if (!address.trim()) return;
     setBusy(true);
     try {
-      const res = await adminApi<{ latitude: number; longitude: number }>("/api/admin/geocode", {
+      const geo = await adminApi<{ latitude: number; longitude: number }>("/api/admin/geocode", {
         method: "POST",
         body: JSON.stringify({ address: address.trim() }),
       });
-      setAddressPin({ lat: res.latitude, lng: res.longitude });
-      setView("map");
-      mapRef.current?.flyTo([res.latitude, res.longitude], 13);
+      setAddressPin({ lat: geo.latitude, lng: geo.longitude });
+      await runRadiusSearchAt(geo.latitude, geo.longitude);
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "The address search failed.");
-    } finally {
+      toast.error(e instanceof ApiError ? e.message : "The pincode search failed.");
       setBusy(false);
-    }
-  }
-
-  function switchView(next: "map" | "list") {
-    setView(next);
-    if (next === "map") {
-      // The container was hidden — Leaflet must re-measure it.
-      setTimeout(() => mapRef.current?.invalidateSize(), 50);
     }
   }
 
@@ -324,13 +312,13 @@ export function VendorMap() {
         <Input
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && runAddressSearch()}
-          placeholder="Go to address…"
+          onKeyDown={(e) => e.key === "Enter" && runPincodeSearch()}
+          placeholder="Pincode or address…"
           className="w-56"
-          aria-label="Go to address"
+          aria-label="Search by pincode or address"
         />
-        <Button variant="outline" onClick={runAddressSearch} disabled={busy}>
-          Find address
+        <Button variant="outline" onClick={runPincodeSearch} disabled={busy}>
+          Search
         </Button>
         <Select
           value={status}
@@ -389,16 +377,13 @@ export function VendorMap() {
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={runRadiusSearch} disabled={busy}>
-            Search radius
+            Search this area
           </Button>
           {circle && (
             <Button variant="ghost" onClick={clearRadius}>
               Clear radius
             </Button>
           )}
-          <Button variant="outline" onClick={() => switchView(view === "map" ? "list" : "map")}>
-            {view === "map" ? "List view" : "Map view"}
-          </Button>
         </div>
       </div>
 
@@ -416,7 +401,7 @@ export function VendorMap() {
         </div>
       )}
 
-      <div className={cn("h-[32rem] overflow-hidden rounded-md border", view !== "map" && "hidden")}>
+      <div className="h-[32rem] overflow-hidden rounded-md border">
         <MapContainer
           ref={mapRef}
           {...(db.bounds
@@ -448,61 +433,10 @@ export function VendorMap() {
         </MapContainer>
       </div>
 
-      {view === "map" && vendors.length === 0 && !noGeocodedVendors && (
+      {vendors.length === 0 && !noGeocodedVendors && (
         <p className="text-sm text-muted-foreground">
           No vendors in this view. Zoom out or adjust the filters.
         </p>
-      )}
-
-      {view === "list" && (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                {circle && <TableHead>Distance</TableHead>}
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {vendors.length ? (
-                vendors.map((v) => (
-                  <TableRow key={v.id}>
-                    <TableCell className="font-medium">{v.name}</TableCell>
-                    <TableCell>{v.vendorType}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={v.status} />
-                    </TableCell>
-                    {circle && (
-                      <TableCell>
-                        {v.distance != null ? `${v.distance} ${unit === "miles" ? "mi" : "km"}` : "—"}
-                      </TableCell>
-                    )}
-                    <TableCell className="text-right">
-                      <Link
-                        href={`/admin/vendors/${v.id}/edit`}
-                        className="text-primary underline-offset-4 hover:underline"
-                      >
-                        Edit
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={circle ? 5 : 4}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    No vendors in the current results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
       )}
     </div>
   );

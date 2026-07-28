@@ -4,6 +4,8 @@ import { PageHeroBand } from "@/components/public/page-hero-band";
 
 export const metadata: Metadata = { title: "Sitemap — TYS Global Logistics" };
 
+// "Book Shipment" and the whole "My Account" group are temporarily hidden —
+// see the matching note in site-header.tsx.
 const GROUPS: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: "Main",
@@ -11,7 +13,6 @@ const GROUPS: { title: string; links: { href: string; label: string }[] }[] = [
       { href: "/", label: "Home" },
       { href: "/quotes", label: "Get a Free Quote" },
       { href: "/tracking", label: "Track a Shipment" },
-      { href: "/book-shipment", label: "Book Shipment" },
       { href: "/contact-us", label: "Contact Us" },
       { href: "/contact-us/support", label: "Contact Support" },
       { href: "/contact-us/pay", label: "Online Payment" },
@@ -37,17 +38,6 @@ const GROUPS: { title: string; links: { href: string; label: string }[] }[] = [
       { href: "/services/volume-shipping", label: "Volume Shipping" },
       { href: "/services/retailer-shipping", label: "Retailer Shipping" },
       { href: "/services/global-shopper", label: "Global Shopper" },
-    ],
-  },
-  {
-    title: "My Account",
-    links: [
-      { href: "/account/login", label: "Log In" },
-      { href: "/account/register", label: "Create an Account" },
-      { href: "/account", label: "My Account" },
-      { href: "/account/quotes", label: "My Quotes" },
-      { href: "/account/tracking", label: "My Tracking" },
-      { href: "/account/profile", label: "Profile Settings" },
     ],
   },
   {

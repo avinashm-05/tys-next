@@ -7,10 +7,8 @@ import {
   CaretDownIcon,
   ListIcon,
   PhoneIcon,
-  UserCircleIcon,
   XIcon,
   HouseIcon,
-  UserIcon,
   BriefcaseIcon,
   ListNumbersIcon,
   PaperPlaneTiltIcon,
@@ -22,15 +20,19 @@ import {
   BookOpenIcon,
   CreditCardIcon,
   ClockIcon,
-  PackageIcon,
   NotePencilIcon,
   HeadsetIcon,
 } from "@phosphor-icons/react";
 import { UsFlag } from "@/components/public/us-flag";
 
+// Book Shipment + account/profile entry points are temporarily hidden
+// site-wide (nav, mobile menu, header icon) — self-serve booking and the
+// customer account portal aren't ready for customers yet. Re-add the
+// "Book Shipment" nav link, the MOBILE_MENU_ITEMS "My Account"/"Book
+// Shipment" rows, and the UserCircleIcon header link (removed below) when
+// told to bring them back.
 const NAV_LINKS = [
   { href: "/tracking", label: "Tracking" },
-  { href: "/book-shipment", label: "Book Shipment" },
   { href: "/contact-us", label: "Contact Us" },
 ] as const;
 
@@ -42,7 +44,6 @@ const DESTINATION_LINKS = [
 // Full icon-list mobile drawer (replaces the old compact dropdown).
 const MOBILE_MENU_ITEMS = [
   { href: "/", label: "Home", icon: HouseIcon },
-  { href: "/book-shipment", label: "My Account", icon: UserIcon },
   { href: "/about-us", label: "About Us", icon: BriefcaseIcon },
   { href: "/services", label: "Services", icon: ListNumbersIcon },
   { href: "/carriers", label: "Major Carriers", icon: PaperPlaneTiltIcon },
@@ -54,7 +55,6 @@ const MOBILE_MENU_ITEMS = [
   { href: "/blog", label: "Blog", icon: BookOpenIcon },
   { href: "/contact-us/pay", label: "Pay Online", icon: CreditCardIcon },
   { href: "/tracking", label: "Tracking", icon: ClockIcon },
-  { href: "/book-shipment", label: "Book Shipment", icon: PackageIcon },
   { href: "/quotes", label: "Get Quote", icon: NotePencilIcon },
   { href: "/contact-us", label: "Contact Us", icon: HeadsetIcon },
 ] as const;
@@ -133,13 +133,6 @@ export function SiteHeader() {
             +1 (404) 793-8759
           </a>
           <UsFlag className="h-5 w-auto overflow-hidden rounded-[3px]" />
-          <Link
-            href="/book-shipment"
-            aria-label="My account"
-            className="flex items-center justify-center text-ink hover:text-brand"
-          >
-            <UserCircleIcon size={24} />
-          </Link>
         </div>
 
         <button

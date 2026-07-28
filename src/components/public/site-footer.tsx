@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { InstagramLogoIcon, LinkedinLogoIcon, YoutubeLogoIcon } from "@phosphor-icons/react/dist/ssr";
+import { InstagramLogoIcon, LinkedinLogoIcon } from "@phosphor-icons/react/dist/ssr";
 
 const SERVICES = [
   { href: "/destinations", label: "Worldwide Shipping" },
@@ -17,9 +17,9 @@ const RESOURCES = [
   { href: "/blog", label: "Blog" },
 ] as const;
 
+// "Book Shipment" temporarily hidden — see the matching note in site-header.tsx.
 const HELP = [
   { href: "/tracking", label: "Track Shipment" },
-  { href: "/book-shipment", label: "Book Shipment" },
   { href: "/quotes", label: "Get Quote" },
   { href: "/contact-us", label: "Contact Us" },
 ] as const;
@@ -81,13 +81,6 @@ export function SiteFooter() {
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-brand hover:bg-brand-pale"
               >
                 <InstagramLogoIcon size={18} weight="fill" />
-              </a>
-              <a
-                href="#"
-                aria-label="YouTube"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-brand hover:bg-brand-pale"
-              >
-                <YoutubeLogoIcon size={18} weight="fill" />
               </a>
             </div>
           </div>

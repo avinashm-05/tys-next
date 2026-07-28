@@ -1,7 +1,7 @@
 import { publicApiRoute } from "@/lib/public-route";
 import { emptyStringsToNull } from "@/lib/validation/common";
 import { contactSupportSchema } from "@/lib/validation/contact-support";
-import { sendMail } from "@/lib/mail";
+import { sendMail, SALES_FROM } from "@/lib/mail";
 
 function esc(v: unknown): string {
   const s = v == null ? "" : String(v);
@@ -39,6 +39,7 @@ export const POST = publicApiRoute({ name: "contact.store", limit: 5 }, async (r
         subject: `Contact Support — ${data.name}`,
         text,
         html,
+        from: SALES_FROM,
       });
     } catch {
       /* best-effort — never fail the request on a mail outage. */

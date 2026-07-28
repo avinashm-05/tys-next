@@ -2,6 +2,7 @@ import { adminRoute } from "@/lib/auth";
 import { calculateChargeableWeight } from "@/lib/chargeable-weight";
 import { isUnitedStates, normalizeCode } from "@/lib/countries";
 import { FedExClient } from "@/lib/fedex/client";
+import { rateCredentials } from "@/lib/fedex/config";
 import { FedExRateQuoteService, type ShipmentInput } from "@/lib/fedex/rate-quote";
 import {
   getFedexMarkupInternationalPercentage,
@@ -57,7 +58,7 @@ export const POST = adminRoute(async (req) => {
     pickup_type: null, // engine defaults from config
   };
 
-  const service = new FedExRateQuoteService(new FedExClient());
+  const service = new FedExRateQuoteService(new FedExClient(rateCredentials()));
   const domestic = isUnitedStates(data.from_country) && isUnitedStates(data.to_country);
   const rates = domestic
     ? await service.quote(shipment, await getFedexMarkupPercentage())

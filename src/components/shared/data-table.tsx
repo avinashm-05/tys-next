@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 // The one table every admin list uses (replaces yajra DataTables — R30).
@@ -37,12 +38,22 @@ interface ServerMode {
   loading?: boolean;
 }
 
+/** One text filter box rendered under a specific column's header (by column id). */
+export interface ColumnFilterConfig {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   /** Empty states invite an action — pass e.g. "No vendors yet. Add your first vendor." */
   emptyMessage?: string;
   server?: ServerMode;
+  /** Per-column search boxes under the header row (SETU reference) — opt-in per list. */
+  columnFilters?: ColumnFilterConfig[];
 }
 
 /** Column header that toggles server/client sorting: `header: sortableHeader("Name")`. */
@@ -74,6 +85,7 @@ export function DataTable<TData, TValue>({
   data,
   emptyMessage = "Nothing here yet.",
   server,
+  columnFilters,
 }: DataTableProps<TData, TValue>) {
   const [clientSorting, setClientSorting] = useState<SortingState>([]);
 
@@ -102,7 +114,10 @@ export function DataTable<TData, TValue>({
   return (
     <div className="space-y-2">
       <div
-        className={cn("rounded-md border", server?.loading && "pointer-events-none opacity-60")}
+        className={cn(
+          "overflow-hidden rounded-xl border border-tys-mist",
+          server?.loading && "pointer-events-none opacity-60",
+        )}
       >
         <Table>
           <TableHeader>
@@ -117,6 +132,26 @@ export function DataTable<TData, TValue>({
                 ))}
               </TableRow>
             ))}
+            {columnFilters && (
+              <TableRow className="hover:bg-transparent">
+                {table.getHeaderGroups()[0]?.headers.map((header) => {
+                  const filter = columnFilters.find((f) => f.id === header.column.id);
+                  return (
+                    <TableHead key={`filter-${header.id}`} className="py-1.5">
+                      {filter && (
+                        <Input
+                          value={filter.value}
+                          onChange={(e) => filter.onChange(e.target.value)}
+                          placeholder={filter.placeholder ?? "Search…"}
+                          className="h-8 text-xs"
+                          aria-label={`Filter by ${header.column.id}`}
+                        />
+                      )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            )}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length ? (

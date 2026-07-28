@@ -14,6 +14,8 @@ export default async function NewVendorPage() {
     select: { id: true, name: true },
   });
   return (
-    <VendorForm typeOptions={types.map((t) => ({ id: Number(t.id), name: t.name }))} />
+    <div className="mx-auto w-full max-w-5xl">
+      <VendorForm typeOptions={types.map((t) => ({ id: Number(t.id), name: t.name }))} />
+    </div>
   );
 }

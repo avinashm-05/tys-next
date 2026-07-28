@@ -13,7 +13,7 @@ export function ArticleJsonLd({
   datePublished: string;
   slug: string;
 }) {
-  const siteUrl = (process.env.APP_URL ?? "https://tysgloballogistics.com").replace(/\/+$/, "");
+  const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(/\/+$/, "");
   const url = `${siteUrl}/blog/${slug}`;
 
   const data = {

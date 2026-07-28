@@ -14,6 +14,16 @@ export class FedExError extends Error {
 }
 
 const REQUEST_TIMEOUT_MS = 15_000;
+// A sandbox 503 can mean either a sub-second blip (an immediate retry
+// succeeded in testing) or a sustained multi-minute outage (a fresh retry
+// still failed identically after several minutes) — there's no way to tell
+// which from inside one request. One quick retry catches the blip case
+// without making the sustained case wait multiple × 13s for an outcome more
+// attempts can't change.
+const RETRYABLE_ATTEMPTS = 2; // 1 initial + 1 retry
+const RETRY_BACKOFF_MS = 500;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 type FedExErrorRow = { code?: string; message?: string };
 
@@ -32,12 +42,43 @@ export interface FedExRequester {
  * OAuth token is cached (TTL = expires_in − 60s buffer); a single-flight lock
  * prevents a token stampede. Requests auto-retry ONCE on HTTP 401 or the
  * NOT.AUTHORIZED.ERROR code with a freshly-fetched token, then throw.
+ *
+ * FedEx's sandbox is documented to intermittently return 5xx
+ * (SERVICE.UNAVAILABLE.ERROR and friends) under otherwise-valid requests —
+ * confirmed directly both ways: the exact same payload failed via the app
+ * then succeeded seconds later via a standalone curl (a blip), and separately
+ * failed identically via the app and a fresh standalone curl minutes apart (a
+ * sustained outage — retrying doesn't help there). Requests get one quick
+ * retry on a 5xx to catch the blip case without piling multiple × ~13s
+ * waits onto the sustained case; 4xx (real validation errors) never retries.
  */
+/** Lets a caller point this client at a different FedEx project's keys —
+ * e.g. Track uses its own project/credentials, separate from Rate's.
+ * `baseUrl` lets one project sit on production (apis.fedex.com) while
+ * another stays on sandbox — Rate and Track each have their own production
+ * project, entitled and cut over independently of each other. */
+export type FedExCredentials = {
+  clientId: string;
+  clientSecret: string;
+  tokenCacheKey: string;
+  baseUrl?: string;
+};
+
 export class FedExClient implements FedExRequester {
   private cfg = fedexConfig();
+  private creds: FedExCredentials;
+
+  constructor(credentials?: FedExCredentials) {
+    this.creds = credentials ?? {
+      clientId: this.cfg.clientId,
+      clientSecret: this.cfg.clientSecret,
+      tokenCacheKey: this.cfg.tokenCacheKey,
+      baseUrl: this.cfg.baseUrl,
+    };
+  }
 
   async getToken(): Promise<string> {
-    const cached = await cacheGet<string>(this.cfg.tokenCacheKey);
+    const cached = await cacheGet<string>(this.creds.tokenCacheKey);
     if (cached) return cached;
     return this.fetchAndCacheToken();
   }
@@ -47,22 +88,22 @@ export class FedExClient implements FedExRequester {
   }
 
   async clearToken(): Promise<void> {
-    await cacheDelete(this.cfg.tokenCacheKey);
+    await cacheDelete(this.creds.tokenCacheKey);
   }
 
   private async fetchAndCacheToken(): Promise<string> {
     // Single-flight: only one concurrent refresh actually hits FedEx.
-    return withLock(`${this.cfg.tokenCacheKey}:lock`, 20, async () => {
-      const existing = await cacheGet<string>(this.cfg.tokenCacheKey);
+    return withLock(`${this.creds.tokenCacheKey}:lock`, 20, async () => {
+      const existing = await cacheGet<string>(this.creds.tokenCacheKey);
       if (existing) return existing;
 
-      const res = await fetch(`${this.cfg.baseUrl}/oauth/token`, {
+      const res = await fetch(`${this.creds.baseUrl ?? this.cfg.baseUrl}/oauth/token`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
           grant_type: "client_credentials",
-          client_id: this.cfg.clientId,
-          client_secret: this.cfg.clientSecret,
+          client_id: this.creds.clientId,
+          client_secret: this.creds.clientSecret,
         }),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
@@ -81,7 +122,7 @@ export class FedExClient implements FedExRequester {
 
       const expiresIn = Number(data.expires_in ?? 3600);
       const ttl = Math.max(1, expiresIn - this.cfg.tokenTtlBuffer);
-      await cacheSet(this.cfg.tokenCacheKey, data.access_token, ttl);
+      await cacheSet(this.creds.tokenCacheKey, data.access_token, ttl);
       return data.access_token;
     });
   }
@@ -92,18 +133,23 @@ export class FedExClient implements FedExRequester {
     payload: Record<string, unknown> = {},
     headers: Record<string, string> = {},
   ): Promise<Record<string, unknown>> {
-    let res = await this.send(method, endpoint, payload, await this.getToken(), headers);
+    for (let attempt = 1; attempt <= RETRYABLE_ATTEMPTS; attempt++) {
+      let res = await this.send(method, endpoint, payload, await this.getToken(), headers);
 
-    if (await this.isUnauthorized(res)) {
-      await this.clearToken();
-      res = await this.send(method, endpoint, payload, await this.refreshToken(), headers);
-    }
+      if (await this.isUnauthorized(res)) {
+        await this.clearToken();
+        res = await this.send(method, endpoint, payload, await this.refreshToken(), headers);
+      }
 
-    const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-    if (!res.ok) {
-      throw new FedExError("FedEx API request failed", res.status, body);
+      const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (res.ok) return body;
+
+      const error = new FedExError("FedEx API request failed", res.status, body);
+      const canRetry = res.status >= 500 && attempt < RETRYABLE_ATTEMPTS;
+      if (!canRetry) throw error;
+      await sleep(RETRY_BACKOFF_MS * attempt);
     }
-    return body;
+    throw new FedExError("FedEx API request failed", 0, {});
   }
 
   private send(
@@ -113,7 +159,8 @@ export class FedExClient implements FedExRequester {
     token: string,
     headers: Record<string, string>,
   ): Promise<Response> {
-    const url = `${this.cfg.baseUrl.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`;
+    const base = this.creds.baseUrl ?? this.cfg.baseUrl;
+    const url = `${base.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`;
     return fetch(url, {
       method: method.toUpperCase(),
       headers: {

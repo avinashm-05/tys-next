@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { adminApi, ApiError } from "@/lib/admin-api";
+import { QUOTE_STATUS_LABELS, QUOTE_STATUS_VALUES } from "@/lib/quote-status";
 import {
   Select,
   SelectContent,
@@ -10,14 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const STATUSES = ["pending", "quoted", "accepted", "cancelled"] as const;
-const LABELS: Record<string, string> = {
-  pending: "Pending",
-  quoted: "Quoted",
-  accepted: "Accepted",
-  cancelled: "Cancelled",
-};
 
 /** Inline status changer — reused by the list rows and the detail page. */
 export function QuoteStatusControl({
@@ -31,8 +25,22 @@ export function QuoteStatusControl({
   onChanged?: (status: string) => void;
   className?: string;
 }) {
+  const router = useRouter();
   const [value, setValue] = useState(status);
   const [busy, setBusy] = useState(false);
+
+  // `useState(status)` only seeds from the prop on mount — a status change
+  // from anywhere else (the Next Step banner's Accept/Decline, the new
+  // send-options email, another tab) re-renders this component with a new
+  // `status` prop but never touches `value` on its own, leaving this select
+  // showing a stale status. Resync during render (React's documented
+  // "adjust state during render" pattern) rather than in a useEffect, which
+  // would let one stale-render frame slip through before the effect ran.
+  const [prevStatus, setPrevStatus] = useState(status);
+  if (status !== prevStatus) {
+    setPrevStatus(status);
+    setValue(status);
+  }
 
   async function change(next: string) {
     if (next === value) return;
@@ -44,8 +52,12 @@ export function QuoteStatusControl({
         method: "PATCH",
         body: JSON.stringify({ status: next }),
       });
-      toast.success(`Status changed to ${LABELS[next] ?? next}.`);
+      toast.success(`Status changed to ${QUOTE_STATUS_LABELS[next] ?? next}.`);
       onChanged?.(next);
+      // The detail page's Next Step banner is server-rendered off this same
+      // status — without a refresh it'd keep showing the old step after a
+      // change made right here in the header.
+      router.refresh();
     } catch (e) {
       setValue(prev); // revert on failure
       toast.error(e instanceof ApiError ? e.message : "Couldn't update the status.");
@@ -60,9 +72,9 @@ export function QuoteStatusControl({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {STATUSES.map((s) => (
+        {QUOTE_STATUS_VALUES.map((s) => (
           <SelectItem key={s} value={s}>
-            {LABELS[s]}
+            {QUOTE_STATUS_LABELS[s]}
           </SelectItem>
         ))}
       </SelectContent>

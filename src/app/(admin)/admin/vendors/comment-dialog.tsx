@@ -31,7 +31,11 @@ import { CATEGORY_LABELS, PRIORITY_LABELS, type CommentRow } from "./comments-se
 
 const FIELDS = ["title", "content", "category", "priority"] as const;
 
-/** Mounted fresh per open (parent conditional-renders it) so RHF state resets. */
+/**
+ * Comment details/edit — opened via the info icon on an existing row.
+ * New comments are posted inline from CommentsSection's quick-add row, so
+ * this dialog is always in "editing" mode now.
+ */
 export function CommentDialog({
   vendorId,
   comment,
@@ -39,37 +43,28 @@ export function CommentDialog({
   onSaved,
 }: {
   vendorId: number;
-  comment?: CommentRow;
+  comment: CommentRow;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const editing = comment !== undefined;
   const form = useForm<VendorCommentInput>({
     resolver: zodResolver(vendorCommentInput),
     defaultValues: {
-      title: comment?.title ?? "",
-      content: comment?.content ?? "",
-      category: comment?.category ?? "general",
-      priority: comment?.priority ?? "normal",
+      title: comment.title,
+      content: comment.content,
+      category: comment.category,
+      priority: comment.priority,
     },
   });
   const { errors, isSubmitting } = form.formState;
 
   async function onSubmit(values: VendorCommentInput) {
     try {
-      if (editing) {
-        await adminApi(`/api/admin/vendors/${vendorId}/comments/${comment.id}`, {
-          method: "PUT",
-          body: JSON.stringify(values),
-        });
-        toast.success("Comment updated.");
-      } else {
-        await adminApi(`/api/admin/vendors/${vendorId}/comments`, {
-          method: "POST",
-          body: JSON.stringify(values),
-        });
-        toast.success("Comment added.");
-      }
+      await adminApi(`/api/admin/vendors/${vendorId}/comments/${comment.id}`, {
+        method: "PUT",
+        body: JSON.stringify(values),
+      });
+      toast.success("Comment updated.");
       onSaved();
     } catch (e) {
       handleFormError(e, form.setError, FIELDS);
@@ -109,7 +104,7 @@ export function CommentDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{editing ? "Edit comment" : "Add comment"}</DialogTitle>
+          <DialogTitle>Comment details</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
           <FieldGroup>
@@ -143,9 +138,9 @@ export function CommentDialog({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-tys-orange text-white hover:bg-tys-orange/90"
+                className="bg-tys-blue text-white hover:bg-tys-blue/90"
               >
-                {isSubmitting ? "Saving…" : editing ? "Save changes" : "Add comment"}
+                {isSubmitting ? "Saving…" : "Save changes"}
               </Button>
             </DialogFooter>
           </FieldGroup>

@@ -160,10 +160,18 @@
 :root {
   --tys-navy: #16294e; /* primary — trust/marine logistics */
   --tys-navy-deep: #0d1a33; /* sidebar & dark surfaces */
-  --tys-orange: #f26a21; /* action accent — CTAs, active nav */
+  --tys-blue: #0364ff; /* action accent — CTAs, active nav (matches the public site's brand blue) */
   --tys-ink: #1d2534; /* body text */
   --tys-paper: #f7f8fa; /* app background */
   --tys-mist: #dde2ea; /* borders/dividers */
+
+  /* Secondary accents (SETU-reference-inspired) — for pages that need more
+     than one accent color to distinguish action types (e.g. Vendors: a Map
+     View action vs. a Services filter vs. the primary blue Add action),
+     rather than every button sharing the single --tys-blue accent. */
+  --tys-indigo: #7c3aed; /* secondary accent — map/location actions, icon badges */
+  --tys-rose: #e11d48; /* secondary accent — filters/services, active tab */
+  --tys-teal: #0d9488; /* secondary accent — vendor type filter */
 
   --background: var(--tys-paper);
   --foreground: var(--tys-ink);
@@ -175,18 +183,18 @@
 
   --sidebar: var(--tys-navy-deep);
   --sidebar-foreground: #e6eaf2;
-  --sidebar-primary: var(--tys-orange);
+  --sidebar-primary: var(--tys-blue);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: color-mix(in oklch, var(--tys-navy-deep) 70%, white 8%);
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: color-mix(in oklch, var(--tys-navy-deep) 80%, white 12%);
-  --sidebar-ring: var(--tys-orange);
+  --sidebar-ring: var(--tys-blue);
 }
 
 /* ── TYS dark palette ─────────────────────────────────────────────────────
    Brand-aligned dark mode (overrides the stock shadcn .dark block above, same
    way the light :root override works). Surfaces are dark NAVY, not gray; the
-   brand ORANGE stays the primary/accent action color; the sidebar keeps a
+   brand BLUE stays the primary/accent action color; the sidebar keeps a
    distinct lighter navy so it never merges into the page background. */
 .dark {
   --background: #0b1120; /* near-black dark navy — page background */
@@ -195,7 +203,7 @@
   --card-foreground: #e6eaf2;
   --popover: #131c30;
   --popover-foreground: #e6eaf2;
-  --primary: var(--tys-orange); /* brand orange reads well on dark */
+  --primary: var(--tys-blue); /* brand blue reads well on dark */
   --primary-foreground: #ffffff;
   --secondary: #1b2942; /* subtle filled surface */
   --secondary-foreground: #e6eaf2;
@@ -207,27 +215,30 @@
   --destructive-foreground: #ffffff;
   --border: #26324a; /* low-contrast light-on-dark divider */
   --input: #2d3a54; /* inputs a touch more visible than borders */
-  --ring: var(--tys-orange); /* orange focus ring in dark */
+  --ring: var(--tys-blue); /* blue focus ring in dark */
 
   /* Sidebar: distinct navy, clearly separated from both bg and cards. */
   --sidebar: #16294e; /* brand navy (tys-navy) — lighter than the page bg */
   --sidebar-foreground: #e6eaf2;
-  --sidebar-primary: var(--tys-orange);
+  --sidebar-primary: var(--tys-blue);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #1f345c; /* nav hover */
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #24406e;
-  --sidebar-ring: var(--tys-orange);
+  --sidebar-ring: var(--tys-blue);
 }
 
 @theme inline {
-  /* Brand tokens as Tailwind colors (bg-tys-orange, text-tys-navy, …). */
+  /* Brand tokens as Tailwind colors (bg-tys-blue, text-tys-navy, …). */
   --color-tys-navy: var(--tys-navy);
   --color-tys-navy-deep: var(--tys-navy-deep);
-  --color-tys-orange: var(--tys-orange);
+  --color-tys-blue: var(--tys-blue);
   --color-tys-ink: var(--tys-ink);
   --color-tys-paper: var(--tys-paper);
   --color-tys-mist: var(--tys-mist);
+  --color-tys-indigo: var(--tys-indigo);
+  --color-tys-rose: var(--tys-rose);
+  --color-tys-teal: var(--tys-teal);
 
   /* Type scale (~1.25 ratio). Use text-display/h1/h2/h3 — not ad-hoc sizes. */
   --text-display: 2.44rem;

@@ -19,6 +19,14 @@ import { hashSsn } from "@/lib/pii";
 
 export const VENDOR_INCLUDE = {
   vendorType: { select: { id: true, name: true } },
+  addedBy: { select: { id: true, name: true } },
+  // First couple of assigned services, for the list's "Services" column —
+  // a vendor can have many; showing all would need its own cell layout.
+  vendorServices: {
+    take: 2,
+    orderBy: { assignedAt: "asc" },
+    select: { service: { select: { name: true } } },
+  },
   // Dependent-row counts for the delete confirmation. This nested _count does
   // NOT pass through the soft-delete extension, so it includes trashed
   // contacts/comments — correct: a vendor hard-delete cascades them all away.
@@ -108,14 +116,27 @@ export async function findVendorOr404(param: string): Promise<bigint> {
  * (the money decimal-as-string contract R3 does not apply to coordinates).
  */
 type VendorCounts = { contacts: number; comments: number; vendorServices: number };
+type VendorAddedBy = { id: bigint; name: string };
+type VendorServiceName = { service: { name: string } };
 
-export function serializeVendor<T extends Vendor & { _count?: VendorCounts }>(row: T) {
-  const { ssnNumber, ssnNumberHash: _hash, latitude, longitude, _count, ...rest } = row;
+export function serializeVendor<
+  T extends Vendor & {
+    _count?: VendorCounts;
+    addedBy?: VendorAddedBy;
+    vendorServices?: VendorServiceName[];
+  },
+>(row: T) {
+  const { ssnNumber, ssnNumberHash: _hash, latitude, longitude, _count, addedBy, vendorServices, ...rest } =
+    row;
   return {
     ...rest,
     latitude: latitude == null ? null : Number(latitude),
     longitude: longitude == null ? null : Number(longitude),
     hasSsn: ssnNumber != null,
+    ...(addedBy ? { createdByName: addedBy.name } : {}),
+    ...(vendorServices
+      ? { serviceNames: vendorServices.map((vs) => vs.service.name) }
+      : {}),
     ...(_count
       ? {
           counts: {

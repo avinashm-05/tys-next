@@ -1,14 +1,17 @@
 "use client";
 
+import type { Icon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalculatorIcon,
+  CurrencyDollarIcon,
   FileTextIcon,
-  PackageIcon,
+  MapPinLineIcon,
+  ShippingContainerIcon,
   SlidersHorizontalIcon,
   SquaresFourIcon,
   TruckIcon,
+  UsersIcon,
 } from "@phosphor-icons/react";
 import {
   Sidebar,
@@ -22,30 +25,87 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  SidebarRail,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { SidebarProfile } from "@/components/admin/sidebar-profile";
 
 // Full nav per migration/07-frontend.md. Unbuilt sections resolve to the
 // shared [...unbuilt] placeholder page until their phase ships.
 const ITEMS = [
   { title: "Dashboard", href: "/admin", icon: SquaresFourIcon },
   { title: "Quotes", href: "/admin/quotes", icon: FileTextIcon },
-  { title: "Price Check", href: "/admin/price-check", icon: CalculatorIcon },
-  { title: "Services", href: "/admin/services", icon: PackageIcon },
+  { title: "Customers", href: "/admin/customers", icon: UsersIcon },
+  { title: "Get Rates", href: "/admin/price-check", icon: CurrencyDollarIcon },
+  { title: "Shipments", href: "/admin/shipments", icon: ShippingContainerIcon },
+  { title: "Tracking", href: "/admin/tracking", icon: MapPinLineIcon },
 ] as const;
 
+// Services and Vendor Types no longer have standalone management pages —
+// both are creatable inline from the fields that use them (vendor type field,
+// service offered tab), so there's nothing left to browse/edit separately.
 const VENDOR_ITEMS = [
   { title: "List", href: "/admin/vendors" },
   { title: "Map", href: "/admin/vendors/map" },
-  { title: "Types", href: "/admin/vendor-types" },
 ] as const;
 
 const SETTINGS_ITEMS = [{ title: "FedEx Markup", href: "/admin/settings" }] as const;
 
 // Active nav item is the one orange element per view (docs/design.md).
+// rounded-xl overrides the sidebar primitive's default rounded-none — every
+// other control in the admin (buttons, cards, badges) is soft-cornered, so a
+// sharp-edged nav read as visually inconsistent.
 const ACTIVE =
-  "data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:hover:bg-sidebar-primary data-active:hover:text-sidebar-primary-foreground";
+  "rounded-xl data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:hover:bg-sidebar-primary data-active:hover:text-sidebar-primary-foreground";
 
-export function AppSidebar() {
+/**
+ * A nav item with sub-links (Vendors, Settings). The icon always navigates
+ * straight to `href` (its default/first sub-item) — collapsed or expanded —
+ * same as every other nav item; it never requires an extra picker step.
+ * Sub-links show inline when expanded; the sidebar primitive hides
+ * SidebarMenuSub by itself once collapsed to icon-rail width.
+ */
+function SidebarNavGroup({
+  title,
+  href,
+  icon: IconComp,
+  items,
+  isSectionActive,
+  isActive,
+}: {
+  title: string;
+  href: string;
+  icon: Icon;
+  items: readonly { title: string; href: string }[];
+  isSectionActive: boolean;
+  isActive: (href: string) => boolean;
+}) {
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild isActive={isSectionActive} tooltip={title} className={ACTIVE}>
+        <Link href={href}>
+          <IconComp />
+          <span>{title}</span>
+        </Link>
+      </SidebarMenuButton>
+      <SidebarMenuSub>
+        {items.map((item) => (
+          <SidebarMenuSubItem key={item.href}>
+            <SidebarMenuSubButton asChild isActive={isActive(item.href)} className={ACTIVE}>
+              <Link href={item.href}>{item.title}</Link>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+        ))}
+      </SidebarMenuSub>
+    </SidebarMenuItem>
+  );
+}
+
+export function AppSidebar({
+  user,
+}: {
+  user: { name: string; email: string; role: string | null };
+}) {
   const pathname = usePathname();
   // Exact for the dashboard; prefix for sections — longest match wins so
   // /admin/vendors/map lights "Map", not "List".
@@ -57,14 +117,28 @@ export function AppSidebar() {
       (other) => other.length > href.length && pathname.startsWith(other),
     );
   };
+  // Broader match for a group's own row (Vendors/Settings): true anywhere
+  // under that section, unlike isActive's single-most-specific-item rule.
+  const isSection = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <Sidebar>
-      <SidebarHeader className="px-4 py-3">
-        <Link href="/admin" className="text-sm font-semibold text-sidebar-primary-foreground">
-          TYS Global Logistics
-          <span className="block text-xs font-normal text-sidebar-foreground/70">Admin</span>
-        </Link>
+    <Sidebar collapsible="icon" variant="floating">
+      <SidebarHeader className="px-4 py-3 group-data-[collapsible=icon]:px-2">
+        {/* min-h keeps this row's own height constant across collapse — the
+            label disappearing (`hidden`, not animatable) would otherwise
+            shrink the header and visibly jolt the nav list below it. Trigger
+            stays first/fixed in place rather than re-centering, so it isn't
+            the thing that visibly jumps either. */}
+        <div className="flex min-h-9 items-center gap-2">
+          <SidebarTrigger className="shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" />
+          <Link
+            href="/admin"
+            className="text-sm font-semibold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden"
+          >
+            TYS Global Logistics
+            <span className="block text-xs font-normal text-sidebar-foreground/70">Admin</span>
+          </Link>
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -72,7 +146,12 @@ export function AppSidebar() {
             <SidebarMenu>
               {ITEMS.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={isActive(item.href)} className={ACTIVE}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={item.title}
+                    className={ACTIVE}
+                  >
                     <Link href={item.href}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -80,44 +159,28 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className={ACTIVE}>
-                  <Link href="/admin/vendors">
-                    <TruckIcon />
-                    <span>Vendors</span>
-                  </Link>
-                </SidebarMenuButton>
-                <SidebarMenuSub>
-                  {VENDOR_ITEMS.map((item) => (
-                    <SidebarMenuSubItem key={item.href}>
-                      <SidebarMenuSubButton asChild isActive={isActive(item.href)} className={ACTIVE}>
-                        <Link href={item.href}>{item.title}</Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className={ACTIVE}>
-                  <Link href="/admin/settings">
-                    <SlidersHorizontalIcon />
-                    <span>Settings</span>
-                  </Link>
-                </SidebarMenuButton>
-                <SidebarMenuSub>
-                  {SETTINGS_ITEMS.map((item) => (
-                    <SidebarMenuSubItem key={item.href}>
-                      <SidebarMenuSubButton asChild isActive={isActive(item.href)} className={ACTIVE}>
-                        <Link href={item.href}>{item.title}</Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </SidebarMenuItem>
+              <SidebarNavGroup
+                title="Vendors"
+                href="/admin/vendors"
+                icon={TruckIcon}
+                items={VENDOR_ITEMS}
+                isSectionActive={isSection("/admin/vendors")}
+                isActive={isActive}
+              />
+              <SidebarNavGroup
+                title="Settings"
+                href="/admin/settings"
+                icon={SlidersHorizontalIcon}
+                items={SETTINGS_ITEMS}
+                isSectionActive={isSection("/admin/settings")}
+                isActive={isActive}
+              />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarProfile user={user} />
+      <SidebarRail />
     </Sidebar>
   );
 }

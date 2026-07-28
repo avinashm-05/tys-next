@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeroBand } from "@/components/public/page-hero-band";
+import { ServiceJsonLd } from "@/components/public/service-json-ld";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 import {
   ServiceIntro,
   ServiceSteps,
@@ -19,6 +21,14 @@ export const metadata: Metadata = {
 export default function AutoTransportPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Services", path: "/services" },
+          { name: "Auto Transport", path: "/services/auto-transport" },
+        ]}
+      />
+      <ServiceJsonLd name="Auto Transport" description="Nationwide auto transport for cars, motorcycles, and fleet vehicles." slug="auto-transport" />
       <PageHeroBand
         title="Auto Transport"
         subtitle="Ship your car, motorcycle, or fleet vehicle anywhere in the country — safely, on schedule, and fully insured."

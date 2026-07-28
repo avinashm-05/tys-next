@@ -78,7 +78,7 @@ export function ConfirmDeleteDialog({
           </Button>
           <Button
             variant={confirmVariant}
-            className={confirmVariant === "default" ? "bg-tys-orange text-white hover:bg-tys-orange/90" : undefined}
+            className={confirmVariant === "default" ? "bg-tys-blue text-white hover:bg-tys-blue/90" : undefined}
             onClick={handleConfirm}
             disabled={busy}
           >

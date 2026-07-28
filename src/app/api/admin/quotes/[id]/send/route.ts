@@ -88,7 +88,7 @@ export const POST = adminRoute<Ctx>(async (_req, ctx, session) => {
   };
 
   try {
-    await sendQuoteConfirmationEmail(data);
+    await sendQuoteConfirmationEmail(data, { fromSales: true });
   } catch {
     // sendMail already logged the failure.
     throw new HttpError(502, "The quote email could not be sent. Try again.");

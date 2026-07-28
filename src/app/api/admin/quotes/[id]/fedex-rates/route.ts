@@ -3,6 +3,7 @@ import { adminRoute } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isUnitedStates, normalizeCode } from "@/lib/countries";
 import { FedExClient } from "@/lib/fedex/client";
+import { rateCredentials } from "@/lib/fedex/config";
 import { FedExRateQuoteService, type ShipmentInput } from "@/lib/fedex/rate-quote";
 import { parseId } from "@/lib/list-query";
 import {
@@ -56,7 +57,7 @@ export const GET = adminRoute<Ctx>(async (req, ctx) => {
     packaging_type: o.packaging_type ?? null,
   };
 
-  const service = new FedExRateQuoteService(new FedExClient());
+  const service = new FedExRateQuoteService(new FedExClient(rateCredentials()));
   const domestic = isUnitedStates(quote.fromCountry) && isUnitedStates(quote.toCountry);
 
   // US↔US → domestic path + domestic markup (unchanged). Any other route →

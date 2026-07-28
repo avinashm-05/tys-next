@@ -155,7 +155,7 @@ export function ContactDialog({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-tys-orange text-white hover:bg-tys-orange/90"
+                className="bg-tys-blue text-white hover:bg-tys-blue/90"
               >
                 {isSubmitting ? "Saving…" : editing ? "Save changes" : "Add contact"}
               </Button>

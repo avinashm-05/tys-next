@@ -2,6 +2,7 @@ import { z } from "zod";
 import { publicApiRoute } from "@/lib/public-route";
 import { emptyStringsToNull } from "@/lib/validation/common";
 import { FedExClient } from "@/lib/fedex/client";
+import { rateCredentials } from "@/lib/fedex/config";
 import { validatePostalCode } from "@/lib/fedex/postal-validation";
 
 // Public port of QuoteController@validatePostal (30/min, same-origin).
@@ -26,7 +27,7 @@ export const POST = publicApiRoute({ name: "quotes:validate-postal", limit: 30 }
     return Response.json({ valid: true, cleaned_postal_code: data.postal_code, location: [] });
   }
 
-  const result = await validatePostalCode(new FedExClient(), data.country_code, data.postal_code);
+  const result = await validatePostalCode(new FedExClient(rateCredentials()), data.country_code, data.postal_code);
   if (!result.valid) {
     return Response.json({ valid: false, message: result.message }, { status: 422 });
   }

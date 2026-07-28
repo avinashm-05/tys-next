@@ -5,6 +5,7 @@ import { quoteStoreInput } from "@/lib/validation/quote-store";
 import { calculateChargeableWeight } from "@/lib/chargeable-weight";
 import { isUnitedStates } from "@/lib/countries";
 import { FedExClient } from "@/lib/fedex/client";
+import { rateCredentials } from "@/lib/fedex/config";
 import { FedExRateQuoteService, type ShipmentInput } from "@/lib/fedex/rate-quote";
 import { getFedexMarkupPercentage } from "@/lib/settings";
 import { generateTrackingToken, trackingUrl } from "@/lib/email-tracking";
@@ -209,7 +210,7 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
       auto_details: clean(autoDetails),
       total_chargeable_weight: totalChargeableWeight,
     };
-    const result = await new FedExRateQuoteService(new FedExClient()).quote(
+    const result = await new FedExRateQuoteService(new FedExClient(rateCredentials())).quote(
       shipment,
       await getFedexMarkupPercentage(),
     );

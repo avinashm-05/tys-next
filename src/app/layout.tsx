@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = (process.env.APP_URL ?? "https://tysgloballogistics.com").replace(/\/+$/, "");
+const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(/\/+$/, "");
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -36,7 +36,11 @@ export const metadata: Metadata = {
     locale: "en_US",
   },
   twitter: {
-    card: "summary",
+    // "summary_large_image" matches the 1200x630 opengraph-image.png (Next's
+    // file convention, src/app/opengraph-image.png) — Twitter/X reuses the
+    // Open Graph image for this card type automatically, no separate
+    // twitter-image file needed.
+    card: "summary_large_image",
     title: "TYS Global Logistics",
     description: "International shipping quotes and logistics services.",
   },

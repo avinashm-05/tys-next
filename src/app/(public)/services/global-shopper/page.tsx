@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeroBand } from "@/components/public/page-hero-band";
+import { ServiceJsonLd } from "@/components/public/service-json-ld";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 import {
   ServiceIntro,
   ServiceSteps,
@@ -19,6 +21,14 @@ export const metadata: Metadata = {
 export default function GlobalShopperPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Services", path: "/services" },
+          { name: "Global Shopper", path: "/services/global-shopper" },
+        ]}
+      />
+      <ServiceJsonLd name="Global Shopper" description="Shop US stores with a free U.S. address and ship your purchases anywhere in the world." slug="global-shopper" />
       <PageHeroBand
         title="Global Shopper"
         subtitle="Shop from your favorite US stores and let TYS Global Logistics ship it all to your door, anywhere in the world."
