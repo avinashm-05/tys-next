@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircleIcon } from "@phosphor-icons/react/dist/ssr";
 import { GoogleAdsConversion } from "@/components/public/google-ads-conversion";
+import { GtmConversionEvent } from "@/components/public/analytics-scripts";
 
 export const metadata: Metadata = {
   title: "Thank You - TYS Global Logistics",
@@ -25,6 +26,7 @@ export default async function ThankYouPage({
   return (
     <section className="bg-brand-light px-4 py-20 md:px-8">
       <GoogleAdsConversion transactionId={transactionId} />
+      <GtmConversionEvent transactionId={transactionId} />
       <div className="mx-auto max-w-2xl rounded-3xl bg-white p-10 text-center shadow-[0_20px_60px_rgba(16,24,40,0.08)] md:p-14">
         <CheckCircleIcon size={72} weight="fill" className="mx-auto text-emerald-500" />
         <h1 className="mt-6 text-2xl font-extrabold text-ink md:text-3xl">Dear {customer},</h1>

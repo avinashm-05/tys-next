@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/public/site-header";
 import { ConditionalFooter } from "@/components/public/conditional-footer";
 import { OrganizationJsonLd } from "@/components/public/organization-json-ld";
 import { WebsiteJsonLd } from "@/components/public/website-json-ld";
+import { AnalyticsScripts, GtmNoscript } from "@/components/public/analytics-scripts";
 
 // Public brand fonts (B1 redesign) — Inter for body/UI, Oldschool Grotesk for
 // display headings. Scoped to this layout only (via the .variable className
@@ -28,6 +29,11 @@ export const metadata: Metadata = {
   title: "International Shipping & Freight Forwarding | TYS Global Logistics",
   description:
     "Trusted domestic and international logistics across the USA and worldwide. Get a free shipping quote in seconds.",
+  // Renders as <meta name="google-site-verification" ...> — Next's own
+  // convention for this rather than a hand-written meta tag. No-ops if unset.
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
 // Public (apex) layout — B1/B2 redesign. Tailwind only; the legacy
@@ -40,6 +46,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <div
       className={`flex min-h-full flex-col bg-white font-body text-ink ${inter.variable} ${oldschoolGrotesk.variable}`}
     >
+      <GtmNoscript />
+      <AnalyticsScripts />
       <OrganizationJsonLd />
       <WebsiteJsonLd />
       <SiteHeader />
