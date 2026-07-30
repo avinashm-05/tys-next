@@ -10,6 +10,7 @@ export function AnalyticsScripts() {
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
   const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID;
+  const adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
 
   return (
     <>
@@ -21,6 +22,21 @@ export function AnalyticsScripts() {
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', ${JSON.stringify(gaId)});`}
+          </Script>
+        </>
+      )}
+      {/* Google Ads base tag — required site-wide (not just the thank-you
+          page) for remarketing/audience signals. Separate from the
+          conversion-specific event in GoogleAdsConversion, which only fires
+          on the thank-you page and reuses the gtag() global this sets up. */}
+      {adsId && (
+        <>
+          <Script src={`https://www.googletagmanager.com/gtag/js?id=${adsId}`} strategy="afterInteractive" />
+          <Script id="google-ads-init" strategy="afterInteractive">
+            {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', ${JSON.stringify(adsId)});`}
           </Script>
         </>
       )}

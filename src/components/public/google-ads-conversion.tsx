@@ -4,8 +4,9 @@ import Script from "next/script";
 
 // Fires a Google Ads "lead submitted" conversion once the thank-you page
 // mounts, so Ads can attribute a submitted quote back to the campaign/keyword
-// that drove it. No-ops entirely when the env vars aren't set (e.g. local
-// dev) — gtag.js never loads, so nothing breaks. `transactionId` (the quote
+// that drove it. Reuses the gtag() global already set up site-wide by
+// AnalyticsScripts's Google Ads base tag — no-ops entirely when the
+// conversion label isn't set (e.g. local dev). `transactionId` (the quote
 // id) dedupes an accidental page refresh from double-counting the same lead.
 export function GoogleAdsConversion({ transactionId }: { transactionId?: string }) {
   const adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
@@ -17,15 +18,10 @@ export function GoogleAdsConversion({ transactionId }: { transactionId?: string 
   if (transactionId) eventParams.transaction_id = transactionId;
 
   return (
-    <>
-      <Script src={`https://www.googletagmanager.com/gtag/js?id=${adsId}`} strategy="afterInteractive" />
-      <Script id="google-ads-conversion" strategy="afterInteractive">
-        {`window.dataLayer = window.dataLayer || [];
+    <Script id="google-ads-conversion" strategy="afterInteractive">
+      {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', ${JSON.stringify(adsId)});
 gtag('event', 'conversion', ${JSON.stringify(eventParams)});`}
-      </Script>
-    </>
+    </Script>
   );
 }
