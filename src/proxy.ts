@@ -47,6 +47,19 @@ function hasSessionCookie(req: NextRequest): boolean {
 export default function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Canonicalize off www before anything else. A request landing on
+  // www.<domain> (browser autocomplete/history, an old cached search
+  // snippet, etc.) renders identically — same app, no DNS distinction —
+  // but its Origin header won't match BETTER_AUTH_URL/trustedOrigins
+  // (apex-only), so every auth call silently fails with "Invalid origin".
+  // 308 (not 301/302) so POST bodies survive the redirect.
+  const hostname = (req.headers.get("host") ?? "").split(":")[0];
+  if (hostname.startsWith("www.")) {
+    const url = req.nextUrl.clone();
+    url.host = hostname.slice(4);
+    return NextResponse.redirect(url, 308);
+  }
+
   if (startsWithAny(pathname, SHARED_PREFIXES)) return NextResponse.next();
 
   // ── Single-domain (path) mode ────────────────────────────────────────────
