@@ -14,8 +14,35 @@ function esc(v: unknown): string {
   );
 }
 let transporter: Transporter | null = null;
+let salesTransporter: Transporter | null = null;
 
-function getTransporter(): Transporter {
+// sales@ is a genuinely separate mailbox on Hostinger, not an alias — an SMTP
+// session authenticated as noreply@ gets a hard 553 "Sender address rejected:
+// not owned by user" if it tries to claim a From of sales@ (confirmed live,
+// 2026-08-06; the earlier assumption below this function used to be that
+// domain-wide SPF/DKIM covered it, which is wrong for Hostinger's own relay).
+// Every send that uses SALES_FROM must authenticate with sales@'s own
+// credentials — this second transporter does that; falls back to the default
+// (noreply@) transporter if SALES_SMTP_PASSWORD isn't configured, so a missing
+// credential degrades to "wrong From header, message still sends" rather than
+// silently swallowing sales-attributed mail again.
+function getTransporter(useSales = false): Transporter {
+  if (useSales) {
+    if (salesTransporter) return salesTransporter;
+    if (process.env.NODE_ENV === "production" && process.env.SALES_SMTP_PASSWORD) {
+      salesTransporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT ?? 587),
+        secure: Number(process.env.SMTP_PORT ?? 587) === 465,
+        auth: {
+          user: process.env.SALES_SMTP_USERNAME ?? process.env.MAIL_SALES_ADDRESS ?? "sales@tysgloballogistics.com",
+          pass: process.env.SALES_SMTP_PASSWORD,
+        },
+      });
+      return salesTransporter;
+    }
+    return getTransporter(false);
+  }
   if (transporter) return transporter;
   transporter =
     process.env.NODE_ENV === "production"
@@ -40,11 +67,10 @@ const FROM = `"${FROM_NAME}" <${process.env.MAIL_FROM_ADDRESS ?? "noreply@tysglo
 // mailbox. Swap via env if the rep changes; no code edit needed.
 export const SALES_REP_NAME = process.env.MAIL_SALES_REP_NAME ?? "Krutik";
 // Anything that invites a reply (or is a human-facing quote/sales
-// conversation) sends from this monitored address instead of no-reply —
-// SMTP still authenticates as MAIL_FROM_ADDRESS (noreply), only the visible
-// From header differs; the domain's SPF/DKIM/DMARC cover the whole domain,
-// not one mailbox, so this works the same way the site already publishes
-// sales@ as its support contact address.
+// conversation) sends from this monitored address instead of no-reply.
+// Requires authenticating as sales@ itself (see getTransporter's useSales
+// param) — every call site using this as `from` must also pass
+// `useSalesAuth: true` to sendMail, or Hostinger's relay rejects it outright.
 export const SALES_FROM = `"${SALES_REP_NAME} — TYS Global Logistics" <${process.env.MAIL_SALES_ADDRESS ?? "sales@tysgloballogistics.com"}>`;
 
 const SITE_URL = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(/\/+$/, "");
@@ -88,10 +114,19 @@ ${opts.trackingUrl ? `<img src="${esc(opts.trackingUrl)}" width="1" height="1" s
 </body></html>`;
 }
 
-export async function sendMail(opts: { to: string; subject: string; text: string; html: string; from?: string }) {
+export async function sendMail(opts: {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  from?: string;
+  /** True for anything sent with `from: SALES_FROM` — authenticates as
+   *  sales@ itself instead of noreply@ (see getTransporter). */
+  useSalesAuth?: boolean;
+}) {
   try {
-    const { from, ...rest } = opts;
-    const info = await getTransporter().sendMail({ from: from ?? FROM, ...rest });
+    const { from, useSalesAuth, ...rest } = opts;
+    const info = await getTransporter(useSalesAuth).sendMail({ from: from ?? FROM, ...rest });
     if (process.env.NODE_ENV !== "production") {
       console.log("[mail:dev]", info.message);
     }
@@ -358,7 +393,14 @@ ${signOff}`;
  */
 export async function sendQuoteConfirmationEmail(d: QuoteEmailData, opts: { fromSales?: boolean } = {}) {
   const { subject, html, text } = renderQuoteConfirmation(d, opts);
-  return sendMail({ to: d.to, subject, text, html, from: opts.fromSales ? SALES_FROM : undefined });
+  return sendMail({
+    to: d.to,
+    subject,
+    text,
+    html,
+    from: opts.fromSales ? SALES_FROM : undefined,
+    useSalesAuth: opts.fromSales,
+  });
 }
 
 // ── Multi-option quote email — support picks a few FedEx services (rather
@@ -434,7 +476,7 @@ ${contactLine}
  */
 export async function sendQuoteOptionsEmail(d: QuoteOptionsEmailData) {
   const { subject, html, text } = renderQuoteOptions(d);
-  return sendMail({ to: d.to, subject, text, html, from: SALES_FROM });
+  return sendMail({ to: d.to, subject, text, html, from: SALES_FROM, useSalesAuth: true });
 }
 
 // ── Admin new-quote notification (net-new in B2; the old site had none) ──
