@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { BookShipmentLoginForm } from "@/components/public/book-shipment-login-form";
+import { ShipmentWizardForm } from "@/components/public/shipment-wizard-form";
 
 export const metadata: Metadata = { title: "Book Shipment — TYS Global Logistics" };
 
-export default async function BookShipmentPage() {
-  const session = await getSession();
-  if (session?.user) redirect("/account");
-
+function LoginGate() {
   return (
     <section className="relative overflow-hidden bg-gray-50 px-4 py-20 md:px-8">
       <svg
@@ -50,4 +48,27 @@ export default async function BookShipmentPage() {
       </div>
     </section>
   );
+}
+
+function VerifyEmailNotice() {
+  return (
+    <section className="bg-gray-50 px-4 py-20 md:px-8">
+      <div className="mx-auto max-w-md rounded-3xl border-t-4 border-brand bg-white p-8 text-center shadow-[0_20px_60px_rgba(16,24,40,0.1)] md:p-10">
+        <h1 className="text-xl font-bold text-ink">Verify your email</h1>
+        <p className="mt-2 text-sm text-ink-muted">
+          Check your inbox for the verification link before booking a shipment.
+        </p>
+        <Link href="/account/verify-email" className="mt-6 inline-block font-semibold text-brand hover:underline">
+          Resend the verification email
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+export default async function BookShipmentPage() {
+  const session = await getSession();
+  if (!session?.user) return <LoginGate />;
+  if (!session.user.emailVerified) return <VerifyEmailNotice />;
+  return <ShipmentWizardForm />;
 }

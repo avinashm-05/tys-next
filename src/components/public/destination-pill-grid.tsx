@@ -1,4 +1,4 @@
-import { flagEmoji } from "@/lib/flag-emoji";
+import { FlagIcon } from "@/components/public/flag-icon";
 
 export type DestinationCountry = { code: string; label: string };
 
@@ -19,9 +19,7 @@ export function DestinationPillGrid({
           key={c.code + c.label}
           className="flex items-center gap-3 rounded-xl bg-brand-pale/60 px-4 py-3 text-sm text-ink"
         >
-          <span className="text-lg leading-none" aria-hidden>
-            {flagEmoji(c.code)}
-          </span>
+          <FlagIcon code={c.code} className="h-4 w-6 shrink-0" />
           <span>
             {verb} to {c.label}
           </span>

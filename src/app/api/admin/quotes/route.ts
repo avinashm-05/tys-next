@@ -2,6 +2,8 @@ import type { Prisma } from "@prisma/client";
 import { adminRoute } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listResponse, parseListParams } from "@/lib/list-query";
+import { emptyStringsToNull } from "@/lib/validation/common";
+import { adminQuoteDetailInput } from "@/lib/validation/admin-quote-detail";
 import { quoteStatus } from "@/lib/validation/quote";
 import { packageTypeWhere, QUOTE_INCLUDE, serializeQuoteRow } from "./helpers";
 
@@ -65,4 +67,74 @@ export const GET = adminRoute(async (req) => {
     db.quote.count({ where }),
   ]);
   return listResponse(rows.map(serializeQuoteRow), total, p);
+});
+
+// Admin "New Quote" — staff building a quote from scratch (phone-in lead,
+// no public submission to convert). Same shape as the detail editor's PATCH,
+// plus a fresh Quote row and package_type recomputed from whatever package
+// rows were added (there's no original customer selection to preserve here,
+// unlike an edit — see PATCH /api/admin/quotes/[id]).
+export const POST = adminRoute(async (req, _ctx, session) => {
+  const data = adminQuoteDetailInput.parse(emptyStringsToNull(await req.json()));
+  const now = new Date();
+  const packageType = [...new Set(data.packages.map((p) => p.package_type))].join(",");
+
+  const created = await db.$transaction(async (tx) => {
+    const quote = await tx.quote.create({
+      data: {
+        fromCountry: data.from_country,
+        fromZip: data.from_zip ?? "",
+        toCountry: data.to_country,
+        toZip: data.to_zip ?? "",
+        isResidence: data.is_residence,
+        packageType,
+        name: data.contact.name ?? null,
+        email: data.contact.email ?? null,
+        mobileNumber: `${data.contact.country_code ?? ""} ${data.contact.phone ?? ""}`.trim() || null,
+        status: "pending",
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
+
+    if (data.contact.name || data.contact.email) {
+      await tx.quoteContact.create({
+        data: {
+          quoteId: quote.id,
+          name: data.contact.name ?? "",
+          email: data.contact.email ?? "",
+          countryCode: data.contact.country_code ?? "",
+          phone: data.contact.phone ?? "",
+          createdAt: now,
+          updatedAt: now,
+        },
+      });
+    }
+
+    for (const p of data.packages) {
+      await tx.packageDetail.create({
+        data: {
+          quoteId: quote.id,
+          packageType: p.package_type,
+          quantity: p.quantity,
+          weight: p.weight ?? null,
+          weightUnit: p.weight_unit ?? null,
+          length: p.length ?? null,
+          width: p.width ?? null,
+          height: p.height ?? null,
+          brandName: p.brand_name ?? null,
+          tvModel: p.tv_model ?? null,
+          carModel: p.car_model ?? null,
+          carYear: p.car_year ?? null,
+          createdAt: now,
+          updatedAt: now,
+        },
+      });
+    }
+
+    return quote;
+  });
+
+  console.info(`[audit] quote ${Number(created.id)} created from admin by user ${session.user.id}`);
+  return Response.json({ id: Number(created.id) }, { status: 201 });
 });

@@ -6,6 +6,8 @@
 // flows.
 
 import { useState } from "react";
+import Link from "next/link";
+import { CheckCircleIcon, EnvelopeSimpleIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
 import { FieldError } from "@/components/public/account/shell";
 
 type Errors = Record<string, string>;
@@ -27,10 +29,11 @@ async function readMessage(res: Response): Promise<string> {
   }
 }
 
-const field = "form-control";
-const pill = "quote-wizard-input-group-pill";
-const label = "quote-wizard-form-label";
-const cta = "fillbttn fillbttn2 w-100 mt-3";
+const inputClass =
+  "w-full rounded-xl border border-brand-light bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand disabled:bg-brand-pale disabled:text-ink-muted";
+const labelClass = "mb-1.5 block text-sm font-medium text-ink";
+const ctaClass =
+  "mt-3 w-full rounded-full bg-brand px-6 py-3 text-center text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-60";
 
 export function RegisterForm() {
   const [name, setName] = useState("");
@@ -66,53 +69,53 @@ export function RegisterForm() {
   if (done) {
     return (
       <div>
-        <p className="fw-bold mb-2">
-          <i className="fa-solid fa-envelope-circle-check me-2"></i>Check your inbox
+        <p className="mb-2 flex items-center gap-2 font-semibold text-ink">
+          <EnvelopeSimpleIcon size={18} />
+          Check your inbox
         </p>
-        <p className="m-0">
-          We sent a verification link to <strong>{email}</strong>. Click it to activate your
-          account, then <a href="/account/login">log in</a>.
+        <p className="m-0 text-sm text-ink-muted">
+          We sent a verification link to <strong className="text-ink">{email}</strong>. Click it
+          to activate your account, then{" "}
+          <Link href="/account/login" className="font-medium text-brand hover:underline">
+            log in
+          </Link>
+          .
         </p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} noValidate>
-      <div className="mb-3">
-        <label className={label}>Name</label>
-        <div className={pill}>
-          <input className={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
-        </div>
+    <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      <div>
+        <label className={labelClass}>Name</label>
+        <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
         <FieldError message={errors.name} />
       </div>
-      <div className="mb-3">
-        <label className={label}>Email address</label>
-        <div className={pill}>
-          <input type="email" className={field} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-        </div>
+      <div>
+        <label className={labelClass}>Email address</label>
+        <input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
         <FieldError message={errors.email} />
       </div>
-      <div className="mb-3">
-        <label className={label}>Password</label>
-        <div className={pill}>
-          <input type="password" className={field} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
-        </div>
+      <div>
+        <label className={labelClass}>Password</label>
+        <input type="password" className={inputClass} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
         <FieldError message={errors.password} />
       </div>
-      <div className="mb-3">
-        <label className={label}>Confirm password</label>
-        <div className={pill}>
-          <input type="password" className={field} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Repeat password" />
-        </div>
+      <div>
+        <label className={labelClass}>Confirm password</label>
+        <input type="password" className={inputClass} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Repeat password" />
         <FieldError message={errors.confirm} />
       </div>
       <FieldError message={errors.form} />
-      <button type="submit" className={cta} disabled={busy} style={{ border: "none" }}>
+      <button type="submit" className={ctaClass} disabled={busy}>
         {busy ? "Creating account…" : "Create account"}
       </button>
-      <p className="text-center mt-3 mb-0">
-        Already registered? <a href="/account/login">Log in</a>
+      <p className="m-0 text-center text-sm text-ink-muted">
+        Already registered?{" "}
+        <Link href="/account/login" className="font-medium text-brand hover:underline">
+          Log in
+        </Link>
       </p>
     </form>
   );
@@ -166,51 +169,55 @@ export function LoginForm({ verified }: { verified: boolean }) {
   }
 
   return (
-    <form onSubmit={submit} noValidate>
+    <form onSubmit={submit} noValidate className="flex flex-col gap-4">
       {verified && (
-        <p className="fw-bold" style={{ color: "#00a843" }}>
-          <i className="fa-solid fa-circle-check me-2"></i>Email verified — you can log in now.
+        <p className="m-0 flex items-center gap-2 font-semibold text-green-600">
+          <CheckCircleIcon size={18} />
+          Email verified — you can log in now.
         </p>
       )}
-      <div className="mb-3">
-        <label className={label}>Email address</label>
-        <div className={pill}>
-          <input type="email" className={field} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-        </div>
+      <div>
+        <label className={labelClass}>Email address</label>
+        <input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
       </div>
-      <div className="mb-3">
-        <label className={label}>Password</label>
-        <div className={pill}>
-          <input type="password" className={field} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
-        </div>
+      <div>
+        <label className={labelClass}>Password</label>
+        <input type="password" className={inputClass} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
       </div>
       <FieldError message={error} />
       {unverified && (
-        <div className="quote-wizard-error-message" style={{ display: "block" }}>
-          <p className="m-0">
-            <i className="fa-solid fa-circle-exclamation me-1"></i>Your email isn&apos;t verified
-            yet.{" "}
-            {resent ? (
-              <strong>Verification email sent — check your inbox.</strong>
-            ) : (
-              <button
-                type="button"
-                onClick={resend}
-                disabled={busy}
-                style={{ background: "none", border: "none", padding: 0, textDecoration: "underline", cursor: "pointer", color: "inherit", font: "inherit" }}
-              >
-                Resend the verification email
-              </button>
-            )}
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <p className="m-0 flex items-start gap-1.5">
+            <WarningCircleIcon size={16} className="mt-0.5 shrink-0" />
+            <span>
+              Your email isn&apos;t verified yet.{" "}
+              {resent ? (
+                <strong>Verification email sent — check your inbox.</strong>
+              ) : (
+                <button
+                  type="button"
+                  onClick={resend}
+                  disabled={busy}
+                  className="font-medium underline disabled:opacity-60"
+                >
+                  Resend the verification email
+                </button>
+              )}
+            </span>
           </p>
         </div>
       )}
-      <button type="submit" className={cta} disabled={busy} style={{ border: "none" }}>
+      <button type="submit" className={ctaClass} disabled={busy}>
         {busy ? "Signing in…" : "Log in"}
       </button>
-      <p className="text-center mt-3 mb-0">
-        <a href="/account/forgot-password">Forgot password?</a> ·{" "}
-        <a href="/account/register">Create an account</a>
+      <p className="m-0 text-center text-sm text-ink-muted">
+        <Link href="/account/forgot-password" className="font-medium text-brand hover:underline">
+          Forgot password?
+        </Link>{" "}
+        ·{" "}
+        <Link href="/account/register" className="font-medium text-brand hover:underline">
+          Create an account
+        </Link>
       </p>
     </form>
   );
@@ -237,20 +244,19 @@ export function ResendVerificationForm() {
 
   if (sent) {
     return (
-      <p className="m-0">
-        If an account exists for <strong>{email}</strong>, a verification link is on its way.
+      <p className="m-0 text-sm text-ink-muted">
+        If an account exists for <strong className="text-ink">{email}</strong>, a verification
+        link is on its way.
       </p>
     );
   }
   return (
-    <form onSubmit={submit} noValidate>
-      <div className="mb-3">
-        <label className={label}>Email address</label>
-        <div className={pill}>
-          <input type="email" className={field} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-        </div>
+    <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      <div>
+        <label className={labelClass}>Email address</label>
+        <input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
       </div>
-      <button type="submit" className={cta} disabled={busy || !email.trim()} style={{ border: "none" }}>
+      <button type="submit" className={ctaClass} disabled={busy || !email.trim()}>
         {busy ? "Sending…" : "Resend verification email"}
       </button>
     </form>
@@ -279,24 +285,25 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <p className="m-0">
-        If an account exists for <strong>{email}</strong>, a password-reset link is on its way.
+      <p className="m-0 text-sm text-ink-muted">
+        If an account exists for <strong className="text-ink">{email}</strong>, a password-reset
+        link is on its way.
       </p>
     );
   }
   return (
-    <form onSubmit={submit} noValidate>
-      <div className="mb-3">
-        <label className={label}>Email address</label>
-        <div className={pill}>
-          <input type="email" className={field} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-        </div>
+    <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      <div>
+        <label className={labelClass}>Email address</label>
+        <input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
       </div>
-      <button type="submit" className={cta} disabled={busy || !email.trim()} style={{ border: "none" }}>
+      <button type="submit" className={ctaClass} disabled={busy || !email.trim()}>
         {busy ? "Sending…" : "Send reset link"}
       </button>
-      <p className="text-center mt-3 mb-0">
-        <a href="/account/login">Back to login</a>
+      <p className="m-0 text-center text-sm text-ink-muted">
+        <Link href="/account/login" className="font-medium text-brand hover:underline">
+          Back to login
+        </Link>
       </p>
     </form>
   );
@@ -328,36 +335,39 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   if (!token) {
     return (
-      <p className="m-0">
+      <p className="m-0 text-sm text-ink-muted">
         This reset link is invalid or incomplete.{" "}
-        <a href="/account/forgot-password">Request a new one</a>.
+        <Link href="/account/forgot-password" className="font-medium text-brand hover:underline">
+          Request a new one
+        </Link>
+        .
       </p>
     );
   }
   if (done) {
     return (
-      <p className="m-0">
-        <i className="fa-solid fa-circle-check me-2" style={{ color: "#00a843" }}></i>
-        Password updated. <a href="/account/login">Log in with your new password</a>.
+      <p className="m-0 flex items-center gap-2 text-sm text-ink-muted">
+        <CheckCircleIcon size={18} className="text-green-600" />
+        Password updated.{" "}
+        <Link href="/account/login" className="font-medium text-brand hover:underline">
+          Log in with your new password
+        </Link>
+        .
       </p>
     );
   }
   return (
-    <form onSubmit={submit} noValidate>
-      <div className="mb-3">
-        <label className={label}>New password</label>
-        <div className={pill}>
-          <input type="password" className={field} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
-        </div>
+    <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      <div>
+        <label className={labelClass}>New password</label>
+        <input type="password" className={inputClass} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" />
       </div>
-      <div className="mb-3">
-        <label className={label}>Confirm new password</label>
-        <div className={pill}>
-          <input type="password" className={field} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Repeat password" />
-        </div>
+      <div>
+        <label className={labelClass}>Confirm new password</label>
+        <input type="password" className={inputClass} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Repeat password" />
       </div>
       <FieldError message={error} />
-      <button type="submit" className={cta} disabled={busy} style={{ border: "none" }}>
+      <button type="submit" className={ctaClass} disabled={busy}>
         {busy ? "Saving…" : "Set new password"}
       </button>
     </form>

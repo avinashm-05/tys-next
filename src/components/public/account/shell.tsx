@@ -1,6 +1,10 @@
-// Shared wrapper for the /account/* pages — public-site styling (the loaded
-// legacy stylesheets), NOT admin shadcn. The card class comes from the wizard's
-// location card so the portal looks native to the public site.
+import { WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
+import { PageHeroBand } from "@/components/public/page-hero-band";
+
+// Shared wrapper for the auth pages (/account/login, /register, /forgot-*,
+// /reset-*, /verify-email) — matches the legal-page pattern (PageHeroBand +
+// a centered white card) so the portal looks native to the rest of the
+// Tailwind-rebuilt public site instead of the old Bootstrap-era styling.
 export function AccountShell({
   title,
   subtitle,
@@ -13,20 +17,18 @@ export function AccountShell({
   wide?: boolean;
 }) {
   return (
-    <main
-      className="container"
-      style={{ paddingTop: 160, paddingBottom: 80, maxWidth: wide ? 960 : 560 }}
-    >
-      <h1 className="quote-wizard-section-title" style={{ marginBottom: 4 }}>
-        {title}
-      </h1>
-      {subtitle && (
-        <p className="text-muted" style={{ marginBottom: 20 }}>
-          {subtitle}
-        </p>
-      )}
-      <div className="quote-wizard-location-card">{children}</div>
-    </main>
+    <>
+      <PageHeroBand title={title} subtitle={subtitle} />
+      <section className="bg-gray-50 px-4 py-14 md:px-8">
+        <div
+          className={`mx-auto rounded-3xl border border-brand-light bg-white p-6 md:p-10 ${
+            wide ? "max-w-3xl" : "max-w-md"
+          }`}
+        >
+          {children}
+        </div>
+      </section>
+    </>
   );
 }
 
@@ -34,8 +36,8 @@ export function AccountShell({
 export function FieldError({ message }: { message?: string | null }) {
   if (!message) return null;
   return (
-    <div className="quote-wizard-error-message" style={{ display: "flex" }}>
-      <i className="fa-solid fa-circle-exclamation"></i>
+    <div className="mt-1 flex items-center gap-1.5 text-xs text-red-600">
+      <WarningCircleIcon size={14} />
       <span>{message}</span>
     </div>
   );

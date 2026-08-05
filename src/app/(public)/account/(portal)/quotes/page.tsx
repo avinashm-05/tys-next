@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireCustomerPage } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { decimal2 } from "@/lib/serialize";
 import { formatPackageTypes } from "@/lib/package-type";
-import { AccountNav, QuoteStatusPill } from "@/components/public/account/account-nav";
+import { QuoteStatusPill } from "@/components/public/account/account-nav";
 
 export const metadata: Metadata = { title: "My quotes — TYS Global Logistics" };
 
@@ -26,54 +27,54 @@ export default async function MyQuotesPage() {
   });
 
   return (
-    <main className="container" style={{ paddingTop: 160, paddingBottom: 80, maxWidth: 960 }}>
-      <AccountNav current="/account/quotes" />
-      <h1 className="quote-wizard-section-title" style={{ marginBottom: 20 }}>
-        My quotes
-      </h1>
+    <div>
+      <h1 className="mb-6 text-2xl font-bold text-ink">My quotes</h1>
 
       {quotes.length === 0 ? (
-        <div className="quote-wizard-location-card">
-          <p className="m-0">
-            No quote requests yet. <a href="/#bookShipmentForm">Get a free quote</a> to see it here.
+        <div className="rounded-2xl border border-brand-light bg-white p-6">
+          <p className="m-0 text-sm text-ink-muted">
+            No quote requests yet.{" "}
+            <Link href="/#bookShipmentForm" className="font-medium text-brand hover:underline">
+              Get a free quote
+            </Link>{" "}
+            to see it here.
           </p>
         </div>
       ) : (
-        <div className="d-flex flex-column gap-3">
+        <div className="flex flex-col gap-3">
           {quotes.map((quote) => (
-            <a
+            <Link
               key={String(quote.id)}
               href={`/account/quotes/${Number(quote.id)}`}
-              className="quote-wizard-location-card d-block"
-              style={{ textDecoration: "none", color: "inherit" }}
+              className="block rounded-2xl border border-brand-light bg-white p-5 no-underline transition hover:border-brand"
             >
-              <div className="d-flex flex-wrap align-items-center gap-3">
-                <div style={{ flex: "2 1 220px" }}>
-                  <div style={{ fontWeight: 700 }}>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="min-w-[220px] flex-[2]">
+                  <div className="font-semibold text-ink">
                     {quote.fromCountry} ({quote.fromZip}) → {quote.toCountry} ({quote.toZip})
                   </div>
-                  <div className="text-muted" style={{ fontSize: "0.85rem" }}>
+                  <div className="text-sm text-ink-muted">
                     {formatPackageTypes(quote.packageType)} · Quote #{Number(quote.id)}
                     {quote.createdAt ? ` · ${dateFmt.format(quote.createdAt)}` : ""}
                   </div>
                 </div>
-                <div style={{ flex: "1 1 120px", textAlign: "right" }}>
+                <div className="min-w-[120px] flex-1 text-right">
                   {quote.estimatedCost != null ? (
-                    <span style={{ fontWeight: 700 }}>
+                    <span className="font-semibold text-ink">
                       {decimal2(quote.estimatedCost)} {quote.currency ?? "USD"}
                     </span>
                   ) : (
-                    <span className="text-muted">Awaiting price</span>
+                    <span className="text-sm text-ink-muted">Awaiting price</span>
                   )}
                 </div>
-                <div style={{ flex: "0 0 auto" }}>
+                <div>
                   <QuoteStatusPill status={quote.status} />
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
 }

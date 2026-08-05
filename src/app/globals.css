@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Real per-country flag artwork (SVG-backed `.fi.fi-us` classes) — used
+   instead of Unicode flag emoji, which render as plain two-letter text on
+   Windows Chrome/Edge and many Linux browsers (no colored glyph installed).
+   See src/components/public/flag-icon.tsx. */
+@import "flag-icons/css/flag-icons.min.css";
 
 /* Class-based dark variant (Tailwind v4 defaults to prefers-color-scheme).
    `.dark` is toggled on <html> by next-themes; :where keeps 0 specificity. */
@@ -266,6 +271,43 @@
   }
   html {
     @apply font-sans;
+  }
+  /* Site-wide guard: the page must never scroll sideways, on phone or
+     desktop — a stray fixed/off-canvas element (e.g. the mobile nav drawer)
+     or a too-wide row can otherwise sneak the document a few pixels past
+     100vw and make the whole page horizontally scrollable/swipeable. This
+     clips that possibility at the root instead of chasing every individual
+     culprit. */
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  /* Stop the elastic rubber-band overscroll past the very top/bottom of the
+     page (trackpad on macOS, touch on mobile) — scrolling should stop
+     cleanly right at the footer instead of bouncing into blank space beyond
+     it. Deliberately on `html` only, not `body` too — setting this on both
+     ancestors at once is a known trap that can wedge scrolling entirely
+     instead of just clamping the bounce; one is enough to catch it. */
+  html {
+    overscroll-behavior-y: none;
+  }
+  /* Radix UI (Select/DropdownMenu/Popover) locks scroll via the
+     react-remove-scroll library, which sets `body[data-scroll-locked]` with
+     an `!important` `margin-right` sized to whatever scrollbar it thinks it's
+     hiding. That math assumes BODY owns the page's scrollbar — but in this
+     layout `html` is the real scrolling element (confirmed via
+     `document.scrollingElement`) and body never has a visible scrollbar of
+     its own, so that compensation is pure noise: body would get ~15px
+     narrower and spring back every time ANY select/dropdown/popover
+     opened/closed, visibly shifting right-aligned content (e.g. the "New
+     Quote" button) — this was the "layout shifts/jumps once clicking any
+     button" bug. Neutralize just the margin compensation; leave their
+     `overflow: hidden` (it correctly still blocks background scroll while a
+     popover is open). Selector is deliberately more specific than theirs
+     (`body[data-scroll-locked]`) so it wins regardless of injection order. */
+  html body[data-scroll-locked] {
+    margin-right: 0 !important;
   }
 }
 

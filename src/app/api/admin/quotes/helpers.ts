@@ -77,6 +77,8 @@ export function serializeQuoteRow(q: QuoteWithRelations) {
     totalChargeableWeight: decimal2(q.totalChargeableWeight),
     estimatedCost: decimal2(q.estimatedCost),
     currency: q.currency,
+    preferredTimeSlot: q.preferredTimeSlot,
+    timezone: q.timezone,
     contact: resolveContact(q),
     emailStatistic: serializeEmailStat(q),
     createdAt: q.createdAt,

@@ -3,13 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { COUNTRY_LIST } from "@/lib/countries-list";
-import { flagEmoji } from "@/lib/flag-emoji";
 import { SearchableSelect } from "@/components/public/searchable-select";
 
 const COUNTRY_OPTIONS = COUNTRY_LIST.map(([code, name]) => ({
   value: code,
   label: name,
-  flag: flagEmoji(code),
+  flag: code,
 }));
 
 // Hero / "Need a Quote" mini form — collects From/To only, then hands off to

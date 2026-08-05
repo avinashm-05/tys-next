@@ -33,23 +33,68 @@ const rerateOverrides = z.object({
 
 const asArray = (v: unknown) => (Array.isArray(v) ? (v as Record<string, unknown>[]) : []);
 
+// FedExRateQuoteService reads box_details/television_details/auto_details —
+// snake_case Detail objects (see rate-quote.ts's buildDimensionalLineItems).
+// The OLD wizard wrote those as one JSON blob per type on the Quote row
+// itself (boxData/televisionData/autoData); this app no longer writes those
+// columns for ANY current flow — not the single-page public form, not the
+// admin Package card — both write PackageDetail rows instead (`packages`
+// relation). Reading only the legacy JSON columns here meant "Get live
+// rates" always saw an empty array and failed with "No package details were
+// provided" for every quote created since that migration, sandbox or
+// production alike (caught while verifying the FedEx production cutover).
+// This maps the real rows to the shape FedExRateQuoteService expects.
+type PackageRow = {
+  packageType: string;
+  quantity: number;
+  weight: unknown;
+  weightUnit: string | null;
+  length: unknown;
+  width: unknown;
+  height: unknown;
+};
+
+function detailsFromPackages(packages: PackageRow[], type: "box" | "television"): Record<string, unknown>[] {
+  return packages
+    .filter((p) => p.packageType === type || (type === "box" && p.packageType === "boxes"))
+    .map((p) => ({
+      quantity: p.quantity,
+      weight: p.weight,
+      weight_unit: p.weightUnit ?? "lb",
+      length: p.length,
+      width: p.width,
+      height: p.height,
+    }));
+}
+
 export const GET = adminRoute<Ctx>(async (req, ctx) => {
   const id = parseId((await ctx.params).id);
-  const quote = id !== null ? await db.quote.findUnique({ where: { id } }) : null;
+  const quote =
+    id !== null ? await db.quote.findUnique({ where: { id }, include: { packages: true } }) : null;
   if (!quote) throw new HttpError(404, "Quote not found.");
 
   const raw = new URL(req.url).searchParams.get("overrides");
   // JSON.parse throwing SyntaxError → 400 via toErrorResponse; schema fail → 422.
   const o = raw ? rerateOverrides.parse(JSON.parse(raw)) : {};
 
+  // Legacy JSON columns as a last-resort fallback (a handful of very old
+  // quotes from before the PackageDetail-rows migration may still only have
+  // those) — real rows win whenever any exist.
   const shipment: ShipmentInput = {
     from_zip: quote.fromZip,
     to_zip: quote.toZip,
     is_residence: o.is_residence ?? quote.isResidence,
     package_type: o.package_type ?? quote.packageType,
-    box_details: o.box_details ?? asArray(quote.boxData),
-    television_details: o.television_details ?? asArray(quote.televisionData),
-    auto_details: o.auto_details ?? asArray(quote.autoData),
+    box_details:
+      o.box_details ?? (quote.packages.length > 0 ? detailsFromPackages(quote.packages, "box") : asArray(quote.boxData)),
+    television_details:
+      o.television_details ??
+      (quote.packages.length > 0 ? detailsFromPackages(quote.packages, "television") : asArray(quote.televisionData)),
+    auto_details:
+      o.auto_details ??
+      (quote.packages.length > 0
+        ? quote.packages.filter((p) => p.packageType === "auto").map(() => ({}))
+        : asArray(quote.autoData)),
     total_chargeable_weight:
       o.total_chargeable_weight ?? Number(quote.totalChargeableWeight ?? 0),
     ship_date: o.ship_date ?? null,

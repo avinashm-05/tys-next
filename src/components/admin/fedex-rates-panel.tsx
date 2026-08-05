@@ -3,13 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CaretDownIcon, CaretUpIcon, PercentIcon, SlidersHorizontalIcon, TagIcon } from "@phosphor-icons/react";
+import {
+  CaretDownIcon,
+  CaretUpIcon,
+  PaperPlaneTiltIcon,
+  PercentIcon,
+  SlidersHorizontalIcon,
+  TagIcon,
+} from "@phosphor-icons/react";
 import { adminApi, ApiError } from "@/lib/admin-api";
 import { ALLOWED_CURRENCIES } from "@/lib/validation/quote-price";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDeleteDialog } from "@/components/admin/confirm-delete-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -70,12 +78,14 @@ export function FedExRatesPanel({
   defaultCurrency,
   currentAmount,
   packageType,
+  sendTo,
 }: {
   quoteId: number;
   isResidence: boolean;
   defaultCurrency: string;
   currentAmount: number | null;
   packageType: string;
+  sendTo: string | null;
 }) {
   const router = useRouter();
   // Only box/television line items actually send this to FedEx (see
@@ -99,11 +109,12 @@ export function FedExRatesPanel({
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RatesResponse | null>(null);
   const [lockingKey, setLockingKey] = useState<string | null>(null);
-  // Check a few services to email as options — nothing is locked by
-  // checking a box. The customer picks one and tells us, and only THEN does
-  // support lock it (per-row "Use this rate" below) and hit Send quote.
+  // Check one or more services — a single "Send quote" button below handles
+  // both cases through the same endpoint (which already renders a single
+  // price line vs. a comparison table depending on count), so there's no
+  // separate "lock this one" vs. "email these as options" split anymore.
   const [selectedRates, setSelectedRates] = useState<Set<string>>(new Set());
-  const [sendingOptions, setSendingOptions] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // Manual entry (international / auto-failed).
   const manualCurrencyDefault = ALLOWED_CURRENCIES.includes(defaultCurrency as never)
@@ -170,52 +181,57 @@ export function FedExRatesPanel({
     });
   }
 
-  async function sendSelectedOptions() {
-    if (!result?.success) return;
-    const rates = result.rates.filter((r) => selectedRates.has(r.service_type));
-    if (rates.length === 0) return;
-    setSendingOptions(true);
-    try {
-      const res = await adminApi<{ sentTo: string; count: number }>(
-        `/api/admin/quotes/${quoteId}/send-options`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            rates: rates.map((r) => ({
-              service_name: r.service_name,
-              total_charge: r.total_charge,
-              currency: r.currency,
-            })),
-          }),
-        },
-      );
-      toast.success(`${res.count} option${res.count === 1 ? "" : "s"} sent to ${res.sentTo}.`);
-      setSelectedRates(new Set());
-      router.refresh();
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Couldn't send the options email.");
-    } finally {
-      setSendingOptions(false);
-    }
-  }
+  // The one "Send quote" action, regardless of how the price gets there:
+  //  - one or more rates checked → send-options (its email already renders
+  //    as a single price line for exactly one, a comparison table for more)
+  //  - a manual base rate typed in → lock it, then send the confirmation
+  //  - neither, but a price is already locked from a previous visit → just send
+  const hasSelection = selectedRates.size > 0 && result?.success;
+  const hasManualEntry = baseRate.trim() !== "";
+  const canSend = hasSelection || hasManualEntry || currentAmount != null;
 
-  async function lockManual() {
-    setLockingKey("manual");
+  async function handleSend() {
     try {
-      const saved = await adminApi<{ estimatedCost: string; currency: string }>(
-        `/api/admin/quotes/${quoteId}/price`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ source: "manual", baseRate, currency: manualCurrency }),
-        },
-      );
-      toast.success(`Price locked: ${saved.estimatedCost} ${saved.currency} (incl. intl markup).`);
-      setBaseRate("");
+      if (hasSelection && result?.success) {
+        const rates = result.rates.filter((r) => selectedRates.has(r.service_type));
+        const res = await adminApi<{ sentTo: string; count: number }>(
+          `/api/admin/quotes/${quoteId}/send-options`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              rates: rates.map((r) => ({
+                service_name: r.service_name,
+                total_charge: r.total_charge,
+                currency: r.currency,
+              })),
+            }),
+          },
+        );
+        toast.success(`Sent to ${res.sentTo}.`);
+        setSelectedRates(new Set());
+      } else if (hasManualEntry) {
+        const saved = await adminApi<{ estimatedCost: string; currency: string }>(
+          `/api/admin/quotes/${quoteId}/price`,
+          {
+            method: "PATCH",
+            body: JSON.stringify({ source: "manual", baseRate, currency: manualCurrency }),
+          },
+        );
+        const res = await adminApi<{ sentTo: string }>(`/api/admin/quotes/${quoteId}/send`, {
+          method: "POST",
+        });
+        toast.success(`Locked ${saved.estimatedCost} ${saved.currency} and sent to ${res.sentTo}.`);
+        setBaseRate("");
+      } else {
+        const res = await adminApi<{ sentTo: string }>(`/api/admin/quotes/${quoteId}/send`, {
+          method: "POST",
+        });
+        toast.success(`Sent to ${res.sentTo}.`);
+      }
       router.refresh();
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Couldn't lock the price.");
-    } finally {
-      setLockingKey(null);
+      toast.error(e instanceof ApiError ? e.message : "Couldn't send the quote.");
+      throw e; // ConfirmDeleteDialog shows this inline and keeps the dialog open
     }
   }
 
@@ -324,9 +340,9 @@ export function FedExRatesPanel({
         {result?.success && (
           <div className="flex flex-col gap-2">
             <p className="text-xs text-muted-foreground">
-              Check a few services and email them as options for the customer to pick from, or click{" "}
-              <span className="font-medium text-foreground">Use this rate</span> to lock one in now (e.g.
-              once they&rsquo;ve already told you which they want) and send it below.
+              Check one service to send that price, or a few to email as options for the customer to
+              compare — <span className="font-medium text-foreground">Send quote</span> below sends
+              whatever&rsquo;s checked.
             </p>
             <FedExRatesTable
               rates={result.rates}
@@ -336,47 +352,16 @@ export function FedExRatesPanel({
                 const discounted = discount
                   ? applyDiscount(r.raw_total_charge, result.markupPercent, discount.type, discount.value)
                   : null;
-                return (
-                  <div className="flex flex-col items-end gap-1">
-                    {discounted != null && (
-                      <span className="text-xs">
-                        <span className="text-muted-foreground line-through">
-                          {money(r.total_charge, r.currency)}
-                        </span>{" "}
-                        <span className="font-semibold text-tys-rose">{money(discounted, r.currency)}</span>
-                      </span>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={lockingKey !== null}
-                      onClick={() =>
-                        lockAmount(r.service_type, discounted ?? r.total_charge, r.currency, r.service_name)
-                      }
-                    >
-                      {discounted != null ? "Lock discounted rate" : "Use this rate"}
-                    </Button>
-                  </div>
-                );
+                return discounted != null ? (
+                  <span className="text-xs">
+                    <span className="text-muted-foreground line-through">
+                      {money(r.total_charge, r.currency)}
+                    </span>{" "}
+                    <span className="font-semibold text-tys-rose">{money(discounted, r.currency)}</span>
+                  </span>
+                ) : null;
               }}
             />
-            {selectedRates.size > 0 && (
-              <div className="flex items-center justify-between gap-3 rounded-md border border-tys-mist bg-muted/30 p-3">
-                <p className="text-sm">
-                  <span className="font-medium">{selectedRates.size}</span> option
-                  {selectedRates.size === 1 ? "" : "s"} selected — nothing is locked yet.
-                </p>
-                <Button
-                  className="bg-tys-indigo text-white hover:bg-tys-indigo/90"
-                  disabled={sendingOptions}
-                  onClick={sendSelectedOptions}
-                >
-                  {sendingOptions
-                    ? "Sending…"
-                    : `Email ${selectedRates.size} option${selectedRates.size === 1 ? "" : "s"} to customer`}
-                </Button>
-              </div>
-            )}
           </div>
         )}
 
@@ -415,16 +400,10 @@ export function FedExRatesPanel({
                   </SelectContent>
                 </Select>
               </div>
-              <Button
-                onClick={lockManual}
-                disabled={lockingKey !== null || baseRate.trim() === ""}
-                className="bg-tys-blue text-white hover:bg-tys-blue/90"
-              >
-                Lock manual price
-              </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              The international markup is applied to your base rate on the server.
+              Send quote below will lock this rate (international markup applied on the server) and
+              email it.
             </p>
           </FedExRateUnavailable>
         )}
@@ -517,6 +496,39 @@ export function FedExRatesPanel({
             </div>
           )}
         </div>
+
+        {/* The one send action for the whole card — sends whatever's
+            currently selected/entered, whether that's checked rates, a
+            manual entry, or an already-locked price from an earlier visit. */}
+        <div className="flex items-center justify-end rounded-xl border border-tys-mist bg-muted/20 p-4">
+          <Button
+            size="lg"
+            className="bg-tys-blue text-white hover:bg-tys-blue/90"
+            disabled={!canSend}
+            onClick={() => setConfirmOpen(true)}
+          >
+            <PaperPlaneTiltIcon size={16} weight="bold" />
+            Send quote
+          </Button>
+        </div>
+
+        <ConfirmDeleteDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title="Send quote"
+          description={
+            hasSelection
+              ? `Email ${selectedRates.size} rate option${selectedRates.size === 1 ? "" : "s"} to ${sendTo ?? "the customer"}? The status will move to "quoted".`
+              : hasManualEntry
+                ? `Lock ${baseRate} ${manualCurrency} and email the confirmed quote to ${sendTo ?? "the customer"}? The status will move to "quoted".`
+                : `Email the confirmed quote to ${sendTo ?? "the customer"}? The status will move to "quoted".`
+          }
+          confirmLabel="Send quote"
+          confirmVariant="default"
+          busyLabel="Sending…"
+          errorFallback="The quote could not be sent. Try again."
+          onConfirm={handleSend}
+        />
       </CardContent>
     </Card>
   );

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { QuoteWizardForm } from "@/components/public/quote-wizard-form";
+import { QuoteRequestForm } from "@/components/public/quote-request-form";
 import { normalizeCode } from "@/lib/countries";
 
 export const metadata: Metadata = {
@@ -7,14 +7,12 @@ export const metadata: Metadata = {
   description: "Get a free domestic or international shipping quote in under a minute.",
 };
 
-// B2 redesign — the quote wizard's own route (previously inline-only on the
-// home page). from_country/to_country are read from the query string so the
-// home page's mini quote forms can hand off a prefilled Step 1 (mirrors what
-// the old Laravel QuoteController@index did with the same params).
-//
-// The colored hero band + curve live inside QuoteWizardForm itself now, not
-// here — the title/subtitle need to switch to the customer's own route once
-// results are showing, and only the client component knows that state.
+// Single-page quote request (replaces the old 4-step wizard, folded together
+// with what used to be the separate /quick-quote callback form — see
+// QuoteRequestForm's header comment). from_country/to_country are read from
+// the query string so the home page's mini quote form can hand off a
+// prefilled route (mirrors what the old Laravel QuoteController@index did
+// with the same params).
 export default async function QuotesPage({
   searchParams,
 }: {
@@ -23,7 +21,7 @@ export default async function QuotesPage({
   const { from_country, to_country } = await searchParams;
 
   return (
-    <QuoteWizardForm
+    <QuoteRequestForm
       defaultFromCountry={normalizeCode(from_country) || undefined}
       defaultToCountry={normalizeCode(to_country) || undefined}
     />

@@ -77,27 +77,115 @@ export function selectedPackageTypes(packageType: string | string[]): string[] {
   return arr.map((t) => t.toLowerCase().trim()).filter((t) => t !== "");
 }
 
+// Public quote form asks a single best-time-to-call window instead of
+// collecting box/tv/auto dimensions — staff work out the exact details (and
+// can still add PackageDetail rows manually) on the callback. Exported so
+// callback-request.ts's own (now-unlinked, kept-for-reference) schema shares
+// the same values instead of drifting.
+export const TIME_SLOTS = [
+  { value: "morning", label: "Morning", hint: "8am – 12pm" },
+  { value: "afternoon", label: "Afternoon", hint: "12pm – 5pm" },
+  { value: "evening", label: "Evening", hint: "5pm – 8pm" },
+] as const;
+const timeSlotValues = ["morning", "afternoon", "evening"] as const;
+
+// IANA zone name, e.g. "America/New_York" — validated as non-empty rather
+// than against Intl's zone list, since that list is runtime/ICU-dependent and
+// the server shouldn't reject a valid zone just because Node's build
+// disagrees with the browser's about the exact catalog.
+export const timezoneField = z
+  .string({ error: () => "Please select your timezone." })
+  .min(1, "Please select your timezone.")
+  .max(64);
+
+// National significant number digit length by dial code (E.164 calling
+// code, e.g. "+1") — a RANGE, not an exact count, since several countries
+// legitimately vary (mobile vs. landline, area-code differences). Covers the
+// most commonly selected codes; anything not listed here falls back to the
+// generic DEFAULT_PHONE_DIGIT_RANGE below rather than guessing wrong for a
+// country we haven't verified.
+const PHONE_DIGIT_RANGE: Record<string, [min: number, max: number]> = {
+  "+1": [10, 10], // NANP: US, Canada, Caribbean
+  "+91": [10, 10], // India
+  "+44": [10, 10], // UK
+  "+61": [9, 9], // Australia
+  "+86": [11, 11], // China
+  "+81": [9, 10], // Japan
+  "+33": [9, 9], // France
+  "+34": [9, 9], // Spain
+  "+7": [10, 10], // Russia, Kazakhstan
+  "+971": [9, 9], // UAE
+  "+966": [9, 9], // Saudi Arabia
+  "+65": [8, 8], // Singapore
+  "+63": [10, 10], // Philippines
+  "+92": [10, 10], // Pakistan
+  "+880": [10, 10], // Bangladesh
+  "+94": [9, 9], // Sri Lanka
+  "+977": [10, 10], // Nepal
+  "+52": [10, 10], // Mexico
+  "+55": [10, 11], // Brazil
+  "+27": [9, 9], // South Africa
+  "+234": [10, 10], // Nigeria
+  "+20": [10, 10], // Egypt
+  "+212": [9, 9], // Morocco
+  "+82": [9, 10], // South Korea
+  "+351": [9, 9], // Portugal
+  "+31": [9, 9], // Netherlands
+  "+41": [9, 9], // Switzerland
+  "+47": [8, 8], // Norway
+  "+45": [8, 8], // Denmark
+  "+48": [9, 9], // Poland
+  "+420": [9, 9], // Czechia
+  "+30": [10, 10], // Greece
+  "+90": [10, 10], // Turkey
+  "+972": [9, 9], // Israel
+  "+353": [9, 9], // Ireland
+};
+const DEFAULT_PHONE_DIGIT_RANGE: [min: number, max: number] = [7, 15];
+
 // Exported so the wizard's client-side schema shares these exact rules/messages.
-export const quoteContact = z.object({
-  name: z.string({ error: () => "Please enter your name." }).max(255).regex(/\S/, "Please enter a valid name."),
-  email: z
-    .string({ error: () => "Please enter your email address." })
-    .max(255)
-    .email("Please enter a valid email address."),
-  country_code: requiredStr("Please select a country code.", 10),
-  phone: z
-    .string({ error: () => "Please enter your phone number." })
-    .min(7, "Phone number must be at least 7 characters.")
-    .max(20)
-    .regex(/^[0-9\s\-()]+$/, "Phone number can only contain numbers, spaces, hyphens, and parentheses."),
-});
+export const quoteContact = z
+  .object({
+    name: z.string({ error: () => "Please enter your name." }).max(255).regex(/\S/, "Please enter a valid name."),
+    email: z
+      .string({ error: () => "Please enter your email address." })
+      .max(255)
+      .email("Please enter a valid email address."),
+    country_code: requiredStr("Please select a country code.", 10),
+    phone: z
+      .string({ error: () => "Please enter your phone number." })
+      .min(1, "Please enter your phone number.")
+      .max(20)
+      .regex(/^[0-9\s\-()]+$/, "Phone number can only contain numbers, spaces, hyphens, and parentheses."),
+  })
+  // Cross-field: the expected digit count depends on which country code was
+  // selected (e.g. 10 digits for +1/US) rather than one fixed rule for every
+  // country.
+  .superRefine((data, ctx) => {
+    if (!data.phone.trim()) return; // the field's own required rule already covers this
+    const digits = data.phone.replace(/\D/g, "").length;
+    const [min, max] = PHONE_DIGIT_RANGE[data.country_code] ?? DEFAULT_PHONE_DIGIT_RANGE;
+    if (digits < min || digits > max) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["phone"],
+        message:
+          min === max
+            ? `Phone number must be exactly ${min} digits for this country code.`
+            : `Phone number must be between ${min} and ${max} digits for this country code.`,
+      });
+    }
+  });
 
 export const quoteStoreInput = z
   .object({
     from_country: requiredStr("Please select the country you are sending from."),
-    from_zip: requiredStr("Please enter the zip code you are sending from.", 20),
+    // Zip is no longer collected by the single-page public form — just the
+    // route's countries, plus a callback window — so staff get the exact
+    // zips on the call. Still accepted when present (admin-side callers).
+    from_zip: z.string().max(20, "The zip code is invalid.").nullish(),
     to_country: requiredStr("Please select the country you are sending to."),
-    to_zip: requiredStr("Please enter the zip code you are sending to.", 20),
+    to_zip: z.string().max(20, "The zip code is invalid.").nullish(),
     is_residence: z.preprocess((v) => v === true || v === 1 || v === "1", z.boolean()).optional(),
 
     package_type: z
@@ -105,6 +193,15 @@ export const quoteStoreInput = z
       .min(1, "Please select a package type.")
       .max(255, "The selected package type is invalid."),
 
+    // The single-page public form asks when/what timezone to call back
+    // instead of collecting box/tv/auto dimensions up front — staff fill
+    // those in via the admin editor once they've talked to the customer.
+    time_slot: z.enum(timeSlotValues, { error: () => "Please select a time that works for you." }),
+    timezone: timezoneField,
+
+    // Still accepted (and still validated below when present) so the admin
+    // editor's own writes and any legacy caller keep working — the public
+    // form itself never sends these three anymore.
     packages: z.array(legacyPackage).nullish(),
     box_details: z.array(boxDetail).nullish(),
     television_details: z.array(televisionDetail).nullish(),
@@ -112,10 +209,13 @@ export const quoteStoreInput = z
 
     contact: quoteContact,
   })
-  // withValidator: allowed types + the envelope/furniture override.
+  // withValidator: allowed package types only. Per-type detail rows (box/tv/
+  // auto dimensions) are no longer required from the public form — the
+  // customer picks a callback window instead, and staff capture exact
+  // package details on the call.
   .superRefine((data, ctx) => {
     const selected = selectedPackageTypes(data.package_type);
-    const allowed = ["envelope", "box", "boxes", "television", "furniture", "auto"];
+    const allowed = ["envelope", "box", "boxes", "television", "furniture", "auto", "packers_movers"];
 
     if (selected.length === 0) {
       ctx.addIssue({ code: "custom", path: ["package_type"], message: "Please select at least one package type." });
@@ -126,23 +226,6 @@ export const quoteStoreInput = z
         ctx.addIssue({ code: "custom", path: ["package_type"], message: "The selected package type is invalid." });
         return;
       }
-    }
-
-    const hasBox = selected.includes("box") || selected.includes("boxes");
-    const hasTelevision = selected.includes("television");
-    const hasAuto = selected.includes("auto");
-    // Envelope/furniture override: skip box/tv/auto detail requirements.
-    if (selected.includes("envelope") || selected.includes("furniture")) return;
-
-    const hasPackages = (data.packages?.length ?? 0) > 0;
-    if (hasBox && (data.box_details?.length ?? 0) === 0 && !hasPackages) {
-      ctx.addIssue({ code: "custom", path: ["box_details"], message: "Please provide box details." });
-    }
-    if (hasTelevision && (data.television_details?.length ?? 0) === 0 && !hasPackages) {
-      ctx.addIssue({ code: "custom", path: ["television_details"], message: "Please provide television details." });
-    }
-    if (hasAuto && (data.auto_details?.length ?? 0) === 0) {
-      ctx.addIssue({ code: "custom", path: ["auto_details"], message: "Please provide auto details." });
     }
   });
 

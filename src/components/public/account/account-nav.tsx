@@ -1,35 +1,44 @@
+import Link from "next/link";
+import {
+  SquaresFourIcon,
+  ReceiptIcon,
+  TruckIcon,
+  MapPinIcon,
+  UserIcon,
+} from "@phosphor-icons/react/dist/ssr";
 import { SignOutButton } from "@/components/public/account/sign-out-button";
 
 // Portal navigation (C1.2). Shipments/Tracking are wired now so the fulfillment
 // track (C3–C5) can light them up — their pages render honest empty states.
 const ITEMS = [
-  ["/account", "Dashboard"],
-  ["/account/quotes", "My Quotes"],
-  ["/account/shipments", "Shipments"],
-  ["/account/tracking", "Tracking"],
-  ["/account/profile", "Profile"],
+  ["/account", "Dashboard", SquaresFourIcon],
+  ["/account/quotes", "My Quotes", ReceiptIcon],
+  ["/account/shipments", "Shipments", TruckIcon],
+  ["/account/tracking", "Tracking", MapPinIcon],
+  ["/account/profile", "Profile", UserIcon],
 ] as const;
 
 export function AccountNav({ current }: { current: string }) {
   return (
-    <nav
-      className="d-flex flex-wrap align-items-center gap-3"
-      style={{ marginBottom: 24, fontSize: "0.95rem" }}
-    >
-      {ITEMS.map(([href, label]) => (
-        <a
-          key={href}
-          href={href}
-          style={{
-            textDecoration: "none",
-            fontWeight: current === href ? 700 : 400,
-            color: current === href ? "#f26a21" : "#1d2534",
-          }}
-        >
-          {label}
-        </a>
-      ))}
-      <span className="ms-auto">
+    <nav className="mb-6 flex flex-wrap items-center gap-1 border-b border-brand-light">
+      {ITEMS.map(([href, label, Icon]) => {
+        const active = current === href;
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium transition ${
+              active
+                ? "border-brand text-brand"
+                : "border-transparent text-ink-muted hover:text-ink"
+            }`}
+          >
+            <Icon size={16} weight={active ? "fill" : "regular"} />
+            {label}
+          </Link>
+        );
+      })}
+      <span className="ml-auto pb-3">
         <SignOutButton />
       </span>
     </nav>
@@ -37,28 +46,51 @@ export function AccountNav({ current }: { current: string }) {
 }
 
 /** Read-only status pill for quote rows (public styling, no shadcn). */
+const STATUS_STYLES: Record<string, string> = {
+  pending: "bg-amber-50 text-amber-700",
+  quoted: "bg-brand-pale text-brand",
+  accepted: "bg-green-50 text-green-700",
+  cancelled: "bg-red-50 text-red-600",
+};
+
 export function QuoteStatusPill({ status }: { status: string }) {
-  const colors: Record<string, { bg: string; fg: string }> = {
-    pending: { bg: "#fff4e5", fg: "#b45309" },
-    quoted: { bg: "#e7f1ff", fg: "#0d6efd" },
-    accepted: { bg: "#e6f9ee", fg: "#00a843" },
-    cancelled: { bg: "#fdecec", fg: "#dc3545" },
-  };
-  const c = colors[status] ?? { bg: "#eef1f5", fg: "#1d2534" };
   return (
     <span
-      style={{
-        background: c.bg,
-        color: c.fg,
-        borderRadius: 50,
-        padding: "3px 12px",
-        fontSize: "0.8rem",
-        fontWeight: 600,
-        textTransform: "capitalize",
-        whiteSpace: "nowrap",
-      }}
+      className={`inline-block shrink-0 rounded-full px-3 py-1 text-xs font-semibold capitalize whitespace-nowrap ${
+        STATUS_STYLES[status] ?? "bg-gray-100 text-ink"
+      }`}
     >
       {status}
+    </span>
+  );
+}
+
+const SHIPMENT_STATUS_LABELS: Record<string, string> = {
+  new_request: "New Request",
+  ready_for_pickup: "Ready for Pickup",
+  in_transit: "In Transit",
+  delivered: "Delivered",
+  on_hold: "On Hold",
+  cancelled: "Cancelled",
+};
+
+const SHIPMENT_STATUS_STYLES: Record<string, string> = {
+  new_request: "bg-brand-pale text-brand",
+  ready_for_pickup: "bg-brand-pale text-brand",
+  in_transit: "bg-amber-50 text-amber-700",
+  delivered: "bg-green-50 text-green-700",
+  on_hold: "bg-amber-50 text-amber-700",
+  cancelled: "bg-red-50 text-red-600",
+};
+
+export function ShipmentStatusPill({ status }: { status: string }) {
+  return (
+    <span
+      className={`inline-block shrink-0 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${
+        SHIPMENT_STATUS_STYLES[status] ?? "bg-gray-100 text-ink"
+      }`}
+    >
+      {SHIPMENT_STATUS_LABELS[status] ?? status}
     </span>
   );
 }

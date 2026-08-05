@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FieldRow } from "./field-row";
+import { FieldRow } from "@/components/admin/field-row";
 import { SHIPMENT_STATUS_LABELS, type ShipmentDetail, type ShipmentStatus, type ShipmentType } from "./mock-data";
 
 const SERVICE_TYPES = ["Standard", "Express", "Economy"];

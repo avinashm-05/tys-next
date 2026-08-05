@@ -17,7 +17,7 @@
 //     code reads the first row to model the hasOne.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   // "native" keeps local dev (macOS) working; the rest cover the most likely
   // Linux server configurations for the Hostinger deploy, since the exact
   // distro/libc isn't known from here — harmless to over-include, each
@@ -27,7 +27,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 // ---------------------------------------------------------------------------
@@ -52,6 +52,15 @@ model User {
   image           String?   @db.VarChar(255)
   role            String? // copy of userType.slug for Better Auth; user_type_id stays Laravel's source of truth
 
+  companyName  String? @map("company_name") @db.VarChar(255) // C1 customer profile field (additive)
+  addressLine1 String? @map("address_line_1") @db.VarChar(255) // C1 customer profile field (additive)
+  addressLine2 String? @map("address_line_2") @db.VarChar(255) // C1 customer profile field (additive)
+  addressLine3 String? @map("address_line_3") @db.VarChar(255) // C1 customer profile field (additive)
+  city         String? @db.VarChar(100) // C1 customer profile field (additive)
+  state        String? @db.VarChar(100) // C1 customer profile field (additive)
+  country      String? @db.VarChar(100) // C1 customer profile field (additive)
+  postalCode   String? @map("postal_code") @db.VarChar(20) // C1 customer profile field (additive)
+
   userType        UserType?       @relation(fields: [userTypeId], references: [id], onUpdate: NoAction, map: "users_user_type_id_foreign")
   sessions        Session[]
   accounts        Account[]
@@ -61,6 +70,8 @@ model User {
   commentsCreated VendorComment[] @relation("CommentCreatedBy")
   commentsUpdated VendorComment[] @relation("CommentUpdatedBy")
   serviceAssigns  VendorService[] @relation("AssignedBy")
+  shipments       Shipment[]
+  quoteNotes      QuoteNote[]     @relation("QuoteNoteCreatedBy")
 
   @@index([userTypeId], map: "users_user_type_id_index")
   @@map("users")
@@ -78,29 +89,33 @@ model UserType {
 }
 
 model Quote {
-  id                    BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
-  fromCountry           String      @map("from_country") @db.VarChar(50)
-  fromZip               String      @map("from_zip")
-  toCountry             String      @map("to_country") @db.VarChar(50)
-  toZip                 String      @map("to_zip")
-  isResidence           Boolean     @default(false) @map("is_residence")
-  packageType           String      @map("package_type") @db.VarChar(255) // CSV, e.g. "box,television" — FIND_IN_SET queries
+  id                    BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  fromCountry           String            @map("from_country") @db.VarChar(50)
+  fromZip               String            @map("from_zip")
+  toCountry             String            @map("to_country") @db.VarChar(50)
+  toZip                 String            @map("to_zip")
+  isResidence           Boolean           @default(false) @map("is_residence")
+  packageType           String            @map("package_type") @db.VarChar(255) // CSV, e.g. "box,television" — FIND_IN_SET queries
   name                  String?
   email                 String?
-  mobileNumber          String?     @map("mobile_number")
-  boxData               Json?       @map("box_data")
-  televisionData        Json?       @map("television_data")
-  autoData              Json?       @map("auto_data")
-  status                QuoteStatus @default(pending)
-  totalChargeableWeight Decimal?    @map("total_chargeable_weight") @db.Decimal(10, 2) // serialize as "0.00" string (R3)
-  estimatedCost         Decimal?    @map("estimated_cost") @db.Decimal(10, 2) // serialize as "0.00" string (R3)
-  currency              String?     @db.VarChar(3)
-  createdAt             DateTime?   @map("created_at") @db.Timestamp(0)
-  updatedAt             DateTime?   @map("updated_at") @db.Timestamp(0)
+  mobileNumber          String?           @map("mobile_number")
+  boxData               Json?             @map("box_data")
+  televisionData        Json?             @map("television_data")
+  autoData              Json?             @map("auto_data")
+  status                QuoteStatus       @default(pending)
+  totalChargeableWeight Decimal?          @map("total_chargeable_weight") @db.Decimal(10, 2) // serialize as "0.00" string (R3)
+  estimatedCost         Decimal?          @map("estimated_cost") @db.Decimal(10, 2) // serialize as "0.00" string (R3)
+  currency              String?           @db.VarChar(3)
+  preferredTimeSlot     CallbackTimeSlot? @map("preferred_time_slot") // single-page quote form's "best time to call back"
+  timezone              String?           @db.VarChar(64) // IANA zone the time slot is relative to
+  createdAt             DateTime?         @map("created_at") @db.Timestamp(0)
+  updatedAt             DateTime?         @map("updated_at") @db.Timestamp(0)
 
   packages       PackageDetail[]
   contacts       QuoteContact[] // no DB unique on quote_id — treat first row as the contact
   emailStatistic QuoteEmailStatistic?
+  shipments      Shipment[]
+  notes          QuoteNote[]
 
   @@index([fromCountry, toCountry], map: "idx_c_pair")
   @@index([createdAt], map: "quotes_created_at_index")
@@ -133,6 +148,115 @@ model PackageDetail {
   @@map("package_details")
 }
 
+// Self-serve "Schedule Shipment" booking (C-portal). Unlike Quote, this is
+// owned by a real userId (booking requires a logged-in, verified account) —
+// nullable only because the admin "Convert to Shipment" action seeds a
+// shipment from an anonymous Quote that may have no matching customer.
+// Sender/recipient are flat prefixed columns, not a separate party table:
+// they're strictly 1:1 per shipment (never repeating), unlike packages.
+model Shipment {
+  id             BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  userId         BigInt?        @map("user_id") @db.UnsignedBigInt
+  linkedQuoteId  BigInt?        @map("linked_quote_id") @db.UnsignedBigInt
+  trackingNumber String?        @unique(map: "shipments_tracking_number_unique") @map("tracking_number") @db.VarChar(30)
+  shipmentType   ShipmentType   @map("shipment_type")
+  fromCountry    String         @map("from_country") @db.VarChar(100)
+  toCountry      String         @map("to_country") @db.VarChar(100)
+  status         ShipmentStatus @default(new_request)
+
+  // Pickup — not collected by the v1 wizard (matches SFL's own "Schedule
+  // Pickup" tab, which only asks shipment type + from/to country); filled in
+  // later by staff via the admin editor.
+  pickupProvider     String?   @map("pickup_provider") @db.VarChar(100)
+  pickupDate         DateTime? @map("pickup_date") @db.Date
+  pickupStartTime    String?   @map("pickup_start_time") @db.VarChar(10)
+  pickupEndTime      String?   @map("pickup_end_time") @db.VarChar(10)
+  specialInstruction String?   @map("special_instruction") @db.Text
+
+  senderContactName  String  @map("sender_contact_name") @db.VarChar(255)
+  senderCompanyName  String? @map("sender_company_name") @db.VarChar(255)
+  senderAddressLine1 String  @map("sender_address_line_1") @db.VarChar(255)
+  senderAddressLine2 String? @map("sender_address_line_2") @db.VarChar(255)
+  senderAddressLine3 String? @map("sender_address_line_3") @db.VarChar(255)
+  senderCity         String  @map("sender_city") @db.VarChar(100)
+  senderState        String  @map("sender_state") @db.VarChar(100)
+  senderCountry      String  @map("sender_country") @db.VarChar(100)
+  senderPostalCode   String  @map("sender_postal_code") @db.VarChar(20)
+  senderPhone1       String  @map("sender_phone_1") @db.VarChar(30)
+  senderPhone2       String? @map("sender_phone_2") @db.VarChar(30)
+  senderEmail        String? @map("sender_email") @db.VarChar(255)
+
+  recipientContactName  String       @map("recipient_contact_name") @db.VarChar(255)
+  recipientCompanyName  String?      @map("recipient_company_name") @db.VarChar(255)
+  recipientAddressLine1 String       @map("recipient_address_line_1") @db.VarChar(255)
+  recipientAddressLine2 String?      @map("recipient_address_line_2") @db.VarChar(255)
+  recipientAddressLine3 String?      @map("recipient_address_line_3") @db.VarChar(255)
+  recipientCity         String       @map("recipient_city") @db.VarChar(100)
+  recipientState        String       @map("recipient_state") @db.VarChar(100)
+  recipientCountry      String       @map("recipient_country") @db.VarChar(100)
+  recipientPostalCode   String       @map("recipient_postal_code") @db.VarChar(20)
+  recipientPhone1       String       @map("recipient_phone_1") @db.VarChar(30)
+  recipientPhone2       String?      @map("recipient_phone_2") @db.VarChar(30)
+  recipientEmail        String?      @map("recipient_email") @db.VarChar(255)
+  recipientLocationType LocationType @default(residential) @map("recipient_location_type")
+
+  createdAt DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @map("updated_at") @db.Timestamp(0)
+
+  user     User?                 @relation(fields: [userId], references: [id], onUpdate: NoAction, map: "shipments_user_id_foreign")
+  quote    Quote?                @relation(fields: [linkedQuoteId], references: [id], onUpdate: NoAction, map: "shipments_linked_quote_id_foreign")
+  packages ShipmentPackageLine[]
+
+  @@index([userId], map: "shipments_user_id_index")
+  @@index([status], map: "shipments_status_index")
+  @@index([linkedQuoteId], map: "shipments_linked_quote_id_index")
+  @@map("shipments")
+}
+
+model ShipmentPackageLine {
+  id               BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  shipmentId       BigInt      @map("shipment_id") @db.UnsignedBigInt
+  quantity         Int         @default(1)
+  weight           Decimal?    @db.Decimal(10, 2)
+  weightUnit       WeightUnit? @map("weight_unit") // no unit selector in the SFL-style UI — defaults to "lb"
+  length           Decimal?    @db.Decimal(10, 2)
+  width            Decimal?    @db.Decimal(10, 2)
+  height           Decimal?    @db.Decimal(10, 2)
+  chargeableWeight Decimal?    @map("chargeable_weight") @db.Decimal(10, 2)
+  insuredValue     Decimal?    @map("insured_value") @db.Decimal(10, 2) // SFL's per-row "Insured Val (USD)"
+  createdAt        DateTime?   @map("created_at") @db.Timestamp(0)
+  updatedAt        DateTime?   @map("updated_at") @db.Timestamp(0)
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shipment_package_lines_shipment_id_foreign")
+
+  @@index([shipmentId], map: "shipment_package_lines_shipment_id_index")
+  @@map("shipment_package_lines")
+}
+
+// Lightweight alternative to the full /quotes wizard — "call me back" lead
+// capture: name/contact + a preferred callback window + package type,
+// nothing else. Deliberately its own model, not a Quote with nullable
+// route fields: a callback request has no route yet (that's the whole
+// point — staff get it from the customer on the call), so it would mean
+// making Quote.fromCountry/fromZip/toCountry/toZip/packageType all
+// nullable just to accommodate a shape that doesn't need them, weakening
+// that model's guarantees for every other caller.
+model CallbackRequest {
+  id          BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  name        String           @db.VarChar(255)
+  email       String           @db.VarChar(255)
+  countryCode String           @map("country_code") @db.VarChar(10)
+  phone       String           @db.VarChar(30)
+  timeSlot    CallbackTimeSlot @map("time_slot")
+  timezone    String           @db.VarChar(64) // IANA zone (e.g. "America/New_York") the time slot is relative to — customer-picked, worldwide leads
+  packageType String           @map("package_type") @db.VarChar(255) // CSV, same convention as Quote.packageType
+  createdAt   DateTime?        @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime?        @map("updated_at") @db.Timestamp(0)
+
+  @@index([createdAt], map: "callback_requests_created_at_index")
+  @@map("callback_requests")
+}
+
 model QuoteContact {
   id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
   quoteId     BigInt    @map("quote_id") @db.UnsignedBigInt
@@ -147,6 +271,24 @@ model QuoteContact {
 
   @@index([quoteId], map: "quote_contacts_quote_id_index")
   @@map("quote_contacts")
+}
+
+// Free-form internal notes staff leave on a quote (call recap, follow-up
+// reminders, etc.) — shown on the admin detail page's Notes card.
+model QuoteNote {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  quoteId     BigInt    @map("quote_id") @db.UnsignedBigInt
+  comment     String    @db.Text
+  createdById BigInt?   @map("created_by") @db.UnsignedBigInt
+  createdAt   DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime? @map("updated_at") @db.Timestamp(0)
+
+  quote     Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "quote_notes_quote_id_foreign")
+  createdBy User? @relation("QuoteNoteCreatedBy", fields: [createdById], references: [id], onUpdate: NoAction, map: "quote_notes_created_by_foreign")
+
+  @@index([quoteId], map: "quote_notes_quote_id_index")
+  @@index([createdAt], map: "quote_notes_created_at_index")
+  @@map("quote_notes")
 }
 
 model QuoteEmailStatistic {
@@ -194,30 +336,30 @@ model VendorType {
 }
 
 model Vendor {
-  id           BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
-  name         String
-  vendorTypeId BigInt         @map("vendor_type_id") @db.UnsignedBigInt
-  email        String         @unique(map: "vendors_email_unique")
-  phoneNumber  String         @map("phone_number") @db.VarChar(20)
-  countryCode  String         @map("country_code") @db.VarChar(5)
-  website      String?        @db.VarChar(255)
-  einNumber     String?       @unique(map: "vendors_ein_number_unique") @map("ein_number") @db.VarChar(20)
-  ssnNumber     String?       @map("ssn_number") @db.VarChar(255) // AES-256-GCM ciphertext (R-PII) — encrypt/decrypt via src/lib/pii.ts only
-  ssnNumberHash String?       @unique(map: "vendors_ssn_number_hash_unique") @map("ssn_number_hash") @db.Char(64) // HMAC-SHA256 of the raw SSN — carries the unique constraint
-  addressLine1 String         @map("address_line_1") @db.VarChar(255)
-  addressLine2 String?        @map("address_line_2") @db.VarChar(255)
-  addressLine3 String?        @map("address_line_3") @db.VarChar(255)
-  city         String         @db.VarChar(100)
-  state        String         @db.VarChar(100)
-  country      String         @db.VarChar(100)
-  postalCode   String         @map("postal_code") @db.VarChar(20)
-  latitude     Decimal?       @db.Decimal(10, 7)
-  longitude    Decimal?       @db.Decimal(10, 7)
-  geocodedAt   DateTime?      @map("geocoded_at") @db.Timestamp(0)
-  status       ActiveInactive @default(active)
-  addedById    BigInt         @map("added_by") @db.UnsignedBigInt
-  createdAt    DateTime?      @map("created_at") @db.Timestamp(0)
-  updatedAt    DateTime?      @map("updated_at") @db.Timestamp(0)
+  id            BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  name          String
+  vendorTypeId  BigInt         @map("vendor_type_id") @db.UnsignedBigInt
+  email         String         @unique(map: "vendors_email_unique")
+  phoneNumber   String         @map("phone_number") @db.VarChar(20)
+  countryCode   String         @map("country_code") @db.VarChar(5)
+  website       String?        @db.VarChar(255)
+  einNumber     String?        @unique(map: "vendors_ein_number_unique") @map("ein_number") @db.VarChar(20)
+  ssnNumber     String?        @map("ssn_number") @db.VarChar(255) // AES-256-GCM ciphertext (R-PII) — encrypt/decrypt via src/lib/pii.ts only
+  ssnNumberHash String?        @unique(map: "vendors_ssn_number_hash_unique") @map("ssn_number_hash") @db.Char(64) // HMAC-SHA256 of the raw SSN — carries the unique constraint
+  addressLine1  String         @map("address_line_1") @db.VarChar(255)
+  addressLine2  String?        @map("address_line_2") @db.VarChar(255)
+  addressLine3  String?        @map("address_line_3") @db.VarChar(255)
+  city          String         @db.VarChar(100)
+  state         String         @db.VarChar(100)
+  country       String         @db.VarChar(100)
+  postalCode    String         @map("postal_code") @db.VarChar(20)
+  latitude      Decimal?       @db.Decimal(10, 7)
+  longitude     Decimal?       @db.Decimal(10, 7)
+  geocodedAt    DateTime?      @map("geocoded_at") @db.Timestamp(0)
+  status        ActiveInactive @default(active)
+  addedById     BigInt         @map("added_by") @db.UnsignedBigInt
+  createdAt     DateTime?      @map("created_at") @db.Timestamp(0)
+  updatedAt     DateTime?      @map("updated_at") @db.Timestamp(0)
 
   vendorType     VendorType      @relation(fields: [vendorTypeId], references: [id], onUpdate: NoAction, map: "vendors_vendor_type_id_foreign")
   addedBy        User            @relation("VendorAddedBy", fields: [addedById], references: [id], onUpdate: NoAction, map: "vendors_added_by_foreign")
@@ -419,6 +561,32 @@ enum QuoteStatus {
 enum WeightUnit {
   lb
   kg
+}
+
+enum ShipmentType {
+  air
+  ground
+  ocean
+}
+
+enum ShipmentStatus {
+  new_request
+  ready_for_pickup
+  in_transit
+  delivered
+  on_hold
+  cancelled
+}
+
+enum LocationType {
+  residential
+  commercial
+}
+
+enum CallbackTimeSlot {
+  morning
+  afternoon
+  evening
 }
 
 enum ServiceStatus {

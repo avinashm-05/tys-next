@@ -267,7 +267,7 @@ function packageSections(d: PackageSectionsData): string {
   return html + "</div>";
 }
 
-// Same support channels published site-wide (site-header.tsx, quote-wizard-form.tsx).
+// Same support channels published site-wide (site-header.tsx, quote-request-form.tsx).
 const SUPPORT_PHONE_DISPLAY = "+1 (404) 793-8759";
 const SUPPORT_EMAIL = "sales@tysgloballogistics.com";
 const contactLine =
@@ -451,6 +451,8 @@ export type AdminQuoteNotification = {
   packageTypeLabel: string;
   estimatedCost: string | null;
   currency: string;
+  /** e.g. "Morning (8am – 12pm) (America/New_York)" — the single-page quote form's callback window. */
+  callbackWindow?: string;
   adminUrl: string;
 };
 
@@ -485,6 +487,7 @@ export async function sendAdminQuoteNotification(d: AdminQuoteNotification) {
         ${detail("Delivery Type", d.isResidence ? "Residential" : "Commercial")}
         ${detail("Packages", d.packageTypeLabel || "N/A")}
         ${detail("Estimated Cost", cost)}
+        ${d.callbackWindow ? detail("Call back", d.callbackWindow) : ""}
         <p style="margin-top:20px;">
           <a href="${esc(d.adminUrl)}" style="background:#f26a21;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;font-weight:bold;">Open in admin</a>
         </p>
@@ -496,8 +499,57 @@ export async function sendAdminQuoteNotification(d: AdminQuoteNotification) {
     `From: ${d.fromCountry} (${d.fromZip})\nTo: ${d.toCountry} (${d.toZip})\n` +
     `Delivery: ${d.isResidence ? "Residential" : "Commercial"}\n` +
     `Packages: ${d.packageTypeLabel || "N/A"}\n` +
-    `Estimated Cost: ${d.estimatedCost ? `${d.currency || "USD"} ${d.estimatedCost}` : "Not auto-rated"}\n\n` +
-    `Open in admin: ${d.adminUrl}`;
+    `Estimated Cost: ${d.estimatedCost ? `${d.currency || "USD"} ${d.estimatedCost}` : "Not auto-rated"}\n` +
+    (d.callbackWindow ? `Call back: ${d.callbackWindow}\n` : "") +
+    `\nOpen in admin: ${d.adminUrl}`;
+
+  return sendMail({ to: recipients.join(", "), subject, text, html, from: SALES_FROM });
+}
+
+// ── Admin new-callback-request notification (the /quick-quote lead form) ──
+export type AdminCallbackNotification = {
+  requestId: number;
+  name: string;
+  email: string;
+  mobileNumber: string;
+  timeSlotLabel: string;
+  timezone: string;
+  packageTypeLabel: string;
+};
+
+/**
+ * Notify staff that a customer wants a callback instead of filling out the
+ * full quote wizard. Same recipients/no-op/throw posture as
+ * sendAdminQuoteNotification — no route/pricing info to show since none was
+ * collected; that's the whole point of this lighter-weight lead type.
+ */
+export async function sendAdminCallbackNotification(d: AdminCallbackNotification) {
+  const recipients = (process.env.ADMIN_NOTIFICATION_EMAILS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (recipients.length === 0) return null;
+
+  const subject = `New callback request #${d.requestId} — ${d.name}`;
+  const html = `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #1d2534;">
+      <div style="background: #16294e; padding: 20px 24px;">
+        <span style="color:#fff;font-size:18px;font-weight:bold;">New Callback Request #${esc(d.requestId)}</span>
+      </div>
+      <div style="padding: 24px; border: 1px solid #dde2ea; border-top: 0;">
+        ${detail("Name", d.name)}
+        ${detail("Email", d.email)}
+        ${detail("Mobile", d.mobileNumber)}
+        ${detail("Best time to call", `${d.timeSlotLabel} (${d.timezone})`)}
+        ${detail("Packages", d.packageTypeLabel || "N/A")}
+        <p style="margin-top:20px;color:#5b6472;">No route or pricing details yet — call the customer to get those.</p>
+      </div>
+    </div>`;
+  const text =
+    `New callback request #${d.requestId}\n\n` +
+    `Name: ${d.name} <${d.email}> ${d.mobileNumber}\n` +
+    `Best time to call: ${d.timeSlotLabel} (${d.timezone})\n` +
+    `Packages: ${d.packageTypeLabel || "N/A"}\n`;
 
   return sendMail({ to: recipients.join(", "), subject, text, html, from: SALES_FROM });
 }

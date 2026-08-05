@@ -26,7 +26,15 @@ export const auth = betterAuth({
   // /api/auth is served on BOTH hosts (proxy.ts SHARED prefix) since C1 —
   // customer auth posts from the apex origin, which must pass Better Auth's
   // origin check alongside baseURL.
-  trustedOrigins: [appUrl()].filter(Boolean),
+  // Local dev only: a second `next dev` instance on another port (e.g. for
+  // testing two logged-in roles side by side) is otherwise rejected with
+  // "Invalid origin" the same way a stray www vs. apex mismatch is in
+  // production — self-scoping since APP_URL is only ever a localhost URL in
+  // dev, never in a real deployment.
+  trustedOrigins: [
+    appUrl(),
+    ...(appUrl().startsWith("http://localhost") ? ["http://localhost:3001"] : []),
+  ].filter(Boolean),
   emailAndPassword: {
     enabled: true,
     // C1: customer self-registration is OPEN — the database hook below forces

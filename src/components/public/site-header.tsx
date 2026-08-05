@@ -25,12 +25,10 @@ import {
 } from "@phosphor-icons/react";
 import { UsFlag } from "@/components/public/us-flag";
 
-// Book Shipment + account/profile entry points are temporarily hidden
-// site-wide (nav, mobile menu, header icon) — self-serve booking and the
-// customer account portal aren't ready for customers yet. Re-add the
-// "Book Shipment" nav link, the MOBILE_MENU_ITEMS "My Account"/"Book
-// Shipment" rows, and the UserCircleIcon header link (removed below) when
-// told to bring them back.
+// Book Shipment (self-serve pickup scheduling) is still hidden — that flow
+// isn't ready for customers yet. The account/profile entry point is hidden
+// too, for now (temporary — the /account routes and backend are untouched,
+// this only removes the header's link to them; see the two spots below).
 const NAV_LINKS = [
   { href: "/tracking", label: "Tracking" },
   { href: "/contact-us", label: "Contact Us" },
@@ -57,6 +55,7 @@ const MOBILE_MENU_ITEMS = [
   { href: "/tracking", label: "Tracking", icon: ClockIcon },
   { href: "/quotes", label: "Get Quote", icon: NotePencilIcon },
   { href: "/contact-us", label: "Contact Us", icon: HeadsetIcon },
+  // "My Account" hidden for now — see the comment above NAV_LINKS.
 ] as const;
 
 // B1/B2 redesign — Tailwind rebuild matching the new Figma nav. Replaces the
@@ -132,6 +131,7 @@ export function SiteHeader() {
             <PhoneIcon size={16} weight="bold" />
             +1 (404) 793-8759
           </a>
+          {/* "My Account" hidden for now — see the comment above NAV_LINKS. */}
           <UsFlag className="h-5 w-auto overflow-hidden rounded-[3px]" />
         </div>
 

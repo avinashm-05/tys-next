@@ -3,8 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CaretDownIcon, MagnifyingGlassIcon, MapPinIcon } from "@phosphor-icons/react/dist/ssr";
+import { FlagIcon } from "@/components/public/flag-icon";
 
-export type SearchableOption = { value: string; label: string; flag?: string; sublabel?: string };
+export type SearchableOption = {
+  value: string;
+  label: string;
+  /** ISO 3166-1 alpha-2 country code — rendered as real flag artwork via
+   *  <FlagIcon>, not a pre-rendered emoji character (see flag-icon.tsx). */
+  flag?: string;
+  sublabel?: string;
+  /** Extra space-separated search terms not shown in the UI (e.g. a
+   *  timezone's alternate abbreviations) — matched in addition to `label`. */
+  keywords?: string;
+};
 
 // Flag/name searchable dropdown used for every country and phone-code
 // selector on the public site (mini quote form + wizard). Native <select>
@@ -58,7 +69,10 @@ export function SearchableSelect({
   const filtered =
     query.trim() === ""
       ? options
-      : options.filter((o) => o.label.toLowerCase().includes(query.trim().toLowerCase()));
+      : options.filter((o) => {
+          const q = query.trim().toLowerCase();
+          return o.label.toLowerCase().includes(q) || (o.keywords?.toLowerCase().includes(q) ?? false);
+        });
 
   function updateRect() {
     const btn = buttonRef.current;
@@ -172,7 +186,7 @@ export function SearchableSelect({
                 i === highlighted || o.value === value ? "bg-brand-pale text-brand" : "text-ink"
               }`}
             >
-              {o.flag && <span className="text-base leading-none">{o.flag}</span>}
+              {o.flag && <FlagIcon code={o.flag} className="h-3.5 w-5 shrink-0" />}
               <span className="truncate">{o.label}</span>
               {o.sublabel && <span className="ml-auto shrink-0 text-ink-muted">{o.sublabel}</span>}
             </button>
@@ -196,7 +210,7 @@ export function SearchableSelect({
         className={`flex w-full items-center justify-between gap-2 border bg-white text-left text-ink outline-none focus:border-brand ${large ? "px-4 py-4 text-base" : "px-4 py-3 text-sm"} ${pill ? "rounded-full" : "rounded-xl"} ${open ? "border-brand" : invalid ? "border-red-400" : "border-brand-light"}`}
       >
         <span className="flex min-w-0 items-center gap-2">
-          {selected?.flag && <span className="text-base leading-none">{selected.flag}</span>}
+          {selected?.flag && <FlagIcon code={selected.flag} className="h-3.5 w-5 shrink-0" />}
           {!selected && placeholderIcon && (
             <MapPinIcon size={large ? 18 : 16} className="shrink-0 text-ink-muted" />
           )}

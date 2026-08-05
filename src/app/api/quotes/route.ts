@@ -1,13 +1,8 @@
 import { db } from "@/lib/db";
 import { publicApiRoute } from "@/lib/public-route";
 import { emptyStringsToNull } from "@/lib/validation/common";
-import { quoteStoreInput } from "@/lib/validation/quote-store";
+import { TIME_SLOTS, quoteStoreInput } from "@/lib/validation/quote-store";
 import { calculateChargeableWeight } from "@/lib/chargeable-weight";
-import { isUnitedStates } from "@/lib/countries";
-import { FedExClient } from "@/lib/fedex/client";
-import { rateCredentials } from "@/lib/fedex/config";
-import { FedExRateQuoteService, type ShipmentInput } from "@/lib/fedex/rate-quote";
-import { getFedexMarkupPercentage } from "@/lib/settings";
 import { generateTrackingToken, trackingUrl } from "@/lib/email-tracking";
 import {
   sendAdminQuoteNotification,
@@ -20,10 +15,20 @@ import { decimal2 } from "@/lib/serialize";
 // Public port of QuoteController@store (10/min, same-origin) — the only public
 // write path. Validate → create the quote + package rows + contact + tracking
 // token IN ONE TRANSACTION (no orphaned partial quote on a mid-write failure)
-// → rate (US↔US only) → send emails inline (failure-safe). Honors R1 (CSV
-// backend names), R3 (decimals as strings), R8 (car_year string), R26
-// (estimatedCost = cheapest, US↔US, else NULL). Rating, the estimatedCost
-// update, and the emails run OUTSIDE the transaction (slow/external work).
+// → send emails inline (failure-safe). Honors R1 (CSV backend names), R3
+// (decimals as strings), R8 (car_year string).
+//
+// No FedEx auto-rating here (deliberate, as of the /quotes consolidation):
+// the public form now collects a callback window instead of package
+// dimensions, so there's nothing to rate yet — every quote is created with a
+// NULL estimatedCost, and staff pull live rates on demand from the admin
+// quote detail page's "Get live rates" panel (POST
+// /api/admin/quotes/[id]/fedex-rates) once they've talked to the customer
+// and filled in the real package details.
+
+const TIME_SLOT_LABELS: Record<string, string> = Object.fromEntries(
+  TIME_SLOTS.map((s) => [s.value, `${s.label} (${s.hint})`]),
+);
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
@@ -82,13 +87,16 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
   // A failure anywhere rolls the whole thing back — no orphaned partial quote.
   // storePackageDetails is a closure over `tx` so its type is inferred (the
   // extended client's tx isn't assignable to Prisma.TransactionClient).
-  const { quoteId, totalChargeableWeight } = await db.$transaction(async (tx) => {
+  const { quoteId } = await db.$transaction(async (tx) => {
     const quote = await tx.quote.create({
       data: {
         fromCountry: data.from_country,
-        fromZip: data.from_zip,
+        // Not collected by the single-page public form (just the countries) —
+        // staff capture the exact zips on the callback and add them via the
+        // admin editor. Still honored when a caller does supply them.
+        fromZip: data.from_zip ?? "",
         toCountry: data.to_country,
-        toZip: data.to_zip,
+        toZip: data.to_zip ?? "",
         isResidence: data.is_residence ?? false,
         packageType: packageTypeCsv,
         name: contact.name,
@@ -97,6 +105,8 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
         boxData: clean(boxDetails),
         televisionData: clean(televisionDetails),
         autoData: clean(autoDetails),
+        preferredTimeSlot: data.time_slot,
+        timezone: data.timezone,
         status: "pending",
         createdAt: now,
         updatedAt: now,
@@ -188,50 +198,6 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
     return { quoteId: quote.id, totalChargeableWeight: total };
   });
 
-  // R26: auto-rate only US↔US (and only when FedEx is enabled); everything else
-  // is created with a NULL cost for staff to price in the admin workstation.
-  const isDomesticUs = isUnitedStates(data.from_country) && isUnitedStates(data.to_country);
-  const fedexEnabled = (process.env.FEDEX_ENABLED ?? "true").toLowerCase() !== "false";
-  const showFedexRates = isDomesticUs && fedexEnabled;
-
-  let rates: unknown[] = [];
-  let ratesError: string | null = null;
-  let estimatedCost: number | null = null;
-  let currency = "USD";
-
-  if (showFedexRates) {
-    const shipment: ShipmentInput = {
-      from_zip: data.from_zip,
-      to_zip: data.to_zip,
-      is_residence: data.is_residence ?? false,
-      package_type: packageTypeCsv,
-      box_details: clean(boxDetails),
-      television_details: clean(televisionDetails),
-      auto_details: clean(autoDetails),
-      total_chargeable_weight: totalChargeableWeight,
-    };
-    const result = await new FedExRateQuoteService(new FedExClient(rateCredentials())).quote(
-      shipment,
-      await getFedexMarkupPercentage(),
-    );
-    if (result.success) {
-      rates = result.rates;
-      const cheapest = [...result.rates].sort((a, b) => a.total_charge - b.total_charge)[0];
-      if (cheapest) {
-        estimatedCost = cheapest.total_charge;
-        currency = cheapest.currency ?? "USD";
-      }
-    } else {
-      ratesError = result.message;
-    }
-    if (estimatedCost !== null) {
-      await db.quote.update({
-        where: { id: quoteId },
-        data: { estimatedCost: estimatedCost.toFixed(2), currency, updatedAt: new Date() }, // R3
-      });
-    }
-  }
-
   // Emails inline (no worker). A failure must NOT fail quote creation — log +
   // continue (the quote is already committed). Re-read with packages so the
   // confirmation body matches the admin "send" assembly exactly.
@@ -306,6 +272,7 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
         packageTypeLabel: emailData.packageTypeLabel,
         estimatedCost: decimal2(full.estimatedCost),
         currency: full.currency ?? "USD",
+        callbackWindow: `${TIME_SLOT_LABELS[data.time_slot] ?? data.time_slot} (${data.timezone})`,
         adminUrl: `${(process.env.BETTER_AUTH_URL ?? "").replace(/\/+$/, "")}/admin/quotes/${Number(full.id)}`,
       });
     } catch {
@@ -313,25 +280,8 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
     }
   }
 
-  const payload: Record<string, unknown> = {
-    message: "Your quote request has been submitted successfully!",
-    quote_id: Number(quoteId),
-    show_fedex_rates: showFedexRates,
-  };
-  if (showFedexRates) {
-    payload.summary = {
-      package_label: formatPackageTypes(packageTypeCsv),
-      weight_lb: round2(totalChargeableWeight),
-      route: `${data.from_zip} → ${data.to_zip}`,
-      contact: {
-        name: contact.name,
-        email: contact.email,
-        phone: `${contact.country_code ?? ""} ${contact.phone ?? ""}`.trim(),
-      },
-    };
-    payload.rates = rates;
-    payload.rates_error = ratesError;
-  }
-
-  return Response.json(payload, { status: 201 });
+  return Response.json(
+    { message: "Your quote request has been submitted successfully!", quote_id: Number(quoteId) },
+    { status: 201 },
+  );
 });

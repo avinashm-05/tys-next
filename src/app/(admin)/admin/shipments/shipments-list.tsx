@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -12,9 +12,12 @@ import {
   PlusIcon,
   PulseIcon,
   ShippingContainerIcon,
+  TruckIcon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { useAdminList } from "@/hooks/use-admin-list";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,17 +26,30 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DataTable, sortableHeader, type ColumnFilterConfig } from "@/components/shared/data-table";
+import type { ShipmentStatus, ShipmentType } from "@prisma/client";
+import { DataTable, sortableHeader } from "@/components/shared/data-table";
 import { LocalDateTime } from "@/components/shared/local-date-time";
 import { RowActions } from "@/components/admin/row-actions";
-import {
-  listMockShipments,
-  SHIPMENT_STATUS_LABELS,
-  type ShipmentRow,
-  type ShipmentStatus,
-  type ShipmentType,
-} from "./mock-data";
+import { SHIPMENT_STATUS_LABELS } from "./mock-data";
 import { ShipmentStatusBadge } from "./shipment-status-badge";
+
+// Real row shape from GET /api/admin/shipments — distinct from mock-data.ts's
+// ShipmentRow (which still backs the still-mock "New shipment"/edit flow).
+type ShipmentListRow = {
+  id: number;
+  date: string | null;
+  trackingNumber: string | null;
+  senderName: string;
+  senderCity: string;
+  senderState: string;
+  senderCountry: string;
+  receiverName: string;
+  receiverCity: string;
+  receiverState: string;
+  receiverCountry: string;
+  shipmentType: ShipmentType;
+  status: ShipmentStatus;
+};
 
 // Same visual checkbox-multiselect pattern as the Vendor list filters
 // (src/app/(admin)/admin/vendors/vendors-list.tsx) — kept local rather than
@@ -112,60 +128,37 @@ function CheckboxFilterDropdown<T extends string>({
   );
 }
 
-const TYPE_LABELS: Record<ShipmentType, string> = { air: "Air", ocean: "Ocean" };
+// "ground" has no icon of its own in this list yet — reuses the truck glyph
+// already used for the account-portal Shipments empty state.
+const TYPE_LABELS: Record<ShipmentType, string> = { air: "Air", ground: "Ground", ocean: "Ocean" };
 const TYPE_OPTIONS = Object.keys(TYPE_LABELS) as ShipmentType[];
 const STATUS_OPTIONS = Object.keys(SHIPMENT_STATUS_LABELS) as ShipmentStatus[];
+
+function TypeIcon({ type }: { type: ShipmentType }) {
+  if (type === "air") return <AirplaneTiltIcon size={14} weight="bold" className="text-tys-blue" />;
+  if (type === "ocean") return <BoatIcon size={14} weight="bold" className="text-tys-teal" />;
+  return <TruckIcon size={14} weight="bold" className="text-tys-indigo" />;
+}
 
 export function ShipmentsList() {
   const router = useRouter();
   const [selectedStatuses, setSelectedStatuses] = useState<Set<ShipmentStatus>>(new Set());
   const [selectedTypes, setSelectedTypes] = useState<Set<ShipmentType>>(new Set());
-  const [trackingFilter, setTrackingFilter] = useState("");
-  const [senderFilter, setSenderFilter] = useState("");
-  const [receiverFilter, setReceiverFilter] = useState("");
-  const [managedByFilter, setManagedByFilter] = useState("");
 
-  const allRows = useMemo(() => listMockShipments(), []);
-
-  const rows = useMemo(() => {
-    return allRows.filter((r) => {
-      if (selectedStatuses.size > 0 && !selectedStatuses.has(r.status)) return false;
-      if (selectedTypes.size > 0 && !selectedTypes.has(r.shipmentType)) return false;
-      if (trackingFilter && !r.trackingNumber.includes(trackingFilter.trim())) return false;
-      if (
-        senderFilter &&
-        !r.senderName.toLowerCase().includes(senderFilter.trim().toLowerCase())
-      )
-        return false;
-      if (
-        receiverFilter &&
-        !r.receiverName.toLowerCase().includes(receiverFilter.trim().toLowerCase())
-      )
-        return false;
-      if (
-        managedByFilter &&
-        !r.managedBy.toLowerCase().includes(managedByFilter.trim().toLowerCase())
-      )
-        return false;
-      return true;
-    });
-  }, [allRows, selectedStatuses, selectedTypes, trackingFilter, senderFilter, receiverFilter, managedByFilter]);
+  const list = useAdminList<ShipmentListRow>("/api/admin/shipments", [{ id: "createdAt", desc: true }], {
+    ...(selectedStatuses.size > 0 ? { status: [...selectedStatuses].join(",") } : {}),
+    ...(selectedTypes.size > 0 ? { type: [...selectedTypes].join(",") } : {}),
+  });
 
   function toggleSet<T>(setter: (v: Set<T>) => void, current: Set<T>, value: T, on: boolean) {
     const next = new Set(current);
     if (on) next.add(value);
     else next.delete(value);
     setter(next);
+    list.setPage(1);
   }
 
-  const columnFilters: ColumnFilterConfig[] = [
-    { id: "trackingNumber", value: trackingFilter, onChange: setTrackingFilter, placeholder: "Search tracking…" },
-    { id: "sender", value: senderFilter, onChange: setSenderFilter, placeholder: "Search sender…" },
-    { id: "receiver", value: receiverFilter, onChange: setReceiverFilter, placeholder: "Search receiver…" },
-    { id: "managedBy", value: managedByFilter, onChange: setManagedByFilter, placeholder: "Search…" },
-  ];
-
-  const columns: ColumnDef<ShipmentRow>[] = [
+  const columns: ColumnDef<ShipmentListRow>[] = [
     {
       accessorKey: "date",
       header: sortableHeader("Date"),
@@ -174,19 +167,14 @@ export function ShipmentsList() {
     {
       accessorKey: "trackingNumber",
       header: sortableHeader("Tracking"),
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.trackingNumber}</span>,
-    },
-    {
-      id: "managedBy",
-      header: "Managed By",
-      cell: ({ row }) => row.original.managedBy,
+      cell: ({ row }) => <span className="font-mono text-xs">{row.original.trackingNumber ?? "—"}</span>,
     },
     {
       id: "sender",
       header: "Sender",
       cell: ({ row }) => (
         <div className="text-xs">
-          <span className="block font-medium">{row.original.senderName}</span>
+          <span className="block font-medium">{row.original.senderName || "—"}</span>
           <span className="text-muted-foreground">
             {row.original.senderState}, {row.original.senderCountry}
           </span>
@@ -198,7 +186,7 @@ export function ShipmentsList() {
       header: "Receiver",
       cell: ({ row }) => (
         <div className="text-xs">
-          <span className="block font-medium">{row.original.receiverName}</span>
+          <span className="block font-medium">{row.original.receiverName || "—"}</span>
           <span className="text-muted-foreground">
             {row.original.receiverState}, {row.original.receiverCountry}
           </span>
@@ -210,11 +198,7 @@ export function ShipmentsList() {
       header: "Type",
       cell: ({ row }) => (
         <span className="inline-flex items-center gap-1.5 text-xs font-medium">
-          {row.original.shipmentType === "air" ? (
-            <AirplaneTiltIcon size={14} weight="bold" className="text-tys-blue" />
-          ) : (
-            <BoatIcon size={14} weight="bold" className="text-tys-teal" />
-          )}
+          <TypeIcon type={row.original.shipmentType} />
           {TYPE_LABELS[row.original.shipmentType]}
         </span>
       ),
@@ -249,6 +233,13 @@ export function ShipmentsList() {
           <h1 className="text-h2">Shipments</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={list.search}
+            onChange={(e) => list.setSearch(e.target.value)}
+            placeholder="Search tracking / sender / receiver…"
+            className="max-w-xs"
+            aria-label="Search shipments"
+          />
           <CheckboxFilterDropdown
             label="Status"
             icon={PulseIcon}
@@ -256,7 +247,10 @@ export function ShipmentsList() {
             labels={SHIPMENT_STATUS_LABELS}
             selected={selectedStatuses}
             onToggle={(v, on) => toggleSet(setSelectedStatuses, selectedStatuses, v, on)}
-            onToggleAll={(on) => setSelectedStatuses(on ? new Set(STATUS_OPTIONS) : new Set())}
+            onToggleAll={(on) => {
+              setSelectedStatuses(on ? new Set(STATUS_OPTIONS) : new Set());
+              list.setPage(1);
+            }}
             className="bg-tys-indigo text-white uppercase hover:bg-tys-indigo/90"
           />
           <CheckboxFilterDropdown
@@ -266,7 +260,10 @@ export function ShipmentsList() {
             labels={TYPE_LABELS}
             selected={selectedTypes}
             onToggle={(v, on) => toggleSet(setSelectedTypes, selectedTypes, v, on)}
-            onToggleAll={(on) => setSelectedTypes(on ? new Set(TYPE_OPTIONS) : new Set())}
+            onToggleAll={(on) => {
+              setSelectedTypes(on ? new Set(TYPE_OPTIONS) : new Set());
+              list.setPage(1);
+            }}
             className="bg-tys-teal text-white uppercase hover:bg-tys-teal/90"
           />
           <Button asChild className="bg-tys-rose text-white uppercase hover:bg-tys-rose/90">
@@ -279,9 +276,17 @@ export function ShipmentsList() {
       </div>
       <DataTable
         columns={columns}
-        data={rows}
-        columnFilters={columnFilters}
+        data={list.rows}
         emptyMessage="No shipments match the current filters."
+        server={{
+          total: list.total,
+          page: list.page,
+          pageSize: list.pageSize,
+          onPageChange: list.setPage,
+          sorting: list.sorting,
+          onSortingChange: list.setSorting,
+          loading: list.loading,
+        }}
       />
     </div>
   );

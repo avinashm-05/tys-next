@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CaretDownIcon, CheckIcon, FileTextIcon, PulseIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
+import Link from "next/link";
+import { CaretDownIcon, CheckIcon, FileTextIcon, PlusIcon, PulseIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { formatPackageTypes, PACKAGE_TYPE_OPTIONS } from "@/lib/package-type";
-import { buildConvertToShipmentHref } from "@/lib/quote-to-shipment";
+import { adminApi, ApiError } from "@/lib/admin-api";
 import { useAdminList } from "@/hooks/use-admin-list";
 import { QUOTE_STATUS_LABELS } from "@/lib/quote-status";
 import { Button } from "@/components/ui/button";
@@ -88,6 +90,22 @@ export function QuotesList() {
   const [route, setRoute] = useState("all");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [convertingId, setConvertingId] = useState<number | null>(null);
+
+  async function convertToShipment(quoteId: number) {
+    setConvertingId(quoteId);
+    try {
+      const res = await adminApi<{ id: number }>(`/api/admin/quotes/${quoteId}/convert-to-shipment`, {
+        method: "POST",
+      });
+      toast.success(`Shipment #${res.id} created.`);
+      router.push("/admin/shipments");
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Couldn't convert this quote to a shipment.");
+    } finally {
+      setConvertingId(null);
+    }
+  }
 
   const list = useAdminList<QuoteRow>("/api/admin/quotes", [{ id: "createdAt", desc: true }], {
     ...(selectedStatuses.size > 0 ? { status: [...selectedStatuses].join(",") } : {}),
@@ -188,23 +206,10 @@ export function QuotesList() {
             <Button
               size="sm"
               className="bg-tys-indigo text-white hover:bg-tys-indigo/90"
-              onClick={() => {
-                const q = row.original;
-                router.push(
-                  buildConvertToShipmentHref({
-                    id: q.id,
-                    fromCountry: q.fromCountry,
-                    fromZip: q.fromZip,
-                    toCountry: q.toCountry,
-                    toZip: q.toZip,
-                    contactName: q.contact.name,
-                    contactEmail: q.contact.email,
-                    contactPhone: q.contact.phone,
-                  }),
-                );
-              }}
+              disabled={convertingId === row.original.id}
+              onClick={() => convertToShipment(row.original.id)}
             >
-              Convert to Shipment
+              {convertingId === row.original.id ? "Converting…" : "Convert to Shipment"}
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={() => router.push(`/admin/quotes/${row.original.id}`)}>
@@ -224,11 +229,19 @@ export function QuotesList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-2xl bg-tys-blue text-white">
-          <FileTextIcon size={22} weight="bold" />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-tys-blue text-white">
+            <FileTextIcon size={22} weight="bold" />
+          </div>
+          <h1 className="text-h2">Quotes</h1>
         </div>
-        <h1 className="text-h2">Quotes</h1>
+        <Button asChild className="bg-tys-blue text-white uppercase hover:bg-tys-blue/90">
+          <Link href="/admin/quotes/new">
+            <PlusIcon size={16} weight="bold" />
+            New Quote
+          </Link>
+        </Button>
       </div>
       <div className="flex flex-wrap gap-2">
         <Input

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SignOutIcon } from "@phosphor-icons/react/dist/ssr";
 
 export function SignOutButton() {
   const [busy, setBusy] = useState(false);
@@ -21,16 +22,9 @@ export function SignOutButton() {
       type="button"
       onClick={signOut}
       disabled={busy}
-      style={{
-        background: "none",
-        border: "none",
-        padding: 0,
-        color: "#dc3545",
-        cursor: "pointer",
-        font: "inherit",
-      }}
+      className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-60"
     >
-      <i className="fa-solid fa-arrow-right-from-bracket me-1"></i>
+      <SignOutIcon size={16} />
       {busy ? "Signing out…" : "Sign out"}
     </button>
   );

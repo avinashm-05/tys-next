@@ -18,10 +18,11 @@ async function post(path: string, body: Record<string, unknown>): Promise<Respon
   });
 }
 
-// Book Shipment requires a TYS account — online booking itself isn't built
-// yet (Track B fulfillment), so a successful login lands on the real,
-// working destination: the account portal. Same /api/auth/sign-in/email
-// endpoint the /account/login form uses, just styled for this page.
+// Book Shipment requires a TYS account. A successful login does a full
+// navigation back to this same page (not a client-side route change) so the
+// server component re-evaluates the session and renders the booking wizard
+// instead of this gate. Same /api/auth/sign-in/email endpoint the
+// /account/login form uses, just styled for this page.
 export function BookShipmentLoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,7 +39,7 @@ export function BookShipmentLoginForm() {
     try {
       const res = await post("/api/auth/sign-in/email", { email, password });
       if (res.ok) {
-        window.location.href = "/account";
+        window.location.href = "/book-shipment";
         return;
       }
       if (res.status === 403) {

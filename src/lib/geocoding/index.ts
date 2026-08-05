@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import zipcodes from "zipcodes";
+import tzLookup from "tz-lookup";
 import { cacheGet, cacheSet } from "@/lib/cache";
 
 /**
@@ -167,6 +168,80 @@ export async function lookupCityByPostalCode(
     if (!city) return null;
     await cacheSet(cacheKey, city, CACHE_TTL_SECONDS);
     return city;
+  } catch {
+    return null;
+  }
+}
+
+export type ZipInfo = { city: string; state: string | null; timezone: string | null };
+
+/**
+ * Postal code → city, state (or region), and IANA timezone, for the quote
+ * detail editor's From/To "what time is it there" glance. US takes the
+ * instant static-table path (same one geocodeAddress prefers); every other
+ * country goes through one Nominatim structured search — a single call
+ * returns both the address breakdown AND coordinates, so timezone (via
+ * tz-lookup, offline) comes from that same response instead of a second
+ * network round-trip. 30-day cache, same as the rest of this module.
+ */
+export async function lookupZipInfo(
+  postalCode: string,
+  countryCode: string,
+): Promise<ZipInfo | null> {
+  const trimmedZip = postalCode.trim();
+  const cc = countryCode.trim().toUpperCase();
+  if (!trimmedZip || !cc) return null;
+
+  if (cc === "US" && US_ZIP.test(trimmedZip)) {
+    const hit = zipcodes.lookup(trimmedZip.slice(0, 5));
+    if (!hit) return null;
+    let timezone: string | null = null;
+    try {
+      timezone = tzLookup(hit.latitude, hit.longitude);
+    } catch {
+      timezone = null;
+    }
+    return { city: hit.city, state: hit.state, timezone };
+  }
+
+  const cacheKey = `zipinfo:${cc}:${trimmedZip.toLowerCase()}`;
+  const cached = await cacheGet<ZipInfo>(cacheKey);
+  if (cached !== null) return cached;
+
+  try {
+    const params = new URLSearchParams({
+      postalcode: trimmedZip,
+      countrycodes: cc,
+      format: "json",
+      addressdetails: "1",
+      limit: "1",
+    });
+    const res = await fetch(`${BASE_URL}/search?${params}`, {
+      headers: { "User-Agent": USER_AGENT },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    if (!res.ok) return null;
+    const results = (await res.json()) as Array<{
+      lat?: string;
+      lon?: string;
+      address?: Record<string, string>;
+    }>;
+    const hit = results?.[0];
+    const address = hit?.address;
+    const city = address?.city ?? address?.town ?? address?.village ?? address?.county ?? null;
+    if (!city) return null;
+    const state = address?.state ?? address?.region ?? null;
+    let timezone: string | null = null;
+    if (hit?.lat && hit?.lon) {
+      try {
+        timezone = tzLookup(Number(hit.lat), Number(hit.lon));
+      } catch {
+        timezone = null;
+      }
+    }
+    const info: ZipInfo = { city, state, timezone };
+    await cacheSet(cacheKey, info, CACHE_TTL_SECONDS);
+    return info;
   } catch {
     return null;
   }

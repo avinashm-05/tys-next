@@ -95,7 +95,11 @@ export class FedExRateQuoteService {
    * domestic, but sends the real origin/destination country codes and applies
    * the INTERNATIONAL markup. Transport charges only: freight services are
    * excluded (parcels-only rule) and dutiesTaxesIncluded is false — no
-   * customs/duties/taxes estimation is attempted.
+   * customs/duties/taxes estimation is attempted. Customs clearance is on by
+   * default (see `rate()`'s customsClearance opt) — FedEx's international
+   * parcel rate types need a customs declaration on the request to be
+   * returned at all; without one, cross-border requests can silently come
+   * back short of the services a dutiable shipment actually qualifies for.
    */
   async quoteInternational(
     shipment: ShipmentInput,
@@ -105,23 +109,26 @@ export class FedExRateQuoteService {
   ): Promise<QuoteResult> {
     const result = await this.rate(shipment, originCountry, destCountry, markupPercent, {
       filterFreight: true,
+      customsClearance: true,
     });
     return result.success ? { ...result, dutiesTaxesIncluded: false } : result;
   }
 
   /**
    * Shared rate call. The ONLY thing that differs between domestic and
-   * international is the shipper/recipient countryCode — the account check,
-   * line-item build, payload shape, request, and parse are identical, so the
+   * international is the shipper/recipient countryCode plus (international
+   * only) the customs declaration — the account check, line-item build,
+   * payload shape, request, and parse are otherwise identical, so the
    * fixture-verified domestic output is preserved byte-for-byte (guarded by
-   * `npm run fedex:check`). Domestic passes ("US","US") and never filters.
+   * `npm run fedex:check`). Domestic passes ("US","US") and never sets
+   * customsClearance, so its payload is byte-for-byte unchanged.
    */
   private async rate(
     shipment: ShipmentInput,
     originCountry: string,
     destCountry: string,
     markupPercent: number,
-    opts: { filterFreight?: boolean } = {},
+    opts: { filterFreight?: boolean; customsClearance?: boolean } = {},
   ): Promise<QuoteResult> {
     const accountNumber = this.cfg.accountNumber.trim();
     if (accountNumber === "") {
@@ -157,6 +164,12 @@ export class FedExRateQuoteService {
           payor: { responsibleParty: { accountNumber: { value: accountNumber } } },
         },
         requestedPackageLineItems: lineItems,
+        // International only, on by default (see quoteInternational): tells
+        // FedEx this is a dutiable cross-border shipment, sender pays duties.
+        // Minimal declaration — no per-commodity value/description, which
+        // the Rate API doesn't require the way the Ship API (real label
+        // creation) does.
+        ...(opts.customsClearance ? { customsClearanceDetail: { dutiesPayment: { paymentType: "SENDER" } } } : {}),
       },
     };
 
@@ -217,6 +230,10 @@ export class FedExRateQuoteService {
     }
     if (selectedTypes.includes("furniture")) {
       const item = this.buildDefaultLineItem("furniture");
+      if (item) lineItems.push(item);
+    }
+    if (selectedTypes.includes("packers_movers")) {
+      const item = this.buildDefaultLineItem("packers_movers");
       if (item) lineItems.push(item);
     }
     if (selectedTypes.includes("auto")) {

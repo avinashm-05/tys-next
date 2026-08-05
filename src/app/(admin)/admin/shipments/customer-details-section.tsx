@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FieldRow, IconInput } from "./field-row";
+import { FieldRow, IconInput } from "@/components/admin/field-row";
 import type { Address, ShipmentDetail } from "./mock-data";
 
 function AddressFields({

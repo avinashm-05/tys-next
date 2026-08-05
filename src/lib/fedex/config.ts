@@ -67,4 +67,5 @@ export const PACKAGE_DEFAULTS: Record<string, PackageDefault> = {
   envelope: { weight_lb: 1, length_in: 12, width_in: 9, height_in: 1, packaging_type: "FEDEX_ENVELOPE" },
   furniture: { weight_lb: 80, length_in: 48, width_in: 24, height_in: 24, packaging_type: "YOUR_PACKAGING" },
   auto: { weight_lb: 120, length_in: 60, width_in: 24, height_in: 18, packaging_type: "YOUR_PACKAGING" },
+  packers_movers: { weight_lb: 200, length_in: 60, width_in: 40, height_in: 40, packaging_type: "YOUR_PACKAGING" },
 };
