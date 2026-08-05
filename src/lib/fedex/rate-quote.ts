@@ -233,6 +233,24 @@ export class FedExRateQuoteService {
     if (opts.filterFreight) {
       rates = rates.filter((r) => !r.service_type.toUpperCase().includes("FREIGHT"));
     }
+    // FedEx Envelope/Pak is Express-only packaging in FedEx's own real service
+    // rules — real Express boxes/envelopes cannot be tendered as Ground
+    // (confirmed against FedEx's own packaging-acceptance guidance, and by
+    // fedex.com's own consumer rate calculator simply not offering Ground as
+    // an option for a document/envelope shipment). The Rate API itself is
+    // more lenient than a real booking would be: it still returns a priced
+    // "FedEx Ground" line for an all-FEDEX_ENVELOPE request instead of
+    // rejecting it (confirmed live, 2026-08-06), which would let staff quote
+    // and sell a Ground price FedEx can't actually fulfill for a document.
+    // Drop Ground-family services whenever every line item on this request
+    // is FEDEX_ENVELOPE packaging — i.e. a pure Document/envelope quote.
+    // Mixed requests (rare: e.g. "box,envelope" on one quote) are left alone
+    // since FedEx's own combined-request behavior there isn't established.
+    const allEnvelopePackaging =
+      lineItems.length > 0 && lineItems.every((li) => li.packagingType === "FEDEX_ENVELOPE");
+    if (allEnvelopePackaging) {
+      rates = rates.filter((r) => !r.service_type.toUpperCase().includes("GROUND"));
+    }
     if (rates.length === 0) {
       return { success: false, message: "No FedEx rates were returned for this shipment." };
     }

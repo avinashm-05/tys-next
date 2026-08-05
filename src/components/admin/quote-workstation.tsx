@@ -11,6 +11,7 @@ export function QuoteWorkstation({
   estimatedCost,
   sendTo,
   packageType,
+  onBeforeGetRates,
 }: {
   quoteId: number;
   isResidence: boolean;
@@ -18,6 +19,7 @@ export function QuoteWorkstation({
   estimatedCost: string | null;
   sendTo: string | null;
   packageType: string;
+  onBeforeGetRates?: () => Promise<boolean>;
 }) {
   return (
     <FedExRatesPanel
@@ -27,6 +29,7 @@ export function QuoteWorkstation({
       currentAmount={estimatedCost != null ? Number(estimatedCost) : null}
       packageType={packageType}
       sendTo={sendTo}
+      onBeforeGetRates={onBeforeGetRates}
     />
   );
 }

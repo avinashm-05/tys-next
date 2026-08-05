@@ -79,6 +79,7 @@ export function FedExRatesPanel({
   currentAmount,
   packageType,
   sendTo,
+  onBeforeGetRates,
 }: {
   quoteId: number;
   isResidence: boolean;
@@ -86,6 +87,14 @@ export function FedExRatesPanel({
   currentAmount: number | null;
   packageType: string;
   sendTo: string | null;
+  // This panel always rates whatever the DB currently has (the /fedex-rates
+  // route re-reads the quote fresh on every call) — it never saw the sibling
+  // editor's in-memory package edits. Staff who typed a weight/dimension and
+  // hit "Get live rates" without saving first would silently rate the OLD
+  // (pre-edit) package data with no indication anything was stale — exactly
+  // the kind of mismatch that prompted this investigation. Saving here first
+  // closes that gap instead of just documenting it.
+  onBeforeGetRates?: () => Promise<boolean>;
 }) {
   const router = useRouter();
   // Only box/television line items actually send this to FedEx (see
@@ -138,6 +147,16 @@ export function FedExRatesPanel({
   async function getRates() {
     setLoading(true);
     setResult(null);
+    if (onBeforeGetRates) {
+      const saved = await onBeforeGetRates();
+      if (!saved) {
+        // handleSave already toasted the specific error — just stop here
+        // instead of rating stale (or, on a first-ever save, nonexistent)
+        // package data.
+        setLoading(false);
+        return;
+      }
+    }
     try {
       const overrides = JSON.stringify({
         packaging_type: packagingType,

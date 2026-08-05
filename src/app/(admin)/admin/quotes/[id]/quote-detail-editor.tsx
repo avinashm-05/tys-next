@@ -336,7 +336,14 @@ export function QuoteDetailEditor({ quote: quoteProp }: { quote?: QuoteDetail })
   // always navigates — "Save" opens the quote it just created (the same
   // detail page a real customer submission would land on), "Save & Exit"
   // goes straight back to the list.
-  async function handleSave(exitAfter: boolean) {
+  // `silent` is used by "Get live rates" below: it needs the just-typed
+  // package edits persisted before it re-reads the quote from the DB (that
+  // API route has no idea about this component's in-memory state), but a
+  // "Quote saved." toast every time staff just want a rate would be noise —
+  // the rates table appearing is confirmation enough. Errors still surface
+  // either way, since a rate pulled against a save that silently failed
+  // would be exactly the stale-data trap this is meant to close.
+  async function handleSave(exitAfter: boolean, opts: { silent?: boolean } = {}): Promise<boolean> {
     setSaving(true);
     const payload = {
       from_country: fromCountry,
@@ -370,8 +377,9 @@ export function QuoteDetailEditor({ quote: quoteProp }: { quote?: QuoteDetail })
           notesRef.current?.flushDraft(),
         ]);
         setPackages(updated.packages);
-        toast.success("Quote saved.");
+        if (!opts.silent) toast.success("Quote saved.");
         if (exitAfter) router.push("/admin/quotes");
+        return true;
       } else {
         const created = await adminApi<{ id: number }>("/api/admin/quotes", {
           method: "POST",
@@ -379,9 +387,11 @@ export function QuoteDetailEditor({ quote: quoteProp }: { quote?: QuoteDetail })
         });
         toast.success("Quote created.");
         router.push(exitAfter ? "/admin/quotes" : `/admin/quotes/${created.id}`);
+        return true;
       }
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Couldn't save the quote.");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -669,6 +679,7 @@ export function QuoteDetailEditor({ quote: quoteProp }: { quote?: QuoteDetail })
               estimatedCost={quote.estimatedCost}
               sendTo={quote.contact.email}
               packageType={quote.packageType}
+              onBeforeGetRates={() => handleSave(false, { silent: true })}
             />
           </div>
 
