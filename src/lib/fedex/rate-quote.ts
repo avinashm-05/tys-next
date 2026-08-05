@@ -311,6 +311,18 @@ export class FedExRateQuoteService {
   }
 
   private buildDimensionalLineItems(detail: Detail, packagingType: string): LineItem[] {
+    // A box/TV row with no weight entered yet (weight null/0 — e.g. a
+    // PackageDetail row created but never filled in by staff) must NOT
+    // silently become a rate request. splitWeightIntoLineItems floors weight
+    // at 0.1lb to avoid a divide-by-zero loop for the *default-profile* path
+    // (envelope/furniture/auto, which always has a real weight ≥1lb from
+    // PACKAGE_DEFAULTS) — reusing that same floor here would instead send
+    // FedEx a fake "0.1lb, 0×0×0in" phantom package for a row that's simply
+    // incomplete, and FedEx happily returns a real-looking but meaningless
+    // rate for it (confirmed live, 2026-08-06). Skipping the row here means
+    // an all-incomplete package list correctly falls through to the existing
+    // "No package details were provided" error instead.
+    if (Number(detail.weight ?? 0) <= 0) return [];
     const quantity = Math.max(Math.trunc(Number(detail.quantity ?? 1)), 1);
     const isMetric = String(detail.weight_unit ?? "lb").toLowerCase() === "kg";
     const weightLb = this.convertWeightToPounds(
