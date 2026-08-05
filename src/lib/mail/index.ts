@@ -461,6 +461,15 @@ export type AdminQuoteNotification = {
  * ADMIN_NOTIFICATION_EMAILS (comma-separated); with none configured this is a
  * no-op. Throws on SMTP failure — the store flow swallows it so a mail outage
  * never fails quote creation.
+ *
+ * Sends from the default (no-reply) address, not SALES_FROM — this is a
+ * one-way internal alert nobody replies to, so it doesn't need the "human
+ * sender" framing SALES_FROM exists for. Confirmed in production
+ * (2026-08-05): the SMTP account only authenticates as MAIL_FROM_ADDRESS: it
+ * can't send *as* sales@ unless that's a separately configured mailbox/alias
+ * with "send as" permission, which it isn't yet — using SALES_FROM here got
+ * every notification silently rejected with 553 "Sender address rejected:
+ * not owned by user noreply@...".
  */
 export async function sendAdminQuoteNotification(d: AdminQuoteNotification) {
   const recipients = (process.env.ADMIN_NOTIFICATION_EMAILS ?? "")
@@ -503,7 +512,7 @@ export async function sendAdminQuoteNotification(d: AdminQuoteNotification) {
     (d.callbackWindow ? `Call back: ${d.callbackWindow}\n` : "") +
     `\nOpen in admin: ${d.adminUrl}`;
 
-  return sendMail({ to: recipients.join(", "), subject, text, html, from: SALES_FROM });
+  return sendMail({ to: recipients.join(", "), subject, text, html });
 }
 
 // ── Admin new-callback-request notification (the /quick-quote lead form) ──
@@ -519,9 +528,10 @@ export type AdminCallbackNotification = {
 
 /**
  * Notify staff that a customer wants a callback instead of filling out the
- * full quote wizard. Same recipients/no-op/throw posture as
- * sendAdminQuoteNotification — no route/pricing info to show since none was
- * collected; that's the whole point of this lighter-weight lead type.
+ * full quote wizard. Same recipients/no-op/throw posture — and same
+ * default-sender reasoning — as sendAdminQuoteNotification above. No
+ * route/pricing info to show since none was collected; that's the whole
+ * point of this lighter-weight lead type.
  */
 export async function sendAdminCallbackNotification(d: AdminCallbackNotification) {
   const recipients = (process.env.ADMIN_NOTIFICATION_EMAILS ?? "")
@@ -551,5 +561,5 @@ export async function sendAdminCallbackNotification(d: AdminCallbackNotification
     `Best time to call: ${d.timeSlotLabel} (${d.timezone})\n` +
     `Packages: ${d.packageTypeLabel || "N/A"}\n`;
 
-  return sendMail({ to: recipients.join(", "), subject, text, html, from: SALES_FROM });
+  return sendMail({ to: recipients.join(", "), subject, text, html });
 }
