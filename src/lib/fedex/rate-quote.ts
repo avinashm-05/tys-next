@@ -25,6 +25,19 @@ const SERVICE_NAMES: Record<string, string> = {
   INTERNATIONAL_GROUND: "FedEx International Ground",
 };
 
+// Generic, human-readable descriptions for the customs commodity placeholder
+// (see buildPlaceholderCommodity) — just enough for FedEx's validation to
+// accept the request, not a real customs declaration.
+const COMMODITY_LABELS: Record<string, string> = {
+  box: "Personal effects",
+  boxes: "Personal effects",
+  television: "Consumer electronics",
+  envelope: "Documents",
+  furniture: "Household goods",
+  auto: "Motor vehicle",
+  packers_movers: "Household goods",
+};
+
 // PHP round() (half away from zero) to 2 dp. EPSILON nudge avoids binary-float
 // truncation on the exact-.005 boundary. ponytail: matches all recorded
 // fixtures; if a future value lands on a float edge, swap for a decimal lib.
@@ -166,10 +179,27 @@ export class FedExRateQuoteService {
         requestedPackageLineItems: lineItems,
         // International only, on by default (see quoteInternational): tells
         // FedEx this is a dutiable cross-border shipment, sender pays duties.
-        // Minimal declaration — no per-commodity value/description, which
-        // the Rate API doesn't require the way the Ship API (real label
-        // creation) does.
-        ...(opts.customsClearance ? { customsClearanceDetail: { dutiesPayment: { paymentType: "SENDER" } } } : {}),
+        // `commodities` is required too — confirmed live against production
+        // 2026-08-06 (the earlier "minimal declaration, no per-commodity
+        // value/description" note above was wrong for production; sandbox
+        // never enforced it, same pattern as the accountNumber/payor fix
+        // above). This is a real quote-request submission, not a booked
+        // shipment — the customer hasn't given a declared value yet, so this
+        // is a rough placeholder good enough to make FedEx return a rate; a
+        // real Ship-time booking flow must collect the actual declared
+        // value/description before creating a label. `unitPrice`/
+        // `customsValue` don't feed the returned freight charge itself
+        // (rateRequestType here is ["ACCOUNT","LIST"], not a duties/taxes
+        // estimate) — they only need to be present and non-zero to pass
+        // FedEx's validation.
+        ...(opts.customsClearance
+          ? {
+              customsClearanceDetail: {
+                dutiesPayment: { paymentType: "SENDER" },
+                commodities: [this.buildPlaceholderCommodity(shipment, originCountry, lineItems)],
+              },
+            }
+          : {}),
       },
     };
 
@@ -250,6 +280,34 @@ export class FedExRateQuoteService {
     }
 
     return lineItems.filter(Boolean);
+  }
+
+  // customsClearanceDetail.commodities — required by FedEx production for any
+  // dutiable (international) rate quote (see the call site's comment). One
+  // aggregate line for the whole shipment is enough to satisfy validation;
+  // FedEx doesn't require it to be split per package for a rate-only request
+  // the way a real Ship API booking would. Values here are a rate-quoting
+  // placeholder, not a customs declaration — nothing about this shipment's
+  // actual contents/value has been collected from the customer at quote time.
+  private buildPlaceholderCommodity(
+    shipment: ShipmentInput,
+    originCountry: string,
+    lineItems: LineItem[],
+  ): Record<string, unknown> {
+    const totalWeightLb = lineItems.reduce((sum, item) => {
+      const w = item.weight as { value?: number } | undefined;
+      return sum + Number(w?.value ?? 0);
+    }, 0);
+    const label = COMMODITY_LABELS[this.normalizePackageTypes(shipment.package_type)[0] ?? ""] ?? "Merchandise";
+    return {
+      description: label,
+      countryOfManufacture: originCountry,
+      quantity: 1,
+      quantityUnits: "PCS",
+      weight: { units: "LB", value: round2(Math.max(totalWeightLb, 0.1)) },
+      unitPrice: { amount: 100, currency: "USD" },
+      customsValue: { amount: 100, currency: "USD" },
+    };
   }
 
   private buildDimensionalLineItems(detail: Detail, packagingType: string): LineItem[] {
