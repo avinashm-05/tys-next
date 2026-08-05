@@ -80,11 +80,29 @@ export const GET = adminRoute<Ctx>(async (req, ctx) => {
   // Legacy JSON columns as a last-resort fallback (a handful of very old
   // quotes from before the PackageDetail-rows migration may still only have
   // those) — real rows win whenever any exist.
+  //
+  // package_type is the one field that ISN'T covered by that "real rows win"
+  // rule below unless we do it explicitly: `quote.packageType` is a snapshot
+  // written once when the quote was created (or converted) and the admin
+  // PATCH handler (../route.ts) never touches it — it only upserts
+  // PackageDetail rows. So a quote created as "envelope" and later edited by
+  // staff into a real "box" row (or vice versa) keeps reporting the
+  // ORIGINAL type here forever. That silently rates against the wrong
+  // profile: a stale "envelope" type ignores the box row entirely and rates
+  // a fake default-weight envelope instead (confirmed live, 2026-08-06,
+  // same investigation that found the box/TV zero-weight bug in
+  // rate-quote.ts). Whenever real PackageDetail rows exist, derive the type
+  // list from them — same "real rows win" precedent as box_details/
+  // television_details/auto_details below — and only fall back to the
+  // stale column for legacy pre-migration quotes with zero rows.
+  const packageTypeFromRows = () =>
+    Array.from(new Set(quote.packages.map((p) => p.packageType))).join(",");
   const shipment: ShipmentInput = {
     from_zip: quote.fromZip,
     to_zip: quote.toZip,
     is_residence: o.is_residence ?? quote.isResidence,
-    package_type: o.package_type ?? quote.packageType,
+    package_type:
+      o.package_type ?? (quote.packages.length > 0 ? packageTypeFromRows() : quote.packageType),
     box_details:
       o.box_details ?? (quote.packages.length > 0 ? detailsFromPackages(quote.packages, "box") : asArray(quote.boxData)),
     television_details:
