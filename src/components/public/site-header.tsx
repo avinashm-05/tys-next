@@ -146,10 +146,28 @@ export function SiteHeader() {
         </button>
       </div>
 
+      {/* Both the backdrop and the drawer below are unconditionally mounted
+          (not `{mobileOpen && ...}`) so the open/close slide has something to
+          transition between — but that means their CLOSED state depends
+          entirely on Tailwind's compiled CSS actually being applied
+          (`translate-x-full`, `opacity-0`, `fixed inset-*`). On a real
+          mobile connection where the stylesheet request lands even slightly
+          behind the HTML paint, those classes are inert and the drawer
+          renders as a plain, unstyled, unpositioned list of every nav link
+          sitting right in the page flow, overlaid on the real content —
+          confirmed via an actual MobileSafari session recording,
+          2026-08-06. The inline `style` fallback below forces the CLOSED
+          position/transform/opacity with zero dependency on any stylesheet
+          having loaded; it's cleared (`undefined`) once `mobileOpen` is
+          true, at which point the Tailwind classes safely take over (CSS is
+          certainly loaded by then — the hamburger button itself needed CSS
+          to be visible/clickable before this state could ever become true),
+          preserving the existing slide/fade transition exactly as before. */}
       <button
         type="button"
         aria-label="Close menu"
         tabIndex={mobileOpen ? 0 : -1}
+        style={!mobileOpen ? { position: "fixed", inset: 0, opacity: 0, pointerEvents: "none" } : undefined}
         className={`fixed inset-0 z-40 bg-ink/30 transition-opacity duration-300 ease-out ${
           mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
@@ -157,6 +175,11 @@ export function SiteHeader() {
       />
       <div
         aria-hidden={!mobileOpen}
+        style={
+          !mobileOpen
+            ? { position: "fixed", top: 0, bottom: 0, right: 0, transform: "translateX(100%)" }
+            : undefined
+        }
         className={`fixed inset-y-0 right-0 z-50 flex h-dvh w-[85%] max-w-xs flex-col overflow-y-auto bg-white pb-8 shadow-2xl transition-transform duration-300 ease-out ${
           mobileOpen ? "translate-x-0" : "translate-x-full"
         }`}
