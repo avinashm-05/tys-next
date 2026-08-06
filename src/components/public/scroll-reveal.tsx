@@ -33,6 +33,16 @@ export function ScrollReveal({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // Trigger well BEFORE the section is actually visible, not after it's
+    // already 80px into the viewport. The old negative bottom margin meant
+    // the fade only started once the user could already see the section —
+    // on any real scroll speed (confirmed live, 2026-08-06: reproduces even
+    // scrolling slowly), the 700ms animation couldn't keep up, so sections
+    // scrolled into view looked genuinely blank/empty for a beat. A 400px
+    // positive margin starts the reveal while the section is still below
+    // the fold, giving it a full scroll's worth of lead time to finish
+    // before it's ever actually on screen; threshold 0 fires on the
+    // earliest possible intersection rather than waiting for 12% visible.
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -40,7 +50,7 @@ export function ScrollReveal({
           observer.disconnect();
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -80px 0px" },
+      { threshold: 0, rootMargin: "0px 0px 400px 0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -55,7 +65,7 @@ export function ScrollReveal({
   return (
     <div
       ref={ref}
-      className={`transition-all duration-700 ease-out ${stateClasses} ${className}`}
+      className={`transition-all duration-300 ease-out ${stateClasses} ${className}`}
       style={{ transitionDelay: visible ? `${delay}ms` : "0ms" }}
       onTransitionEnd={(e) => {
         if (e.propertyName === "transform" && visible) setSettled(true);
