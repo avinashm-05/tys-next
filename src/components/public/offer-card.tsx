@@ -32,6 +32,7 @@ export function OfferCard({
         style={{ left: "var(--hover-x, 50%)", top: "var(--hover-y, 50%)" }}
       />
       <img
+        loading="lazy"
         src={icon}
         alt=""
         className="relative z-10 h-16 w-auto self-start transition duration-500 group-hover:scale-110 group-hover:brightness-0 group-hover:invert"
@@ -46,7 +47,8 @@ export function OfferCard({
         href={href}
         className="relative z-10 mt-auto inline-flex w-fit items-center gap-1 text-base font-bold uppercase tracking-[0.4px] text-brand transition-colors duration-500 group-hover:text-white"
       >
-        Read More <span className="sr-only"> about {title}</span> <ArrowRightIcon size={16} />
+        Read More <span className="sr-only"> about {title}</span>{" "}
+        <ArrowRightIcon size={16} />
       </Link>
     </div>
   );

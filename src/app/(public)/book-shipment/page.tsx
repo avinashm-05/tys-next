@@ -32,6 +32,7 @@ function LoginGate() {
 
       <div className="relative mx-auto max-w-md overflow-hidden rounded-3xl border-t-4 border-brand bg-white p-8 shadow-[0_20px_60px_rgba(16,24,40,0.1)] md:p-10">
         <img
+          loading="lazy"
           src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png"
           alt="TYS Global Logistics"
           width={480}
@@ -58,7 +59,10 @@ function VerifyEmailNotice() {
         <p className="mt-2 text-sm text-ink-muted">
           Check your inbox for the verification link before booking a shipment.
         </p>
-        <Link href="/account/verify-email" className="mt-6 inline-block font-semibold text-brand hover:underline">
+        <Link
+          href="/account/verify-email"
+          className="mt-6 inline-block font-semibold text-brand hover:underline"
+        >
           Resend the verification email
         </Link>
       </div>

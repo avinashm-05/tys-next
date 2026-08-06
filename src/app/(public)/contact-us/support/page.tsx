@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { PhoneIcon, EnvelopeSimpleIcon, MapPinIcon } from "@phosphor-icons/react/dist/ssr";
+import {
+  PhoneIcon,
+  EnvelopeSimpleIcon,
+  MapPinIcon,
+} from "@phosphor-icons/react/dist/ssr";
 import { ContactSupportForm } from "@/components/public/contact-support-form";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 
@@ -12,8 +16,16 @@ export default function ContactSupportPage() {
         <div className="mx-auto max-w-5xl">
           <div className="grid gap-4 sm:grid-cols-3">
             <InfoCard icon={PhoneIcon} label="Call Us" value="+1 (404) 793-8759" />
-            <InfoCard icon={EnvelopeSimpleIcon} label="Email" value="sales@tysgloballogistics.com" />
-            <InfoCard icon={MapPinIcon} label="Address" value="6111 Morgan Pl Ct NE, Atlanta, GA 30324, USA" />
+            <InfoCard
+              icon={EnvelopeSimpleIcon}
+              label="Email"
+              value="sales@tysgloballogistics.com"
+            />
+            <InfoCard
+              icon={MapPinIcon}
+              label="Address"
+              value="6111 Morgan Pl Ct NE, Atlanta, GA 30324, USA"
+            />
           </div>
 
           <div className="mt-10 grid gap-10 md:grid-cols-2">
@@ -24,6 +36,7 @@ export default function ContactSupportPage() {
               </div>
             </div>
             <img
+              loading="lazy"
               src="/frontend/images/redesign/support-illustration.svg"
               alt=""
               aria-hidden

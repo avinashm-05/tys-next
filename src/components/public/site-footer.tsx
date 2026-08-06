@@ -43,6 +43,7 @@ export function SiteFooter() {
         <div className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 md:grid-cols-4">
           <div className="sm:col-span-2 md:col-span-1">
             <img
+              loading="lazy"
               src="/frontend/logo/TYS_GLOBAL_LOGISTICS_White.png"
               alt="TYS Global Logistics"
               width={480}

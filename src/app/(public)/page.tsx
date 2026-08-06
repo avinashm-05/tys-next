@@ -31,6 +31,7 @@ export default function HomePage() {
             rather than needing their own spacing. */}
         <div className="relative mx-auto max-w-6xl">
           <img
+            loading="lazy"
             src="/frontend/images/redesign/hero-truck.webp"
             alt=""
             aria-hidden
@@ -38,6 +39,7 @@ export default function HomePage() {
             className="pointer-events-none absolute left-0 top-0 hidden w-36 -scale-x-100 select-none lg:block xl:w-40"
           />
           <img
+            loading="lazy"
             src="/frontend/images/redesign/hero-plane.webp"
             alt=""
             aria-hidden
@@ -45,6 +47,7 @@ export default function HomePage() {
             className="pointer-events-none absolute right-0 top-0 hidden w-40 select-none lg:block xl:w-44"
           />
           <img
+            loading="lazy"
             src="/frontend/images/redesign/hero-container-truck.svg"
             alt=""
             aria-hidden
@@ -52,6 +55,7 @@ export default function HomePage() {
             className="hero-float-a pointer-events-none absolute bottom-0 left-0 hidden w-32 select-none lg:block xl:w-36"
           />
           <img
+            loading="lazy"
             src="/frontend/images/redesign/hero-container-ship.svg"
             alt=""
             aria-hidden
@@ -71,9 +75,9 @@ export default function HomePage() {
               Your Trusted Global Shipping Partner
             </h1>
             <p className="mx-auto mt-4 max-w-[885px] text-base text-ink-muted">
-              Ship documents, parcels, freight, vehicles, and household goods with confidence. TYS
-              Global Logistics delivers secure domestic and international shipping backed by
-              competitive rates and dedicated support.
+              Ship documents, parcels, freight, vehicles, and household goods with
+              confidence. TYS Global Logistics delivers secure domestic and international
+              shipping backed by competitive rates and dedicated support.
             </p>
           </div>
 
@@ -105,7 +109,7 @@ export default function HomePage() {
               className="group flex flex-col items-start gap-2 rounded-3xl bg-white p-5 text-left transition hover:-translate-y-0.5"
             >
               <div className="flex w-full items-center gap-3">
-                <img src={card.icon} alt="" className="h-8 w-8 shrink-0" />
+                <img loading="lazy" src={card.icon} alt="" className="h-8 w-8 shrink-0" />
                 <span className="flex-1 text-xl font-medium leading-[30px] text-black">
                   {card.title}
                 </span>
@@ -122,156 +126,97 @@ export default function HomePage() {
 
       {/* What We Offer */}
       <section id="services" className="scroll-mt-28 px-4 py-20 md:px-8">
-      <ScrollReveal>
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-[2rem] sm:text-[2.5rem] md:text-[2.75rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-            What We <span className="text-brand">Offer</span>
-          </h2>
-          <p className="mt-3 text-ink-muted">
-            Expand your global reach with TYS Global Logistics&rsquo; reliable domestic and
-            international shipping solutions.
-          </p>
-        </div>
+        <ScrollReveal>
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-[2rem] sm:text-[2.5rem] md:text-[2.75rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+              What We <span className="text-brand">Offer</span>
+            </h2>
+            <p className="mt-3 text-ink-muted">
+              Expand your global reach with TYS Global Logistics&rsquo; reliable domestic
+              and international shipping solutions.
+            </p>
+          </div>
 
-        <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-3">
-          {[
-            {
-              icon: "/frontend/icons/redesign/offer-worldwide-shipping.svg",
-              title: "Worldwide Shipping",
-              body: "Save more with competitive shipping rates from leading courier partners, including FedEx, DHL, UPS, and USPS. Choose flexible shipping solutions that fit your schedule and budget.",
-              href: "/services/parcel-shipping",
-            },
-            {
-              icon: "/frontend/icons/redesign/offer-worldwide-moving.svg",
-              title: "Worldwide Moving",
-              body: "Relocate your family, household belongings, and vehicles with confidence. Enjoy complete, reliable international moving solutions across 200+ destinations worldwide.",
-              href: "/services/international-relocation",
-            },
-            {
-              icon: "/frontend/icons/redesign/offer-freight-forwarding.svg",
-              title: "Freight Forwarding",
-              body: "Ship containers, pallets, and commercial cargo with ease. Choose reliable freight services by air, ocean, rail, or road for shipments of every size, backed by trusted global partners.",
-              href: "/services/freight-forwarding",
-            },
-          ].map((card) => (
-            <OfferCard key={card.title} icon={card.icon} title={card.title} body={card.body} href={card.href} />
-          ))}
-        </div>
-      </ScrollReveal>
+          <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-3">
+            {[
+              {
+                icon: "/frontend/icons/redesign/offer-worldwide-shipping.svg",
+                title: "Worldwide Shipping",
+                body: "Save more with competitive shipping rates from leading courier partners, including FedEx, DHL, UPS, and USPS. Choose flexible shipping solutions that fit your schedule and budget.",
+                href: "/services/parcel-shipping",
+              },
+              {
+                icon: "/frontend/icons/redesign/offer-worldwide-moving.svg",
+                title: "Worldwide Moving",
+                body: "Relocate your family, household belongings, and vehicles with confidence. Enjoy complete, reliable international moving solutions across 200+ destinations worldwide.",
+                href: "/services/international-relocation",
+              },
+              {
+                icon: "/frontend/icons/redesign/offer-freight-forwarding.svg",
+                title: "Freight Forwarding",
+                body: "Ship containers, pallets, and commercial cargo with ease. Choose reliable freight services by air, ocean, rail, or road for shipments of every size, backed by trusted global partners.",
+                href: "/services/freight-forwarding",
+              },
+            ].map((card) => (
+              <OfferCard
+                key={card.title}
+                icon={card.icon}
+                title={card.title}
+                body={card.body}
+                href={card.href}
+              />
+            ))}
+          </div>
+        </ScrollReveal>
       </section>
 
       {/* Relocation & Auto Transport */}
       <section className="px-4 py-16 md:px-8">
-      <ScrollReveal>
-        <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
-          <div>
-            <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-              For All Movers
-            </p>
-            <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-              Relocation
-              <br />
-              &amp; Auto Transport
-            </h2>
-            <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
-              From household furniture and personal belongings to cars and motorcycles, we handle
-              every move with care, precision, and dependable global logistics.
-            </p>
-            <div className="mt-6 flex gap-4 sm:gap-6">
-              {[
-                { icon: "/frontend/icons/redesign/badge-door-to-door.svg", label: "Door-to-Door", sub: "Service" },
-                { icon: "/frontend/icons/redesign/badge-customs.svg", label: "Customs", sub: "Assistance" },
-                { icon: "/frontend/icons/redesign/badge-destinations.svg", label: "200+", sub: "Destinations" },
-              ].map((s) => (
-                <div key={s.label} className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-light">
-                    <img src={s.icon} alt="" className="h-[27px] w-auto self-center" />
-                  </span>
-                  <span className="text-xs font-semibold">
-                    <span className="block font-semibold text-ink">{s.label}</span>
-                    <span className="text-ink-muted">{s.sub}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <img
-            src="/frontend/images/redesign/feature-relocation.webp"
-            alt="Relocation and auto transport"
-            className="w-full rounded-3xl"
-          />
-        </div>
-
-        <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-2">
-          {[
-            {
-              icon: "/frontend/icons/redesign/card-international-relocation.svg",
-              title: "International Relocation",
-              body: "Seamless door-to-door relocation for your household, furniture, and personal belongings.",
-              href: "/services/international-relocation",
-            },
-            {
-              icon: "/frontend/icons/redesign/card-auto-transport.svg",
-              title: "Auto Transport",
-              body: "Dependable, insured shipping for cars, motorcycles, and other vehicles anywhere in the world.",
-              href: "/services/auto-transport",
-            },
-          ].map((c) => (
-            <div key={c.title} className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left">
-              <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-brand-light">
-                <img src={c.icon} alt="" className="h-8 w-auto self-center" />
-              </span>
-              <div className="flex flex-col items-center gap-1 sm:items-start">
-                <h3 className="text-2xl font-semibold leading-[30px] text-ink">{c.title}</h3>
-                <p className="text-base font-medium text-ink-muted">{c.body}</p>
-                <Link
-                  href={c.href}
-                  className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
-                >
-                  Learn More <span className="sr-only"> about {c.title}</span> <ArrowRightIcon size={16} />
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-        <Link
-          href="/quotes"
-          className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
-        >
-          Get a Free Quote <ArrowRightIcon size={26} />
-        </Link>
-      </ScrollReveal>
-      </section>
-
-      {/* Document & Parcel Shipping */}
-      <section className="px-4 py-16 md:px-8">
-      <ScrollReveal>
-        <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
-          <div className="grid items-center gap-10 md:grid-cols-2">
-            <img
-              src="/frontend/images/redesign/feature-docparcel.webp"
-              alt="Document and parcel shipping"
-              className="w-full max-w-sm justify-self-center rounded-3xl md:order-1"
-            />
+        <ScrollReveal>
+          <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
             <div>
               <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-                For All Shippers
+                For All Movers
               </p>
               <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-                Document and Parcel Shipping
+                Relocation
+                <br />
+                &amp; Auto Transport
               </h2>
               <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
-                Save up to 70% on domestic and international shipping with discounted rates from
-                trusted carriers like FedEx, DHL, UPS, and USPS.
+                From household furniture and personal belongings to cars and motorcycles,
+                we handle every move with care, precision, and dependable global
+                logistics.
               </p>
               <div className="mt-6 flex gap-4 sm:gap-6">
                 {[
-                  { icon: "/frontend/icons/redesign/badge-best-rates.svg", label: "Best Rates", sub: "Up to 70% Discount" },
-                  { icon: "/frontend/icons/redesign/badge-trusted-carriers.svg", label: "Trusted Carriers", sub: "FedEx, DHL, UPS, USPS" },
+                  {
+                    icon: "/frontend/icons/redesign/badge-door-to-door.svg",
+                    label: "Door-to-Door",
+                    sub: "Service",
+                  },
+                  {
+                    icon: "/frontend/icons/redesign/badge-customs.svg",
+                    label: "Customs",
+                    sub: "Assistance",
+                  },
+                  {
+                    icon: "/frontend/icons/redesign/badge-destinations.svg",
+                    label: "200+",
+                    sub: "Destinations",
+                  },
                 ].map((s) => (
-                  <div key={s.label} className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left">
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
-                      <img src={s.icon} alt="" className="h-[27px] w-auto self-center" />
+                  <div
+                    key={s.label}
+                    className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left"
+                  >
+                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-light">
+                      <img
+                        loading="lazy"
+                        src={s.icon}
+                        alt=""
+                        className="h-[27px] w-auto self-center"
+                      />
                     </span>
                     <span className="text-xs font-semibold">
                       <span className="block font-semibold text-ink">{s.label}</span>
@@ -281,35 +226,52 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
+            <img
+              loading="lazy"
+              src="/frontend/images/redesign/feature-relocation.webp"
+              alt="Relocation and auto transport"
+              className="w-full rounded-3xl"
+            />
           </div>
 
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
+          <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-2">
             {[
               {
-                icon: "/frontend/icons/redesign/card-document-shipping.svg",
-                title: "Document Shipping",
-                body: "Secure worldwide delivery for important documents with real-time tracking.",
-                href: "/services/document-shipping",
+                icon: "/frontend/icons/redesign/card-international-relocation.svg",
+                title: "International Relocation",
+                body: "Seamless door-to-door relocation for your household, furniture, and personal belongings.",
+                href: "/services/international-relocation",
               },
               {
-                icon: "/frontend/icons/redesign/card-parcel-shipping.svg",
-                title: "Parcel Shipping",
-                body: "Ship parcels of any size with fast, reliable, and cost-effective international delivery options.",
-                href: "/services/parcel-shipping",
+                icon: "/frontend/icons/redesign/card-auto-transport.svg",
+                title: "Auto Transport",
+                body: "Dependable, insured shipping for cars, motorcycles, and other vehicles anywhere in the world.",
+                href: "/services/auto-transport",
               },
             ].map((c) => (
-              <div key={c.title} className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left">
+              <div
+                key={c.title}
+                className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left"
+              >
                 <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-brand-light">
-                  <img src={c.icon} alt="" className="h-8 w-auto self-center" />
+                  <img
+                    loading="lazy"
+                    src={c.icon}
+                    alt=""
+                    className="h-8 w-auto self-center"
+                  />
                 </span>
                 <div className="flex flex-col items-center gap-1 sm:items-start">
-                  <h3 className="text-2xl font-semibold leading-[30px] text-ink">{c.title}</h3>
+                  <h3 className="text-2xl font-semibold leading-[30px] text-ink">
+                    {c.title}
+                  </h3>
                   <p className="text-base font-medium text-ink-muted">{c.body}</p>
                   <Link
                     href={c.href}
                     className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
                   >
-                    Learn More <span className="sr-only"> about {c.title}</span> <ArrowRightIcon size={16} />
+                    Learn More <span className="sr-only"> about {c.title}</span>{" "}
+                    <ArrowRightIcon size={16} />
                   </Link>
                 </div>
               </div>
@@ -317,123 +279,162 @@ export default function HomePage() {
           </div>
           <Link
             href="/quotes"
-            className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
+            className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
           >
             Get a Free Quote <ArrowRightIcon size={26} />
           </Link>
-        </div>
-      </ScrollReveal>
+        </ScrollReveal>
+      </section>
+
+      {/* Document & Parcel Shipping */}
+      <section className="px-4 py-16 md:px-8">
+        <ScrollReveal>
+          <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
+            <div className="grid items-center gap-10 md:grid-cols-2">
+              <img
+                loading="lazy"
+                src="/frontend/images/redesign/feature-docparcel.webp"
+                alt="Document and parcel shipping"
+                className="w-full max-w-sm justify-self-center rounded-3xl md:order-1"
+              />
+              <div>
+                <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+                  For All Shippers
+                </p>
+                <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+                  Document and Parcel Shipping
+                </h2>
+                <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
+                  Save up to 70% on domestic and international shipping with discounted
+                  rates from trusted carriers like FedEx, DHL, UPS, and USPS.
+                </p>
+                <div className="mt-6 flex gap-4 sm:gap-6">
+                  {[
+                    {
+                      icon: "/frontend/icons/redesign/badge-best-rates.svg",
+                      label: "Best Rates",
+                      sub: "Up to 70% Discount",
+                    },
+                    {
+                      icon: "/frontend/icons/redesign/badge-trusted-carriers.svg",
+                      label: "Trusted Carriers",
+                      sub: "FedEx, DHL, UPS, USPS",
+                    },
+                  ].map((s) => (
+                    <div
+                      key={s.label}
+                      className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left"
+                    >
+                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
+                        <img
+                          loading="lazy"
+                          src={s.icon}
+                          alt=""
+                          className="h-[27px] w-auto self-center"
+                        />
+                      </span>
+                      <span className="text-xs font-semibold">
+                        <span className="block font-semibold text-ink">{s.label}</span>
+                        <span className="text-ink-muted">{s.sub}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10 grid gap-6 md:grid-cols-2">
+              {[
+                {
+                  icon: "/frontend/icons/redesign/card-document-shipping.svg",
+                  title: "Document Shipping",
+                  body: "Secure worldwide delivery for important documents with real-time tracking.",
+                  href: "/services/document-shipping",
+                },
+                {
+                  icon: "/frontend/icons/redesign/card-parcel-shipping.svg",
+                  title: "Parcel Shipping",
+                  body: "Ship parcels of any size with fast, reliable, and cost-effective international delivery options.",
+                  href: "/services/parcel-shipping",
+                },
+              ].map((c) => (
+                <div
+                  key={c.title}
+                  className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left"
+                >
+                  <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-brand-light">
+                    <img
+                      loading="lazy"
+                      src={c.icon}
+                      alt=""
+                      className="h-8 w-auto self-center"
+                    />
+                  </span>
+                  <div className="flex flex-col items-center gap-1 sm:items-start">
+                    <h3 className="text-2xl font-semibold leading-[30px] text-ink">
+                      {c.title}
+                    </h3>
+                    <p className="text-base font-medium text-ink-muted">{c.body}</p>
+                    <Link
+                      href={c.href}
+                      className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
+                    >
+                      Learn More <span className="sr-only"> about {c.title}</span>{" "}
+                      <ArrowRightIcon size={16} />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Link
+              href="/quotes"
+              className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
+            >
+              Get a Free Quote <ArrowRightIcon size={26} />
+            </Link>
+          </div>
+        </ScrollReveal>
       </section>
 
       {/* Volume & Business Shipping */}
       <section className="px-4 py-16 md:px-8">
-      <ScrollReveal>
-        <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
-          <div>
-            <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-              Business Only
-            </p>
-            <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-              Volume &amp; Business Shipping
-            </h2>
-            <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
-              Power your global supply chain with integrated freight, customs, warehousing, and
-              transportation solutions.
-            </p>
-            <div className="mt-6 flex gap-4 sm:gap-6">
-              {[
-                { icon: "/frontend/icons/redesign/badge-priority-support.svg", label: "Priority Support", sub: "Dedicated support for businesses" },
-                { icon: "/frontend/icons/redesign/badge-business-accounts.svg", label: "Business Accounts", sub: "Manage all your shipments in one place" },
-              ].map((s) => (
-                <div key={s.label} className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-light">
-                    <img src={s.icon} alt="" className="h-[27px] w-auto self-center" />
-                  </span>
-                  <span className="text-xs font-semibold">
-                    <span className="block font-semibold text-ink">{s.label}</span>
-                    <span className="text-ink-muted">{s.sub}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <img
-            src="/frontend/images/redesign/feature-volume-truck.webp"
-            alt="Volume and business shipping"
-            className="w-full rounded-3xl"
-          />
-        </div>
-
-        <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-2">
-          {[
-            {
-              icon: "/frontend/icons/redesign/card-volume-shipping.svg",
-              title: "Volume Shipping",
-              body: "Exclusive pricing and flexible shipping solutions for businesses with high-volume shipments.",
-              href: "/services/volume-shipping",
-            },
-            {
-              icon: "/frontend/icons/redesign/card-retailer-shipping.svg",
-              title: "Retailer Shipping",
-              body: "Customized logistics solutions designed for retailers and e-commerce businesses of every size.",
-              href: "/services/retailer-shipping",
-            },
-          ].map((c) => (
-            <div key={c.title} className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left">
-              <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-brand-light">
-                <img src={c.icon} alt="" className="h-8 w-auto self-center" />
-              </span>
-              <div className="flex flex-col items-center gap-1 sm:items-start">
-                <h3 className="text-2xl font-semibold leading-[30px] text-ink">{c.title}</h3>
-                <p className="text-base font-medium text-ink-muted">{c.body}</p>
-                <Link
-                  href={c.href}
-                  className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
-                >
-                  Learn More <span className="sr-only"> about {c.title}</span> <ArrowRightIcon size={16} />
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-        <Link
-          href="/quotes"
-          className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
-        >
-          Get a Free Quote <ArrowRightIcon size={26} />
-        </Link>
-      </ScrollReveal>
-      </section>
-
-      {/* Enterprise Logistics Solution */}
-      <section className="px-4 py-16 md:px-8">
-      <ScrollReveal>
-        <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
-          <div className="grid items-center gap-10 md:grid-cols-2">
-            <img
-              src="/frontend/images/redesign/feature-enterprise-ship.webp"
-              alt="Enterprise logistics solution"
-              className="w-full max-w-sm justify-self-center rounded-3xl md:order-1"
-            />
+        <ScrollReveal>
+          <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
             <div>
               <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-                For All Freight
+                Business Only
               </p>
               <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-                Enterprise Logistics Solution
+                Volume &amp; Business Shipping
               </h2>
               <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
-                End-to-end freight and supply chain solutions for imports, exports, and commercial
-                cargo, backed by reliable global logistics expertise.
+                Power your global supply chain with integrated freight, customs,
+                warehousing, and transportation solutions.
               </p>
               <div className="mt-6 flex gap-4 sm:gap-6">
                 {[
-                  { icon: HeadsetIcon, label: "Dedicated Manager", sub: "One point of contact" },
-                  { icon: GlobeIcon, label: "Global Reach", sub: "Import & export coverage" },
+                  {
+                    icon: "/frontend/icons/redesign/badge-priority-support.svg",
+                    label: "Priority Support",
+                    sub: "Dedicated support for businesses",
+                  },
+                  {
+                    icon: "/frontend/icons/redesign/badge-business-accounts.svg",
+                    label: "Business Accounts",
+                    sub: "Manage all your shipments in one place",
+                  },
                 ].map((s) => (
-                  <div key={s.label} className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left">
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
-                      <s.icon size={27} className="text-brand" />
+                  <div
+                    key={s.label}
+                    className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left"
+                  >
+                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-light">
+                      <img
+                        loading="lazy"
+                        src={s.icon}
+                        alt=""
+                        className="h-[27px] w-auto self-center"
+                      />
                     </span>
                     <span className="text-xs font-semibold">
                       <span className="block font-semibold text-ink">{s.label}</span>
@@ -443,204 +444,325 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
+            <img
+              loading="lazy"
+              src="/frontend/images/redesign/feature-volume-truck.webp"
+              alt="Volume and business shipping"
+              className="w-full rounded-3xl"
+            />
+          </div>
+
+          <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-2">
+            {[
+              {
+                icon: "/frontend/icons/redesign/card-volume-shipping.svg",
+                title: "Volume Shipping",
+                body: "Exclusive pricing and flexible shipping solutions for businesses with high-volume shipments.",
+                href: "/services/volume-shipping",
+              },
+              {
+                icon: "/frontend/icons/redesign/card-retailer-shipping.svg",
+                title: "Retailer Shipping",
+                body: "Customized logistics solutions designed for retailers and e-commerce businesses of every size.",
+                href: "/services/retailer-shipping",
+              },
+            ].map((c) => (
+              <div
+                key={c.title}
+                className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left"
+              >
+                <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-brand-light">
+                  <img
+                    loading="lazy"
+                    src={c.icon}
+                    alt=""
+                    className="h-8 w-auto self-center"
+                  />
+                </span>
+                <div className="flex flex-col items-center gap-1 sm:items-start">
+                  <h3 className="text-2xl font-semibold leading-[30px] text-ink">
+                    {c.title}
+                  </h3>
+                  <p className="text-base font-medium text-ink-muted">{c.body}</p>
+                  <Link
+                    href={c.href}
+                    className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
+                  >
+                    Learn More <span className="sr-only"> about {c.title}</span>{" "}
+                    <ArrowRightIcon size={16} />
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
           <Link
             href="/quotes"
-            className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
+            className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
           >
             Get a Free Quote <ArrowRightIcon size={26} />
           </Link>
-        </div>
-      </ScrollReveal>
+        </ScrollReveal>
+      </section>
+
+      {/* Enterprise Logistics Solution */}
+      <section className="px-4 py-16 md:px-8">
+        <ScrollReveal>
+          <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
+            <div className="grid items-center gap-10 md:grid-cols-2">
+              <img
+                loading="lazy"
+                src="/frontend/images/redesign/feature-enterprise-ship.webp"
+                alt="Enterprise logistics solution"
+                className="w-full max-w-sm justify-self-center rounded-3xl md:order-1"
+              />
+              <div>
+                <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+                  For All Freight
+                </p>
+                <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+                  Enterprise Logistics Solution
+                </h2>
+                <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
+                  End-to-end freight and supply chain solutions for imports, exports, and
+                  commercial cargo, backed by reliable global logistics expertise.
+                </p>
+                <div className="mt-6 flex gap-4 sm:gap-6">
+                  {[
+                    {
+                      icon: HeadsetIcon,
+                      label: "Dedicated Manager",
+                      sub: "One point of contact",
+                    },
+                    {
+                      icon: GlobeIcon,
+                      label: "Global Reach",
+                      sub: "Import & export coverage",
+                    },
+                  ].map((s) => (
+                    <div
+                      key={s.label}
+                      className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left"
+                    >
+                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
+                        <s.icon size={27} className="text-brand" />
+                      </span>
+                      <span className="text-xs font-semibold">
+                        <span className="block font-semibold text-ink">{s.label}</span>
+                        <span className="text-ink-muted">{s.sub}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <Link
+              href="/quotes"
+              className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
+            >
+              Get a Free Quote <ArrowRightIcon size={26} />
+            </Link>
+          </div>
+        </ScrollReveal>
       </section>
 
       {/* Global Shopper */}
       <section className="px-4 py-16 md:px-8">
-      <ScrollReveal>
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-            Shop US Stores and Ship Worldwide
-          </p>
-          <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">Global Shopper</h2>
-          <p className="mt-3 text-ink-muted">
-            Receive a free U.S. address, shop from trusted brands, and let TYS Global Logistics
-            consolidate and deliver your purchases worldwide.
-          </p>
-        </div>
-        <div className="mx-auto mt-8 grid max-w-5xl grid-cols-3 gap-4 sm:grid-cols-5 sm:gap-5 md:grid-cols-9 md:gap-4">
-          {[
-            { slug: "amazon", label: "Amazon" },
-            { slug: "walmart", label: "Walmart" },
-            { slug: "apple", label: "Apple" },
-            { slug: "zappos", label: "Zappos" },
-            { slug: "disney", label: "Disney" },
-            { slug: "carters", label: "Carter's" },
-            { slug: "boots", label: "Boots" },
-            { slug: "oshkosh", label: "OshKosh" },
-            { slug: "mands", label: "M&S" },
-            { slug: "6pm", label: "6pm" },
-            { slug: "ebay", label: "eBay" },
-            { slug: "shein", label: "Shein" },
-            { slug: "ipsy", label: "Ipsy" },
-            { slug: "ae", label: "American Eagle" },
-            { slug: "asos", label: "ASOS" },
-            { slug: "forever21", label: "Forever 21" },
-            { slug: "johnlewis", label: "John Lewis" },
-            { slug: "gap", label: "Gap" },
-          ].map(({ slug, label }) => (
-            <div
-              key={slug}
-              className="flex aspect-square items-center justify-center rounded-2xl bg-white p-3 shadow-[0_2px_8px_rgba(16,24,40,0.06)]"
+        <ScrollReveal>
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+              Shop US Stores and Ship Worldwide
+            </p>
+            <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+              Global Shopper
+            </h2>
+            <p className="mt-3 text-ink-muted">
+              Receive a free U.S. address, shop from trusted brands, and let TYS Global
+              Logistics consolidate and deliver your purchases worldwide.
+            </p>
+          </div>
+          <div className="mx-auto mt-8 grid max-w-5xl grid-cols-3 gap-4 sm:grid-cols-5 sm:gap-5 md:grid-cols-9 md:gap-4">
+            {[
+              { slug: "amazon", label: "Amazon" },
+              { slug: "walmart", label: "Walmart" },
+              { slug: "apple", label: "Apple" },
+              { slug: "zappos", label: "Zappos" },
+              { slug: "disney", label: "Disney" },
+              { slug: "carters", label: "Carter's" },
+              { slug: "boots", label: "Boots" },
+              { slug: "oshkosh", label: "OshKosh" },
+              { slug: "mands", label: "M&S" },
+              { slug: "6pm", label: "6pm" },
+              { slug: "ebay", label: "eBay" },
+              { slug: "shein", label: "Shein" },
+              { slug: "ipsy", label: "Ipsy" },
+              { slug: "ae", label: "American Eagle" },
+              { slug: "asos", label: "ASOS" },
+              { slug: "forever21", label: "Forever 21" },
+              { slug: "johnlewis", label: "John Lewis" },
+              { slug: "gap", label: "Gap" },
+            ].map(({ slug, label }) => (
+              <div
+                key={slug}
+                className="flex aspect-square items-center justify-center rounded-2xl bg-white p-3 shadow-[0_2px_8px_rgba(16,24,40,0.06)]"
+              >
+                <img
+                  loading="lazy"
+                  src={`/frontend/images/redesign/brand-logos/${slug}.png`}
+                  alt={label}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 flex justify-center">
+            <Link
+              href="/services/global-shopper"
+              className="inline-flex items-center gap-2 rounded-full bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-dark"
             >
-              <img
-                src={`/frontend/images/redesign/brand-logos/${slug}.png`}
-                alt={label}
-                className="h-full w-full object-contain"
-              />
-            </div>
-          ))}
-        </div>
-        <div className="mt-8 flex justify-center">
-          <Link
-            href="/services/global-shopper"
-            className="inline-flex items-center gap-2 rounded-full bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-dark"
-          >
-            Sign Up &amp; Get Free US Address <ArrowRightIcon size={16} />
-          </Link>
-        </div>
-      </ScrollReveal>
+              Sign Up &amp; Get Free US Address <ArrowRightIcon size={16} />
+            </Link>
+          </div>
+        </ScrollReveal>
       </section>
 
       {/* About TYS stats + Need a Quote */}
       <section id="about" className="scroll-mt-28 px-4 py-8 md:px-8">
-      <ScrollReveal>
-        <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
-          <div className="text-center">
-            <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-              Why Shippers Choose Us
-            </p>
-            <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-              About TYS Global Logistics
-            </h2>
-            <p className="mt-2 text-ink-muted">
-              Our name reflects our commitment: Trust Your Shipment, every step of the way.
-            </p>
-          </div>
+        <ScrollReveal>
+          <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
+            <div className="text-center">
+              <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+                Why Shippers Choose Us
+              </p>
+              <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+                About TYS Global Logistics
+              </h2>
+              <p className="mt-2 text-ink-muted">
+                Our name reflects our commitment: Trust Your Shipment, every step of the
+                way.
+              </p>
+            </div>
 
-          <div className="stats-grid mt-10 items-center gap-x-6 gap-y-8 sm:gap-x-12 md:gap-x-10 md:gap-y-0">
-            <img
-              src="/frontend/images/redesign/about-stats-illustration.webp"
-              alt=""
-              aria-hidden
-              className="w-40 [grid-area:img] justify-self-center sm:w-52 md:w-64 lg:w-80"
-            />
-            <Stat
-              value="200+"
-              label="Countries Worldwide"
-              className="border-b border-[#dedede] pb-4 [grid-area:s1] sm:pb-6"
-            />
-            <Stat
-              value="900+"
-              label="Trusted Carrier Networks"
-              className="border-b border-[#dedede] pb-4 [grid-area:s2] sm:pb-6"
-            />
-            <Stat
-              value="70%"
-              label="Shipping Savings"
-              className="border-b border-[#dedede] py-4 [grid-area:s3] sm:py-6"
-            />
-            <Stat
-              value="100%"
-              label="Shipment Visibility"
-              className="border-b border-[#dedede] py-4 [grid-area:s4] sm:py-6"
-            />
-            <Stat value="24/7" label="Expert Support" className="pt-4 [grid-area:s5] sm:pt-6" />
-            <Stat
-              value="500+"
-              label="Shipments Delivered"
-              className="pt-4 [grid-area:s6] sm:pt-6"
-            />
+            <div className="stats-grid mt-10 items-center gap-x-6 gap-y-8 sm:gap-x-12 md:gap-x-10 md:gap-y-0">
+              <img
+                loading="lazy"
+                src="/frontend/images/redesign/about-stats-illustration.webp"
+                alt=""
+                aria-hidden
+                className="w-40 [grid-area:img] justify-self-center sm:w-52 md:w-64 lg:w-80"
+              />
+              <Stat
+                value="200+"
+                label="Countries Worldwide"
+                className="border-b border-[#dedede] pb-4 [grid-area:s1] sm:pb-6"
+              />
+              <Stat
+                value="900+"
+                label="Trusted Carrier Networks"
+                className="border-b border-[#dedede] pb-4 [grid-area:s2] sm:pb-6"
+              />
+              <Stat
+                value="70%"
+                label="Shipping Savings"
+                className="border-b border-[#dedede] py-4 [grid-area:s3] sm:py-6"
+              />
+              <Stat
+                value="100%"
+                label="Shipment Visibility"
+                className="border-b border-[#dedede] py-4 [grid-area:s4] sm:py-6"
+              />
+              <Stat
+                value="24/7"
+                label="Expert Support"
+                className="pt-4 [grid-area:s5] sm:pt-6"
+              />
+              <Stat
+                value="500+"
+                label="Shipments Delivered"
+                className="pt-4 [grid-area:s6] sm:pt-6"
+              />
+            </div>
           </div>
-        </div>
-      </ScrollReveal>
+        </ScrollReveal>
       </section>
 
       <section className="px-4 py-16 md:px-8">
-      <ScrollReveal>
-        <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
-          <div>
-            <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-              500+ Shipments Delivered
-            </p>
-            <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-              Need A Quote? Takes 30 Seconds.
-            </h2>
-            <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
-              As your trusted logistics service provider, we can help you and your customer with
-              all shipping and moving services within the USA and worldwide.
-            </p>
-            <div className="mt-6 max-w-sm rounded-2xl border border-brand-light p-5">
-              <MiniQuoteForm />
+        <ScrollReveal>
+          <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+            <div>
+              <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
+                500+ Shipments Delivered
+              </p>
+              <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+                Need A Quote? Takes 30 Seconds.
+              </h2>
+              <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
+                As your trusted logistics service provider, we can help you and your
+                customer with all shipping and moving services within the USA and
+                worldwide.
+              </p>
+              <div className="mt-6 max-w-sm rounded-2xl border border-brand-light p-5">
+                <MiniQuoteForm />
+              </div>
             </div>
+            <img
+              loading="lazy"
+              src="/frontend/images/redesign/need-quote-photo.webp"
+              alt="Courier handing a package to a customer"
+              className="w-full rounded-3xl"
+            />
           </div>
-          <img
-            src="/frontend/images/redesign/need-quote-photo.webp"
-            alt="Courier handing a package to a customer"
-            className="w-full rounded-3xl"
-          />
-        </div>
-      </ScrollReveal>
+        </ScrollReveal>
       </section>
 
       {/* Reviews */}
       <section className="px-4 py-16 md:px-8">
-      <ScrollReveal>
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-            See Our <span className="text-brand">Trusted</span> Reviews
-          </h2>
-          <p className="mt-3 text-ink-muted">
-            Every shipment tells a story. Read what our customers have to say about their
-            experience with TYS Global Logistics.
-          </p>
-        </div>
-        <div className="mt-10">
-          <ReviewsCarousel
-            reviews={[
-              {
-                name: "M. Alvarez",
-                role: "Small Business Owner",
-                quote:
-                  "Our freight arrived faster than the original estimate and the team kept us updated the whole way. Booking again for our next shipment.",
-              },
-              {
-                name: "J. Whitfield",
-                role: "Relocating Customer",
-                quote:
-                  "Moving overseas felt overwhelming until TYS took over. Door-to-door pickup, clear pricing, and everything arrived intact.",
-              },
-              {
-                name: "R. Okafor",
-                role: "E-commerce Retailer",
-                quote:
-                  "Volume shipping rates saved us real money this quarter, and their support team answers fast whenever we have a question.",
-              },
-              {
-                name: "D. Martins",
-                role: "Auto Import Dealer",
-                quote:
-                  "Shipped three vehicles across two continents without a single delay. Clear communication at every step of the process.",
-              },
-              {
-                name: "S. Park",
-                role: "Online Store Owner",
-                quote:
-                  "Parcel shipping used to eat into our margins. TYS cut our rates and our customers still get tracking updates in real time.",
-              },
-            ]}
-          />
-        </div>
-      </ScrollReveal>
+        <ScrollReveal>
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+              See Our <span className="text-brand">Trusted</span> Reviews
+            </h2>
+            <p className="mt-3 text-ink-muted">
+              Every shipment tells a story. Read what our customers have to say about
+              their experience with TYS Global Logistics.
+            </p>
+          </div>
+          <div className="mt-10">
+            <ReviewsCarousel
+              reviews={[
+                {
+                  name: "M. Alvarez",
+                  role: "Small Business Owner",
+                  quote:
+                    "Our freight arrived faster than the original estimate and the team kept us updated the whole way. Booking again for our next shipment.",
+                },
+                {
+                  name: "J. Whitfield",
+                  role: "Relocating Customer",
+                  quote:
+                    "Moving overseas felt overwhelming until TYS took over. Door-to-door pickup, clear pricing, and everything arrived intact.",
+                },
+                {
+                  name: "R. Okafor",
+                  role: "E-commerce Retailer",
+                  quote:
+                    "Volume shipping rates saved us real money this quarter, and their support team answers fast whenever we have a question.",
+                },
+                {
+                  name: "D. Martins",
+                  role: "Auto Import Dealer",
+                  quote:
+                    "Shipped three vehicles across two continents without a single delay. Clear communication at every step of the process.",
+                },
+                {
+                  name: "S. Park",
+                  role: "Online Store Owner",
+                  quote:
+                    "Parcel shipping used to eat into our margins. TYS cut our rates and our customers still get tracking updates in real time.",
+                },
+              ]}
+            />
+          </div>
+        </ScrollReveal>
       </section>
 
       {/* FAQ — same DEFAULT_FAQS content as /faqs (a homepage teaser of the
@@ -649,20 +771,20 @@ export default function HomePage() {
           duplicate content for rich-result purposes; /faqs is the canonical
           page for that eligibility. */}
       <section id="faq" className="scroll-mt-28 px-4 pb-20 md:px-8">
-      <ScrollReveal>
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-            Frequently Asked Questions
-          </h2>
-          <p className="mt-3 text-ink-muted">
-            As your trusted logistics service provider, we can help you and your customer with all
-            shipping and moving services.
-          </p>
-        </div>
-        <div className="mx-auto mt-10 max-w-3xl">
-          <FaqAccordion />
-        </div>
-      </ScrollReveal>
+        <ScrollReveal>
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+              Frequently Asked Questions
+            </h2>
+            <p className="mt-3 text-ink-muted">
+              As your trusted logistics service provider, we can help you and your
+              customer with all shipping and moving services.
+            </p>
+          </div>
+          <div className="mx-auto mt-10 max-w-3xl">
+            <FaqAccordion />
+          </div>
+        </ScrollReveal>
       </section>
     </>
   );

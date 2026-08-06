@@ -28,7 +28,9 @@ export function ServiceIntro({
   return (
     <section className="px-4 py-14 md:px-8">
       <div className="mx-auto max-w-3xl text-center">
-        <p className="text-sm font-semibold uppercase tracking-[1.6px] text-brand">{eyebrow}</p>
+        <p className="text-sm font-semibold uppercase tracking-[1.6px] text-brand">
+          {eyebrow}
+        </p>
         <h1 className="mt-2 text-3xl font-bold text-ink md:text-4xl">{heading}</h1>
         <div className="mt-4 space-y-4 text-ink-muted">{children}</div>
       </div>
@@ -37,7 +39,7 @@ export function ServiceIntro({
         {highlights.map((h) => (
           <div key={h.label} className="flex items-center gap-3 text-left">
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-light">
-              <img src={h.icon} alt="" className="h-[27px] w-auto" />
+              <img loading="lazy" src={h.icon} alt="" className="h-[27px] w-auto" />
             </span>
             <span className="text-xs font-semibold">
               <span className="block text-ink">{h.label}</span>
@@ -60,13 +62,19 @@ export function ServiceChecklist({
   tone?: "gray" | "white";
 }) {
   return (
-    <section className={`px-4 py-14 md:px-8 ${tone === "gray" ? "bg-gray-50" : "bg-white"}`}>
+    <section
+      className={`px-4 py-14 md:px-8 ${tone === "gray" ? "bg-gray-50" : "bg-white"}`}
+    >
       <div className="mx-auto max-w-4xl">
         <h2 className="text-2xl font-bold text-ink md:text-3xl">{title}</h2>
         <ul className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
           {items.map((item) => (
             <li key={item} className="flex items-start gap-2.5 text-ink-muted">
-              <CheckCircleIcon size={20} weight="fill" className="mt-0.5 shrink-0 text-brand" />
+              <CheckCircleIcon
+                size={20}
+                weight="fill"
+                className="mt-0.5 shrink-0 text-brand"
+              />
               {item}
             </li>
           ))}

@@ -70,12 +70,20 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 select-none px-4 py-4 md:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between rounded-full bg-white px-5 py-3 shadow-[0_2px_16px_rgba(16,24,40,0.06)] md:px-7">
         <Link href="/" className="flex shrink-0 items-center">
+          {/* The one image on the public site guaranteed to be above the
+              fold on every single page load — eager + high priority so it
+              never competes with the rest of the page for bandwidth.
+              Everything else site-wide is loading="lazy" (see page-loader.tsx
+              for the broader "control what loads first" pass this is part
+              of). */}
           <img
             src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png"
             alt="TYS Global Logistics"
             width={480}
             height={177}
             draggable={false}
+            loading="eager"
+            fetchPriority="high"
             className="h-11 w-auto select-none"
           />
         </Link>
@@ -167,7 +175,11 @@ export function SiteHeader() {
         type="button"
         aria-label="Close menu"
         tabIndex={mobileOpen ? 0 : -1}
-        style={!mobileOpen ? { position: "fixed", inset: 0, opacity: 0, pointerEvents: "none" } : undefined}
+        style={
+          !mobileOpen
+            ? { position: "fixed", inset: 0, opacity: 0, pointerEvents: "none" }
+            : undefined
+        }
         className={`fixed inset-0 z-40 bg-ink/30 transition-opacity duration-300 ease-out ${
           mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
@@ -177,7 +189,13 @@ export function SiteHeader() {
         aria-hidden={!mobileOpen}
         style={
           !mobileOpen
-            ? { position: "fixed", top: 0, bottom: 0, right: 0, transform: "translateX(100%)" }
+            ? {
+                position: "fixed",
+                top: 0,
+                bottom: 0,
+                right: 0,
+                transform: "translateX(100%)",
+              }
             : undefined
         }
         className={`fixed inset-y-0 right-0 z-50 flex h-dvh w-[85%] max-w-xs flex-col overflow-y-auto bg-white pb-8 shadow-2xl transition-transform duration-300 ease-out ${
@@ -186,6 +204,7 @@ export function SiteHeader() {
       >
         <div className="flex items-center justify-between px-5 py-4">
           <img
+            loading="lazy"
             src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png"
             alt="TYS Global Logistics"
             width={480}
