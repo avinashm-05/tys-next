@@ -47,6 +47,23 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
+  // Flagged by Lighthouse Best Practices ("Ensure proper origin isolation
+  // with COOP" — no header found). same-origin-allow-popups (not the
+  // stricter same-origin) since nothing here relies on cross-origin popup
+  // communication today, but this still isolates the tab from any
+  // cross-origin opener reaching in.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+];
+
+// Flagged by Lighthouse ("Use efficient cache lifetimes" — Est savings 988
+// KiB, every /frontend/* asset shows "Cache TTL: None"). These are static,
+// filename-stable assets (not the hashed /_next/static/* chunks, which Next
+// already long-caches by default) — the deploy workflow already manually
+// purges the Hostinger CDN cache after every deploy (see
+// project_hostinger_deploy_gotchas memory), so a stale asset never lingers
+// past a deploy; immutable long-cache just formalizes that.
+const staticAssetCacheHeaders = [
+  { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
 ];
 
 const nextConfig: NextConfig = {
@@ -56,8 +73,17 @@ const nextConfig: NextConfig = {
   // that doesn't need `npm install` or a Git connection on the host at all.
   // Doesn't affect `next dev` or a normal `next start` deploy either.
   output: "standalone",
+  images: {
+    // Default is 60s — these source assets barely ever change and the CDN
+    // cache is purged manually on every deploy anyway, so there's no need
+    // for next/image's own optimizer cache to expire this fast.
+    minimumCacheTTL: 31536000,
+  },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      { source: "/frontend/:path*", headers: staticAssetCacheHeaders },
+    ];
   },
 };
 

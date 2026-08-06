@@ -64,6 +64,14 @@
     "tsx": "^4.23.1",
     "typescript": "^5"
   },
+  "browserslist": [
+    "chrome >= 111",
+    "edge >= 111",
+    "firefox >= 111",
+    "safari >= 16.4",
+    "not dead",
+    "not op_mini all"
+  ],
   "allowScripts": {
     "esbuild@0.28.1": true,
     "sharp@0.34.5": true,

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRightIcon, GlobeIcon, HeadsetIcon } from "@phosphor-icons/react/dist/ssr";
 import { MiniQuoteForm } from "@/components/public/mini-quote-form";
 import { FaqAccordion } from "@/components/public/faq-accordion";
@@ -30,22 +31,48 @@ export default function HomePage() {
             wrapper so they overlay the badge/headline column's height
             rather than needing their own spacing. */}
         <div className="relative mx-auto max-w-6xl">
-          <img
-            loading="lazy"
-            src="/frontend/images/redesign/hero-truck.webp"
-            alt=""
-            aria-hidden
-            draggable={false}
-            className="pointer-events-none absolute left-0 top-0 hidden w-36 -scale-x-100 select-none lg:block xl:w-40"
-          />
-          <img
-            loading="lazy"
-            src="/frontend/images/redesign/hero-plane.webp"
-            alt=""
-            aria-hidden
-            draggable={false}
-            className="pointer-events-none absolute right-0 top-0 hidden w-40 select-none lg:block xl:w-44"
-          />
+          {/* These two are the actual Lighthouse-flagged Desktop LCP element
+              (img.pointer-events-none.absolute.right-0.top-0...w-44) —
+              "fetchpriority=high should be applied" + "LCP resources should
+              not use loading=lazy". But they're also `hidden` below the lg
+              breakpoint (1024px) — real phones never paint them. A plain
+              loading="lazy" img with display:none never even starts
+              fetching (no layout box to judge proximity-to-viewport by), so
+              removing lazy site-wide here would silently cost every mobile
+              visitor ~99 KiB (58+41 KiB) for two images they'll never see.
+              <picture> + a media query keeps that mobile-zero-cost property
+              while still letting desktop fetch eagerly at high priority:
+              browsers pick (and only fetch) one <source> before any
+              request goes out, so under 1024px the img falls through to a
+              ~60-byte inline placeholder instead. */}
+          <picture>
+            <source
+              media="(min-width: 1024px)"
+              srcSet="/frontend/images/redesign/hero-truck.webp"
+            />
+            <img
+              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7"
+              fetchPriority="high"
+              alt=""
+              aria-hidden
+              draggable={false}
+              className="pointer-events-none absolute left-0 top-0 hidden w-36 -scale-x-100 select-none lg:block xl:w-40"
+            />
+          </picture>
+          <picture>
+            <source
+              media="(min-width: 1024px)"
+              srcSet="/frontend/images/redesign/hero-plane.webp"
+            />
+            <img
+              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7"
+              fetchPriority="high"
+              alt=""
+              aria-hidden
+              draggable={false}
+              className="pointer-events-none absolute right-0 top-0 hidden w-40 select-none lg:block xl:w-44"
+            />
+          </picture>
           <img
             loading="lazy"
             src="/frontend/images/redesign/hero-container-truck.svg"
@@ -238,11 +265,14 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            <img
+            <Image
               loading="lazy"
               src="/frontend/images/redesign/feature-relocation.webp"
               alt="Relocation and auto transport"
-              className="w-full rounded-3xl"
+              width={1506}
+              height={1044}
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="w-full h-auto rounded-3xl"
             />
           </div>
 
@@ -303,11 +333,14 @@ export default function HomePage() {
         <ScrollReveal>
           <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
             <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
-              <img
+              <Image
                 loading="lazy"
                 src="/frontend/images/redesign/feature-docparcel.webp"
                 alt="Document and parcel shipping"
-                className="w-full max-w-sm justify-self-center rounded-3xl md:order-1"
+                width={938}
+                height={750}
+                sizes="(min-width: 768px) 384px, 100vw"
+                className="w-full h-auto max-w-sm justify-self-center rounded-3xl md:order-1"
               />
               <div>
                 <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
@@ -456,11 +489,14 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            <img
+            <Image
               loading="lazy"
               src="/frontend/images/redesign/feature-volume-truck.webp"
               alt="Volume and business shipping"
-              className="w-full rounded-3xl"
+              width={1252}
+              height={834}
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="w-full h-auto rounded-3xl"
             />
           </div>
 
@@ -521,11 +557,14 @@ export default function HomePage() {
         <ScrollReveal>
           <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
             <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
-              <img
+              <Image
                 loading="lazy"
                 src="/frontend/images/redesign/feature-enterprise-ship.webp"
                 alt="Enterprise logistics solution"
-                className="w-full max-w-sm justify-self-center rounded-3xl md:order-1"
+                width={1204}
+                height={802}
+                sizes="(min-width: 768px) 384px, 100vw"
+                className="w-full h-auto max-w-sm justify-self-center rounded-3xl md:order-1"
               />
               <div>
                 <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
@@ -655,12 +694,15 @@ export default function HomePage() {
             </div>
 
             <div className="stats-grid mt-10 items-center gap-x-6 gap-y-8 sm:gap-x-12 md:gap-x-10 md:gap-y-0">
-              <img
+              <Image
                 loading="lazy"
                 src="/frontend/images/redesign/about-stats-illustration.webp"
                 alt=""
                 aria-hidden
-                className="w-40 [grid-area:img] justify-self-center sm:w-52 md:w-64 lg:w-80"
+                width={1110}
+                height={740}
+                sizes="(min-width: 1024px) 320px, (min-width: 768px) 256px, (min-width: 640px) 208px, 160px"
+                className="h-auto w-40 [grid-area:img] justify-self-center sm:w-52 md:w-64 lg:w-80"
               />
               <Stat
                 value="200+"
