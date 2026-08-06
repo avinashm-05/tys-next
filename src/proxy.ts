@@ -53,10 +53,29 @@ export default function proxy(req: NextRequest) {
   // but its Origin header won't match BETTER_AUTH_URL/trustedOrigins
   // (apex-only), so every auth call silently fails with "Invalid origin".
   // 308 (not 301/302) so POST bodies survive the redirect.
+  //
+  // req.nextUrl.clone() carries over Next.js's INTERNAL view of the request
+  // URL, not the public one — behind Hostinger's reverse proxy that's the
+  // raw port the Node process itself listens on (:3000, confirmed in the
+  // boot logs: "Local: http://0.0.0.0:3000"). Setting only `url.host` below
+  // replaces the hostname but leaves that inherited :3000 port in place, so
+  // the redirect sent every www. visitor to https://tysgloballogistics.com:3000
+  // — an internal port never meant to be reached directly from the
+  // internet, which just hangs/times out. Confirmed live 2026-08-06 (curl
+  // to the internal-port URL times out after 15s) — this was the real cause
+  // of the intermittent "page never finishes loading, no CSS" reports,
+  // affecting any real visitor who lands on www (browser autocomplete,
+  // history, an old cached search snippet, or a www-tagged ad/referral
+  // link) — same root scenario this whole redirect exists for, see the
+  // comment above. Forcing protocol/port explicitly here, instead of
+  // trusting whatever nextUrl inferred, guarantees the redirect always
+  // lands on the clean public origin.
   const hostname = (req.headers.get("host") ?? "").split(":")[0];
   if (hostname.startsWith("www.")) {
     const url = req.nextUrl.clone();
     url.host = hostname.slice(4);
+    url.port = "";
+    url.protocol = "https:";
     return NextResponse.redirect(url, 308);
   }
 
