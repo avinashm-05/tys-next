@@ -14,8 +14,11 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
+// text-base (16px), not text-sm: iOS Safari auto-zooms the page on
+// focusing any input under 16px — see searchable-select.tsx for the full
+// failure mode.
 const inputClass =
-  "w-full rounded-xl border border-brand-light bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand";
+  "w-full rounded-xl border border-brand-light bg-white px-4 py-3 text-base text-ink outline-none focus:border-brand";
 const labelClass = "block text-sm font-medium text-ink";
 
 // No payment gateway is wired up on this site (no Stripe/processor

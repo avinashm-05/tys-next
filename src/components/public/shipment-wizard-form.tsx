@@ -29,8 +29,11 @@ const COUNTRY_OPTIONS = COUNTRY_LIST.map(([code, name]) => ({
   flag: code,
 }));
 
+// text-base (16px), not text-sm: iOS Safari auto-zooms the page on
+// focusing any input under 16px — see searchable-select.tsx for the full
+// failure mode.
 const inputClass =
-  "w-full rounded-xl border border-brand-light bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand disabled:bg-brand-pale disabled:text-ink-muted";
+  "w-full rounded-xl border border-brand-light bg-white px-4 py-3 text-base text-ink outline-none focus:border-brand disabled:bg-brand-pale disabled:text-ink-muted";
 const labelClass = "block text-sm font-medium text-ink";
 const errorClass = "mt-1 text-xs text-red-600";
 

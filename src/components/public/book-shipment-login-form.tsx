@@ -70,7 +70,10 @@ export function BookShipmentLoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter email"
           autoComplete="email"
-          className="w-full rounded-full border border-brand-light bg-white py-3.5 pl-11 pr-4 text-sm text-ink outline-none focus:border-brand"
+          // text-base (16px), not text-sm: iOS Safari auto-zooms the page on
+          // focusing any input under 16px — see searchable-select.tsx for
+          // the full failure mode.
+          className="w-full rounded-full border border-brand-light bg-white py-3.5 pl-11 pr-4 text-base text-ink outline-none focus:border-brand"
         />
       </div>
 
@@ -86,7 +89,7 @@ export function BookShipmentLoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter password"
           autoComplete="current-password"
-          className="w-full rounded-full border border-brand-light bg-white py-3.5 pl-11 pr-11 text-sm text-ink outline-none focus:border-brand"
+          className="w-full rounded-full border border-brand-light bg-white py-3.5 pl-11 pr-11 text-base text-ink outline-none focus:border-brand"
         />
         <button
           type="button"

@@ -72,8 +72,12 @@ const TIME_SLOT_ICON: Record<string, typeof ClockIcon> = {
   evening: MoonStarsIcon,
 };
 
+// text-base (16px), not text-sm (14px): iOS Safari auto-zooms the whole
+// page on focusing any input under 16px (see searchable-select.tsx for the
+// full failure mode this causes downstream — a stuck zoom level makes every
+// later dropdown/panel on the page look misaligned, not just this field).
 const inputClass =
-  "w-full rounded-xl border border-brand-light bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-brand disabled:bg-brand-pale disabled:text-ink-muted";
+  "w-full rounded-xl border border-brand-light bg-white px-3.5 py-2.5 text-base text-ink outline-none focus:border-brand disabled:bg-brand-pale disabled:text-ink-muted";
 const labelClass = "block text-xs font-medium text-ink";
 const errorClass = "mt-1 text-xs text-red-600";
 
