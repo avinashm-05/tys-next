@@ -67,7 +67,7 @@ export function ServiceChecklist({
     >
       <div className="mx-auto max-w-4xl">
         <h2 className="text-2xl font-bold text-ink md:text-3xl">{title}</h2>
-        <ul className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+        <ul className="mt-6 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
           {items.map((item) => (
             <li key={item} className="flex items-start gap-2.5 text-ink-muted">
               <CheckCircleIcon

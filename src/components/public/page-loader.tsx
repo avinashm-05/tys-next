@@ -1,3 +1,5 @@
+import Script from "next/script";
+
 // Full-viewport branded loading overlay, shown from the very first paint
 // until the page is actually ready (native `load` event — CSS/JS/images/
 // fonts all fetched), then faded out. This is defense-in-depth for the
@@ -15,11 +17,16 @@
 // work before any CSS arrives, since masking a stylesheet-dependent bug
 // with more stylesheet-dependent UI would defeat the point.
 //
-// Removed by a plain inline <script>, not React state — the browser
-// executes this during raw HTML parsing, before hydration, so it can react
-// to `load` as early as possible regardless of how long React takes to
-// hydrate. A capped fallback timeout guarantees it's never stuck on-screen
-// if `load` is delayed or doesn't fire cleanly.
+// Removed by next/script's afterInteractive strategy (same pattern as
+// analytics-scripts.tsx), not React state or a raw <script> tag — avoids
+// the "script tags are never executed by React" dev warning a plain JSX
+// <script> tag triggers. Not beforeInteractive: that strategy is only
+// supported in pages/_document.js (App Router flags it elsewhere via
+// @next/next/no-before-interactive-script-outside-document) and isn't
+// needed here anyway — this script only has to attach a `load` listener,
+// which just needs to happen before the page's `load` event actually
+// fires, not before hydration. A capped fallback timeout guarantees it's
+// never stuck on-screen if `load` is delayed or doesn't fire cleanly.
 export function PageLoader() {
   return (
     <>
@@ -69,11 +76,9 @@ export function PageLoader() {
           __html: "@keyframes tys-loader-spin{to{transform:rotate(360deg)}}",
         }}
       />
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `(function(){function h(){var e=document.getElementById("tys-page-loader");if(!e)return;e.style.opacity="0";e.style.pointerEvents="none";setTimeout(function(){e.remove()},250)}if(document.readyState==="complete"){h()}else{window.addEventListener("load",h)}setTimeout(h,6000)})();`,
-        }}
-      />
+      <Script id="tys-page-loader-hide" strategy="afterInteractive">
+        {`(function(){function h(){var e=document.getElementById("tys-page-loader");if(!e)return;e.style.opacity="0";e.style.pointerEvents="none";setTimeout(function(){e.remove()},250)}if(document.readyState==="complete"){h()}else{window.addEventListener("load",h)}setTimeout(h,6000)})();`}
+      </Script>
     </>
   );
 }

@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Controller,
-  useFieldArray,
-  useForm,
-  type Path,
-} from "react-hook-form";
+import { Controller, useFieldArray, useForm, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeftIcon, ArrowRightIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@phosphor-icons/react/dist/ssr";
 import { COUNTRY_LIST } from "@/lib/countries-list";
 import { calculateChargeableWeight } from "@/lib/chargeable-weight";
 import { SearchableSelect } from "@/components/public/searchable-select";
@@ -62,7 +62,15 @@ function emptyPartyValues() {
 }
 
 function emptyPackageRow() {
-  return { quantity: 1, weight: 0, length: 0, width: 0, height: 0, chargeable_weight: 0, insured_value: 0 };
+  return {
+    quantity: 1,
+    weight: 0,
+    length: 0,
+    width: 0,
+    height: 0,
+    chargeable_weight: 0,
+    insured_value: 0,
+  };
 }
 
 export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number | null }) {
@@ -89,12 +97,18 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
   // Same fresh-render nudge the quote wizard uses so RHF's per-field
   // subscriptions repaint cleanly on step change.
   useEffect(() => {
-    form.reset(form.getValues(), { keepValues: true, keepDirty: true, keepTouched: true });
+    form.reset(form.getValues(), {
+      keepValues: true,
+      keepDirty: true,
+      keepTouched: true,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   async function next() {
-    const fields = STEP_FIELDS[step as keyof typeof STEP_FIELDS] as unknown as Path<ShipmentWizardInput>[];
+    const fields = STEP_FIELDS[
+      step as keyof typeof STEP_FIELDS
+    ] as unknown as Path<ShipmentWizardInput>[];
     const valid = await trigger(fields);
     if (!valid) return;
     setStep((s) => Math.min(4, s + 1));
@@ -108,7 +122,11 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
     const row = form.getValues(`packages.${index}`);
     const chargeable = calculateChargeableWeight(
       Number(row.weight) || 0,
-      { length: Number(row.length) || 0, width: Number(row.width) || 0, height: Number(row.height) || 0 },
+      {
+        length: Number(row.length) || 0,
+        width: Number(row.width) || 0,
+        height: Number(row.height) || 0,
+      },
       "lb",
     );
     setValue(`packages.${index}.chargeable_weight`, Math.round(chargeable * 100) / 100);
@@ -136,15 +154,23 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
   function PartyFields({ base }: { base: "sender" | "recipient" }) {
     const partyErrors = errors[base];
     return (
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div>
           <label className={labelClass}>Contact Name</label>
-          <input className={`mt-1.5 ${inputClass}`} {...register(`${base}.contact_name`)} />
-          {partyErrors?.contact_name && <p className={errorClass}>{partyErrors.contact_name.message}</p>}
+          <input
+            className={`mt-1.5 ${inputClass}`}
+            {...register(`${base}.contact_name`)}
+          />
+          {partyErrors?.contact_name && (
+            <p className={errorClass}>{partyErrors.contact_name.message}</p>
+          )}
         </div>
         <div>
           <label className={labelClass}>Company Name</label>
-          <input className={`mt-1.5 ${inputClass}`} {...register(`${base}.company_name`)} />
+          <input
+            className={`mt-1.5 ${inputClass}`}
+            {...register(`${base}.company_name`)}
+          />
         </div>
         <div>
           <label className={labelClass}>Country</label>
@@ -163,16 +189,26 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
               )}
             />
           </div>
-          {partyErrors?.country && <p className={errorClass}>{partyErrors.country.message}</p>}
+          {partyErrors?.country && (
+            <p className={errorClass}>{partyErrors.country.message}</p>
+          )}
         </div>
         <div className="md:col-span-2">
           <label className={labelClass}>Address Line 1</label>
-          <input className={`mt-1.5 ${inputClass}`} {...register(`${base}.address_line_1`)} />
-          {partyErrors?.address_line_1 && <p className={errorClass}>{partyErrors.address_line_1.message}</p>}
+          <input
+            className={`mt-1.5 ${inputClass}`}
+            {...register(`${base}.address_line_1`)}
+          />
+          {partyErrors?.address_line_1 && (
+            <p className={errorClass}>{partyErrors.address_line_1.message}</p>
+          )}
         </div>
         <div>
           <label className={labelClass}>Address Line 2</label>
-          <input className={`mt-1.5 ${inputClass}`} {...register(`${base}.address_line_2`)} />
+          <input
+            className={`mt-1.5 ${inputClass}`}
+            {...register(`${base}.address_line_2`)}
+          />
         </div>
         <div>
           <label className={labelClass}>Zip Code</label>
@@ -192,7 +228,9 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
               )}
             />
           </div>
-          {partyErrors?.postal_code && <p className={errorClass}>{partyErrors.postal_code.message}</p>}
+          {partyErrors?.postal_code && (
+            <p className={errorClass}>{partyErrors.postal_code.message}</p>
+          )}
         </div>
         <div>
           <label className={labelClass}>City</label>
@@ -202,12 +240,20 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
         <div>
           <label className={labelClass}>State</label>
           <input className={`mt-1.5 ${inputClass}`} {...register(`${base}.state`)} />
-          {partyErrors?.state && <p className={errorClass}>{partyErrors.state.message}</p>}
+          {partyErrors?.state && (
+            <p className={errorClass}>{partyErrors.state.message}</p>
+          )}
         </div>
         <div>
           <label className={labelClass}>Phone 1</label>
-          <input className={`mt-1.5 ${inputClass}`} {...register(`${base}.phone_1`)} placeholder="+1 404 555 0100" />
-          {partyErrors?.phone_1 && <p className={errorClass}>{partyErrors.phone_1.message}</p>}
+          <input
+            className={`mt-1.5 ${inputClass}`}
+            {...register(`${base}.phone_1`)}
+            placeholder="+1 404 555 0100"
+          />
+          {partyErrors?.phone_1 && (
+            <p className={errorClass}>{partyErrors.phone_1.message}</p>
+          )}
         </div>
         <div>
           <label className={labelClass}>Phone 2</label>
@@ -215,8 +261,14 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
         </div>
         <div>
           <label className={labelClass}>Email Address</label>
-          <input type="email" className={`mt-1.5 ${inputClass}`} {...register(`${base}.email`)} />
-          {partyErrors?.email && <p className={errorClass}>{partyErrors.email.message}</p>}
+          <input
+            type="email"
+            className={`mt-1.5 ${inputClass}`}
+            {...register(`${base}.email`)}
+          />
+          {partyErrors?.email && (
+            <p className={errorClass}>{partyErrors.email.message}</p>
+          )}
         </div>
       </div>
     );
@@ -232,9 +284,7 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
             <div
               key={t.n}
               className={`px-5 py-4 text-sm font-semibold ${
-                step === t.n
-                  ? "border-b-2 border-brand text-brand"
-                  : "text-ink-muted"
+                step === t.n ? "border-b-2 border-brand text-brand" : "text-ink-muted"
               }`}
             >
               {t.label}
@@ -244,7 +294,7 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="p-6 md:p-8">
           {step === 1 && (
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <label className={labelClass}>Select Shipment Type</label>
                 <div className="mt-1.5">
@@ -262,7 +312,9 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
                     )}
                   />
                 </div>
-                {errors.shipment_type && <p className={errorClass}>{errors.shipment_type.message}</p>}
+                {errors.shipment_type && (
+                  <p className={errorClass}>{errors.shipment_type.message}</p>
+                )}
               </div>
               <div>
                 <label className={labelClass}>From Country</label>
@@ -281,7 +333,9 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
                     )}
                   />
                 </div>
-                {errors.from_country && <p className={errorClass}>{errors.from_country.message}</p>}
+                {errors.from_country && (
+                  <p className={errorClass}>{errors.from_country.message}</p>
+                )}
               </div>
               <div>
                 <label className={labelClass}>To Country</label>
@@ -300,7 +354,9 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
                     )}
                   />
                 </div>
-                {errors.to_country && <p className={errorClass}>{errors.to_country.message}</p>}
+                {errors.to_country && (
+                  <p className={errorClass}>{errors.to_country.message}</p>
+                )}
               </div>
             </div>
           )}
@@ -355,7 +411,9 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
                             type="number"
                             min={1}
                             className={`w-20 ${inputClass}`}
-                            {...register(`packages.${i}.quantity`, { valueAsNumber: true })}
+                            {...register(`packages.${i}.quantity`, {
+                              valueAsNumber: true,
+                            })}
                           />
                         </td>
                         <td className="px-3 py-2">
@@ -363,7 +421,10 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
                             type="number"
                             step="0.01"
                             className={`w-24 ${inputClass}`}
-                            {...register(`packages.${i}.weight`, { valueAsNumber: true, onChange: () => recalcRow(i) })}
+                            {...register(`packages.${i}.weight`, {
+                              valueAsNumber: true,
+                              onChange: () => recalcRow(i),
+                            })}
                           />
                         </td>
                         <td className="px-3 py-2">
@@ -373,7 +434,10 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
                               step="0.01"
                               placeholder="L"
                               className={`w-16 ${inputClass}`}
-                              {...register(`packages.${i}.length`, { valueAsNumber: true, onChange: () => recalcRow(i) })}
+                              {...register(`packages.${i}.length`, {
+                                valueAsNumber: true,
+                                onChange: () => recalcRow(i),
+                              })}
                             />
                             <span className="text-ink-muted">×</span>
                             <input
@@ -381,7 +445,10 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
                               step="0.01"
                               placeholder="W"
                               className={`w-16 ${inputClass}`}
-                              {...register(`packages.${i}.width`, { valueAsNumber: true, onChange: () => recalcRow(i) })}
+                              {...register(`packages.${i}.width`, {
+                                valueAsNumber: true,
+                                onChange: () => recalcRow(i),
+                              })}
                             />
                             <span className="text-ink-muted">×</span>
                             <input
@@ -389,19 +456,29 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
                               step="0.01"
                               placeholder="H"
                               className={`w-16 ${inputClass}`}
-                              {...register(`packages.${i}.height`, { valueAsNumber: true, onChange: () => recalcRow(i) })}
+                              {...register(`packages.${i}.height`, {
+                                valueAsNumber: true,
+                                onChange: () => recalcRow(i),
+                              })}
                             />
                           </div>
                         </td>
                         <td className="px-3 py-2">
-                          <input disabled className={`w-20 ${inputClass}`} value={Number(watch(`packages.${i}.chargeable_weight`)) || 0} readOnly />
+                          <input
+                            disabled
+                            className={`w-20 ${inputClass}`}
+                            value={Number(watch(`packages.${i}.chargeable_weight`)) || 0}
+                            readOnly
+                          />
                         </td>
                         <td className="px-3 py-2">
                           <input
                             type="number"
                             step="0.01"
                             className={`w-24 ${inputClass}`}
-                            {...register(`packages.${i}.insured_value`, { valueAsNumber: true })}
+                            {...register(`packages.${i}.insured_value`, {
+                              valueAsNumber: true,
+                            })}
                           />
                         </td>
                         <td className="px-3 py-2 text-right">
@@ -420,7 +497,9 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
                   </tbody>
                 </table>
               </div>
-              {errors.packages?.message && <p className={errorClass}>{errors.packages.message}</p>}
+              {errors.packages?.message && (
+                <p className={errorClass}>{errors.packages.message}</p>
+              )}
               <button
                 type="button"
                 onClick={() => packages.append(emptyPackageRow())}

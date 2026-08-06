@@ -21,16 +21,66 @@ export const metadata: Metadata = {
 };
 
 const SERVICES = [
-  { href: "/services/international-relocation", icon: HouseIcon, title: "International Relocation", body: "Door-to-door relocation for your household and family, anywhere in the world." },
-  { href: "/services/auto-transport", icon: CarSimpleIcon, title: "Auto Transport", body: "Safe, insured vehicle shipping nationwide." },
-  { href: "/services/document-shipping", icon: FileTextIcon, title: "Document Shipping", body: "Secure, trackable delivery for time-sensitive paperwork." },
-  { href: "/services/parcel-shipping", icon: PackageIcon, title: "Parcel Shipping", body: "Ship parcels of any size to nearly 200 destinations worldwide." },
-  { href: "/services/freight-forwarding", icon: AnchorIcon, title: "Freight Forwarding", body: "Origin and destination services for commercial and household cargo." },
-  { href: "/services/domestic-shipping", icon: TruckIcon, title: "Domestic Shipping", body: "Fast, affordable shipping across all 50 states." },
-  { href: "/services/domestic-moving", icon: HouseIcon, title: "Domestic Moving", body: "A simpler way to move within the United States." },
-  { href: "/services/volume-shipping", icon: ScalesIcon, title: "Volume Shipping", body: "Consistent rates and dedicated support for frequent shippers." },
-  { href: "/services/retailer-shipping", icon: StorefrontIcon, title: "Retailer Shipping", body: "Fulfillment-ready shipping for retailers and e-commerce brands." },
-  { href: "/services/global-shopper", icon: GlobeIcon, title: "Global Shopper", body: "Shop US stores with a free U.S. address, shipped anywhere in the world." },
+  {
+    href: "/services/international-relocation",
+    icon: HouseIcon,
+    title: "International Relocation",
+    body: "Door-to-door relocation for your household and family, anywhere in the world.",
+  },
+  {
+    href: "/services/auto-transport",
+    icon: CarSimpleIcon,
+    title: "Auto Transport",
+    body: "Safe, insured vehicle shipping nationwide.",
+  },
+  {
+    href: "/services/document-shipping",
+    icon: FileTextIcon,
+    title: "Document Shipping",
+    body: "Secure, trackable delivery for time-sensitive paperwork.",
+  },
+  {
+    href: "/services/parcel-shipping",
+    icon: PackageIcon,
+    title: "Parcel Shipping",
+    body: "Ship parcels of any size to nearly 200 destinations worldwide.",
+  },
+  {
+    href: "/services/freight-forwarding",
+    icon: AnchorIcon,
+    title: "Freight Forwarding",
+    body: "Origin and destination services for commercial and household cargo.",
+  },
+  {
+    href: "/services/domestic-shipping",
+    icon: TruckIcon,
+    title: "Domestic Shipping",
+    body: "Fast, affordable shipping across all 50 states.",
+  },
+  {
+    href: "/services/domestic-moving",
+    icon: HouseIcon,
+    title: "Domestic Moving",
+    body: "A simpler way to move within the United States.",
+  },
+  {
+    href: "/services/volume-shipping",
+    icon: ScalesIcon,
+    title: "Volume Shipping",
+    body: "Consistent rates and dedicated support for frequent shippers.",
+  },
+  {
+    href: "/services/retailer-shipping",
+    icon: StorefrontIcon,
+    title: "Retailer Shipping",
+    body: "Fulfillment-ready shipping for retailers and e-commerce brands.",
+  },
+  {
+    href: "/services/global-shopper",
+    icon: GlobeIcon,
+    title: "Global Shopper",
+    body: "Shop US stores with a free U.S. address, shipped anywhere in the world.",
+  },
 ] as const;
 
 export default function ServicesPage() {
@@ -42,7 +92,7 @@ export default function ServicesPage() {
       />
 
       <section className="px-4 py-14 md:px-8">
-        <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto grid grid-cols-1 max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {SERVICES.map((s) => (
             <Link
               key={s.href}

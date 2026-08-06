@@ -9,7 +9,7 @@ export default function ContactUsPage() {
   return (
     <>
       <section className="bg-gray-50 px-4 py-16 md:px-8">
-        <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+        <div className="mx-auto grid grid-cols-1 max-w-4xl gap-6 md:grid-cols-2">
           <ContactCard
             icon={HeadsetIcon}
             title="Help & Support"

@@ -88,7 +88,7 @@ export default function HomePage() {
 
         {/* "Book Shipment" card temporarily hidden — see the matching note in
             site-header.tsx. Grid drops to 2 columns while it's out. */}
-        <div className="relative mx-auto mt-14 grid max-w-4xl gap-4 sm:grid-cols-2">
+        <div className="relative mx-auto mt-14 grid grid-cols-1 max-w-4xl gap-4 sm:grid-cols-2">
           {[
             {
               icon: "/frontend/icons/redesign/quick-track.svg",
@@ -137,7 +137,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-3">
+          <div className="mx-auto mt-10 grid grid-cols-1 max-w-6xl gap-6 md:grid-cols-3">
             {[
               {
                 icon: "/frontend/icons/redesign/offer-worldwide-shipping.svg",
@@ -173,7 +173,7 @@ export default function HomePage() {
       {/* Relocation & Auto Transport */}
       <section className="px-4 py-16 md:px-8">
         <ScrollReveal>
-          <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+          <div className="mx-auto grid grid-cols-1 max-w-6xl items-center gap-10 md:grid-cols-2">
             <div>
               <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
                 For All Movers
@@ -234,7 +234,7 @@ export default function HomePage() {
             />
           </div>
 
-          <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-2">
+          <div className="mx-auto mt-10 grid grid-cols-1 max-w-6xl gap-6 md:grid-cols-2">
             {[
               {
                 icon: "/frontend/icons/redesign/card-international-relocation.svg",
@@ -290,7 +290,7 @@ export default function HomePage() {
       <section className="px-4 py-16 md:px-8">
         <ScrollReveal>
           <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
-            <div className="grid items-center gap-10 md:grid-cols-2">
+            <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
               <img
                 loading="lazy"
                 src="/frontend/images/redesign/feature-docparcel.webp"
@@ -343,7 +343,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mt-10 grid gap-6 md:grid-cols-2">
+            <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
               {[
                 {
                   icon: "/frontend/icons/redesign/card-document-shipping.svg",
@@ -399,7 +399,7 @@ export default function HomePage() {
       {/* Volume & Business Shipping */}
       <section className="px-4 py-16 md:px-8">
         <ScrollReveal>
-          <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+          <div className="mx-auto grid grid-cols-1 max-w-6xl items-center gap-10 md:grid-cols-2">
             <div>
               <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
                 Business Only
@@ -452,7 +452,7 @@ export default function HomePage() {
             />
           </div>
 
-          <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-2">
+          <div className="mx-auto mt-10 grid grid-cols-1 max-w-6xl gap-6 md:grid-cols-2">
             {[
               {
                 icon: "/frontend/icons/redesign/card-volume-shipping.svg",
@@ -508,7 +508,7 @@ export default function HomePage() {
       <section className="px-4 py-16 md:px-8">
         <ScrollReveal>
           <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
-            <div className="grid items-center gap-10 md:grid-cols-2">
+            <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
               <img
                 loading="lazy"
                 src="/frontend/images/redesign/feature-enterprise-ship.webp"
@@ -687,7 +687,7 @@ export default function HomePage() {
 
       <section className="px-4 py-16 md:px-8">
         <ScrollReveal>
-          <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+          <div className="mx-auto grid grid-cols-1 max-w-6xl items-center gap-10 md:grid-cols-2">
             <div>
               <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
                 500+ Shipments Delivered

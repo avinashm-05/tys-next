@@ -14,7 +14,7 @@ export default function ContactSupportPage() {
     <>
       <section className="bg-gray-50 px-4 py-12 md:px-8">
         <div className="mx-auto max-w-5xl">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <InfoCard icon={PhoneIcon} label="Call Us" value="+1 (404) 793-8759" />
             <InfoCard
               icon={EnvelopeSimpleIcon}
@@ -28,7 +28,7 @@ export default function ContactSupportPage() {
             />
           </div>
 
-          <div className="mt-10 grid gap-10 md:grid-cols-2">
+          <div className="mt-10 grid grid-cols-1 gap-10 md:grid-cols-2">
             <div>
               <h1 className="text-2xl font-bold text-ink md:text-3xl">Contact Support</h1>
               <div className="mt-6">

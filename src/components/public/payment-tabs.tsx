@@ -4,7 +4,11 @@ import { useState, type FormEvent } from "react";
 import { SearchableSelect } from "@/components/public/searchable-select";
 import { COUNTRY_LIST } from "@/lib/countries-list";
 
-const COUNTRY_OPTIONS = COUNTRY_LIST.map(([code, name]) => ({ value: code, label: name, flag: code }));
+const COUNTRY_OPTIONS = COUNTRY_LIST.map(([code, name]) => ({
+  value: code,
+  label: name,
+  flag: code,
+}));
 
 const TABS = [
   { id: "card", label: "Credit Card" },
@@ -61,7 +65,7 @@ export function PaymentTabs() {
         {tab === "card" && (
           <form onSubmit={handleNoOpSubmit} autoComplete="off">
             <h2 className="text-lg font-bold text-ink">Billing Details</h2>
-            <div className="mt-5 grid gap-5 sm:grid-cols-2">
+            <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="First Name" placeholder="Enter First Name" required />
               <Field label="Last Name" placeholder="Enter Last Name" required />
               <Field label="Tracking Number" placeholder="Enter Tracking Number" />
@@ -69,7 +73,11 @@ export function PaymentTabs() {
               <div>
                 <label className={labelClass}>Country</label>
                 <div className="mt-1.5">
-                  <SearchableSelect options={COUNTRY_OPTIONS} value={country} onChange={setCountry} />
+                  <SearchableSelect
+                    options={COUNTRY_OPTIONS}
+                    value={country}
+                    onChange={setCountry}
+                  />
                 </div>
               </div>
               <Field label="Zip Code" placeholder="Enter Zip Code" required />
@@ -92,16 +100,25 @@ export function PaymentTabs() {
         {tab === "bank" && (
           <form onSubmit={handleNoOpSubmit} autoComplete="off">
             <h2 className="text-lg font-bold text-ink">Contact Details</h2>
-            <div className="mt-5 grid gap-5 sm:grid-cols-2">
+            <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Field label="Name" placeholder="Enter Name" required />
               <Field label="Number" placeholder="Enter Number" />
-              <Field label="Email Address" placeholder="Enter Email Address" type="email" required />
+              <Field
+                label="Email Address"
+                placeholder="Enter Email Address"
+                type="email"
+                required
+              />
               <Field label="Tracking Number" placeholder="Enter Tracking Number" />
             </div>
 
             <h2 className="mt-8 text-lg font-bold text-ink">Payment Details</h2>
-            <div className="mt-5 grid gap-5 sm:grid-cols-2">
-              <Field label="Name on Bank Account(*)" placeholder="Enter Name on Bank Account(*)" required />
+            <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <Field
+                label="Name on Bank Account(*)"
+                placeholder="Enter Name on Bank Account(*)"
+                required
+              />
               <Field label="Bank Name" placeholder="Enter Bank Name" required />
               <Field label="Account Number" placeholder="Enter Account Number" required />
               <Field label="Routing Number" placeholder="Enter Routing Number" required />
@@ -122,8 +139,9 @@ export function PaymentTabs() {
         {tab === "zelle" && (
           <div>
             <p className="text-ink-muted">
-              Pay securely with Zelle using your registered email address or phone number. Simply use
-              the payment details below to transfer funds directly to TYS Global Logistics.
+              Pay securely with Zelle using your registered email address or phone number.
+              Simply use the payment details below to transfer funds directly to TYS
+              Global Logistics.
             </p>
             <div className="mt-6 flex flex-col gap-3 border-y border-brand-light py-5 sm:flex-row sm:justify-between">
               <p className="text-sm text-ink">
@@ -135,8 +153,8 @@ export function PaymentTabs() {
             </div>
             <div className="mt-6 rounded-xl bg-amber-300 px-5 py-4 text-sm text-ink">
               <span className="font-bold">Note: </span>
-              Please mention your shipment tracking number in Memo Field when sending payment via
-              zelle.
+              Please mention your shipment tracking number in Memo Field when sending
+              payment via zelle.
             </div>
           </div>
         )}
@@ -159,7 +177,12 @@ function Field({
   return (
     <div>
       <label className={labelClass}>{label}</label>
-      <input type={type} placeholder={placeholder} required={required} className={`mt-1.5 ${inputClass}`} />
+      <input
+        type={type}
+        placeholder={placeholder}
+        required={required}
+        className={`mt-1.5 ${inputClass}`}
+      />
     </div>
   );
 }

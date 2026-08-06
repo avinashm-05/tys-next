@@ -53,17 +53,25 @@ const GROUPS: { title: string; links: { href: string; label: string }[] }[] = [
 export default function SitemapPage() {
   return (
     <>
-      <PageHeroBand title="Sitemap" subtitle="Every page on the TYS Global Logistics website" />
+      <PageHeroBand
+        title="Sitemap"
+        subtitle="Every page on the TYS Global Logistics website"
+      />
 
       <section className="bg-gray-50 px-4 py-14 md:px-8">
-        <div className="mx-auto grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto grid grid-cols-1 max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {GROUPS.map((group) => (
             <div key={group.title}>
-              <h2 className="text-sm font-bold uppercase tracking-wide text-brand">{group.title}</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wide text-brand">
+                {group.title}
+              </h2>
               <ul className="mt-3 space-y-2.5">
                 {group.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="text-sm text-ink-muted hover:text-brand">
+                    <Link
+                      href={link.href}
+                      className="text-sm text-ink-muted hover:text-brand"
+                    >
                       {link.label}
                     </Link>
                   </li>

@@ -87,7 +87,9 @@ export function CallbackRequestForm() {
 
   function togglePackageType(value: string) {
     const current = form.getValues("package_types");
-    const next = current.includes(value) ? current.filter((t) => t !== value) : [...current, value];
+    const next = current.includes(value)
+      ? current.filter((t) => t !== value)
+      : [...current, value];
     setValue("package_types", next, { shouldValidate: false });
   }
 
@@ -102,9 +104,14 @@ export function CallbackRequestForm() {
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 422 && data.errors) {
-          for (const [field, messages] of Object.entries(data.errors as Record<string, string[]>)) {
+          for (const [field, messages] of Object.entries(
+            data.errors as Record<string, string[]>,
+          )) {
             const path = field === "package_type" ? "package_types" : field;
-            form.setError(path as Path<CallbackRequestFormValues>, { type: "server", message: messages[0] });
+            form.setError(path as Path<CallbackRequestFormValues>, {
+              type: "server",
+              message: messages[0],
+            });
           }
           setSubmitError("Please fix the highlighted fields and try again.");
         } else {
@@ -122,19 +129,36 @@ export function CallbackRequestForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-8">
       <div className="flex flex-col gap-6">
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
             <label className={labelClass}>Name</label>
-            <input className={`mt-1.5 ${inputClass}`} placeholder="Enter name" {...register("contact.name")} />
-            {isSubmitted && errors.contact?.name && <p className={errorClass}>{errors.contact.name.message}</p>}
+            <input
+              className={`mt-1.5 ${inputClass}`}
+              placeholder="Enter name"
+              {...register("contact.name")}
+            />
+            {isSubmitted && errors.contact?.name && (
+              <p className={errorClass}>{errors.contact.name.message}</p>
+            )}
           </div>
           <div>
             <label className={labelClass}>Email Address</label>
-            <input className={`mt-1.5 ${inputClass}`} placeholder="Enter Email" {...register("contact.email")} />
-            {isSubmitted && errors.contact?.email && <p className={errorClass}>{errors.contact.email.message}</p>}
+            <input
+              className={`mt-1.5 ${inputClass}`}
+              placeholder="Enter Email"
+              {...register("contact.email")}
+            />
+            {isSubmitted && errors.contact?.email && (
+              <p className={errorClass}>{errors.contact.email.message}</p>
+            )}
           </div>
         </div>
-        <div className="grid gap-6 md:grid-cols-[minmax(0,220px)_1fr]">
+        {/* grid-cols-1 explicitly for the base breakpoint — see the matching
+            comment in quote-request-form.tsx for the full explanation: a
+            bare `grid` with no defined column track lets the browser
+            auto-size the single implicit column to content width instead
+            of container width, overflowing the viewport on narrow screens. */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,220px)_1fr]">
           <div>
             <label className={labelClass}>Country Code</label>
             <div className="mt-1.5">
@@ -166,7 +190,9 @@ export function CallbackRequestForm() {
               placeholder="Enter Phone Number"
               {...register("contact.phone")}
             />
-            {isSubmitted && errors.contact?.phone && <p className={errorClass}>{errors.contact.phone.message}</p>}
+            {isSubmitted && errors.contact?.phone && (
+              <p className={errorClass}>{errors.contact.phone.message}</p>
+            )}
           </div>
         </div>
       </div>
@@ -193,7 +219,9 @@ export function CallbackRequestForm() {
             </div>
           </div>
         </div>
-        {isSubmitted && errors.timezone && <p className={errorClass}>{errors.timezone.message}</p>}
+        {isSubmitted && errors.timezone && (
+          <p className={errorClass}>{errors.timezone.message}</p>
+        )}
         <div className="mt-2 grid grid-cols-3 gap-3">
           {CALLBACK_TIME_SLOTS.map((slot) => {
             const selected = timeSlot === slot.value;
@@ -201,19 +229,26 @@ export function CallbackRequestForm() {
               <button
                 type="button"
                 key={slot.value}
-                onClick={() => setValue("time_slot", slot.value, { shouldValidate: false })}
+                onClick={() =>
+                  setValue("time_slot", slot.value, { shouldValidate: false })
+                }
                 className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 bg-white px-4 py-5 text-center transition ${
                   selected ? "border-brand" : "border-brand-light"
                 }`}
               >
-                <ClockIcon size={22} className={selected ? "text-brand" : "text-ink-muted"} />
+                <ClockIcon
+                  size={22}
+                  className={selected ? "text-brand" : "text-ink-muted"}
+                />
                 <span className="text-sm font-semibold text-ink">{slot.label}</span>
                 <span className="text-xs text-ink-muted">{slot.hint}</span>
               </button>
             );
           })}
         </div>
-        {isSubmitted && errors.time_slot && <p className={errorClass}>{errors.time_slot.message}</p>}
+        {isSubmitted && errors.time_slot && (
+          <p className={errorClass}>{errors.time_slot.message}</p>
+        )}
       </div>
 
       <div>
@@ -241,7 +276,9 @@ export function CallbackRequestForm() {
             );
           })}
         </div>
-        {isSubmitted && errors.package_types && <p className={errorClass}>{errors.package_types.message}</p>}
+        {isSubmitted && errors.package_types && (
+          <p className={errorClass}>{errors.package_types.message}</p>
+        )}
       </div>
 
       {submitError && <p className={errorClass}>{submitError}</p>}

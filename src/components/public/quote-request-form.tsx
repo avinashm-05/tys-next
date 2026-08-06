@@ -88,7 +88,9 @@ function QuoteHero() {
   return (
     <section className="bg-brand-light px-4 py-2.5 text-center md:px-8 md:py-3">
       <h1 className="text-lg font-extrabold text-ink md:text-xl">Get a Free Quote</h1>
-      <p className="mt-0.5 text-xs text-ink-muted">We&rsquo;ll call you back with your rate.</p>
+      <p className="mt-0.5 text-xs text-ink-muted">
+        We&rsquo;ll call you back with your rate.
+      </p>
     </section>
   );
 }
@@ -137,7 +139,9 @@ export function QuoteRequestForm({
   // code below.
   useEffect(() => {
     if (timezoneTouchedRef.current) return;
-    setValue("timezone", timezoneForCountry(fromCountry) ?? detectTimezone(), { shouldValidate: false });
+    setValue("timezone", timezoneForCountry(fromCountry) ?? detectTimezone(), {
+      shouldValidate: false,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromCountry]);
 
@@ -155,7 +159,9 @@ export function QuoteRequestForm({
 
   function togglePackageType(value: string) {
     const current = form.getValues("package_types");
-    const next = current.includes(value) ? current.filter((t) => t !== value) : [...current, value];
+    const next = current.includes(value)
+      ? current.filter((t) => t !== value)
+      : [...current, value];
     setValue("package_types", next, { shouldValidate: false });
   }
 
@@ -170,9 +176,14 @@ export function QuoteRequestForm({
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 422 && data.errors) {
-          for (const [field, messages] of Object.entries(data.errors as Record<string, string[]>)) {
+          for (const [field, messages] of Object.entries(
+            data.errors as Record<string, string[]>,
+          )) {
             const path = field === "package_type" ? "package_types" : field;
-            form.setError(path as Path<QuoteRequestValues>, { type: "server", message: messages[0] });
+            form.setError(path as Path<QuoteRequestValues>, {
+              type: "server",
+              message: messages[0],
+            });
           }
           setSubmitError("Please fix the highlighted fields and try again.");
         } else {
@@ -202,13 +213,27 @@ export function QuoteRequestForm({
         <div className="mx-auto max-w-4xl">
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className="rounded-3xl border border-brand-light bg-white p-5 shadow-[0_20px_60px_rgba(16,24,40,0.08)] md:p-7">
-              <div className="grid gap-6 md:grid-cols-2 md:gap-10">
+              {/* grid-cols-1 explicitly, not just implicit at the base
+                  breakpoint — without it, mobile gets a bare `display:grid`
+                  with no defined column track, so the browser auto-sizes
+                  the single implicit column to its CONTENT's natural width
+                  instead of the container's width. Content down this tree
+                  (the SearchableSelect trigger button chain) doesn't want
+                  to shrink below that natural width, so the column — and
+                  everything inside it — rendered wider than its own parent
+                  and overflowed the viewport (confirmed live, 2026-08-06,
+                  at a 280px width: this div measured 284px inside a 206px
+                  parent). Same root cause class as CSS Grid/Flexbox's
+                  well-known implicit `min-width: auto` trap. */}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
                 {/* Left: route + package type */}
                 <div className="flex flex-col gap-5">
                   <div>
                     <div className="flex items-center gap-2 text-brand">
                       <MapPinIcon size={16} weight="bold" />
-                      <span className="text-xs font-semibold uppercase tracking-wide">Shipment route</span>
+                      <span className="text-xs font-semibold uppercase tracking-wide">
+                        Shipment route
+                      </span>
                     </div>
                     <div className="mt-3 flex flex-col gap-3">
                       <div>
@@ -251,7 +276,9 @@ export function QuoteRequestForm({
                             )}
                           />
                         </div>
-                        {isSubmitted && errors.to_country && <p className={errorClass}>{errors.to_country.message}</p>}
+                        {isSubmitted && errors.to_country && (
+                          <p className={errorClass}>{errors.to_country.message}</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -259,7 +286,9 @@ export function QuoteRequestForm({
                   <div>
                     <div className="flex items-center gap-2 text-brand">
                       <PackageIcon size={16} weight="bold" />
-                      <span className="text-xs font-semibold uppercase tracking-wide">What are you shipping?</span>
+                      <span className="text-xs font-semibold uppercase tracking-wide">
+                        What are you shipping?
+                      </span>
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-3">
                       {PACKAGE_TYPES.map((pt) => {
@@ -279,7 +308,9 @@ export function QuoteRequestForm({
                             >
                               <Icon size={17} />
                             </span>
-                            <span className="text-xs font-medium leading-tight text-ink">{pt.label}</span>
+                            <span className="text-xs font-medium leading-tight text-ink">
+                              {pt.label}
+                            </span>
                           </button>
                         );
                       })}
@@ -295,7 +326,9 @@ export function QuoteRequestForm({
                   <div>
                     <div className="flex items-center gap-2 text-brand">
                       <HeadsetIcon size={16} weight="bold" />
-                      <span className="text-xs font-semibold uppercase tracking-wide">Your details</span>
+                      <span className="text-xs font-semibold uppercase tracking-wide">
+                        Your details
+                      </span>
                     </div>
                     <div className="mt-3 flex flex-col gap-3">
                       <div>
@@ -343,7 +376,9 @@ export function QuoteRequestForm({
                             />
                           </div>
                           {isSubmitted && errors.contact?.country_code && (
-                            <p className={errorClass}>{errors.contact.country_code.message}</p>
+                            <p className={errorClass}>
+                              {errors.contact.country_code.message}
+                            </p>
                           )}
                         </div>
                         <div>
@@ -364,7 +399,9 @@ export function QuoteRequestForm({
                   <div>
                     <div className="flex items-center gap-2 text-brand">
                       <ClockIcon size={16} weight="bold" />
-                      <span className="text-xs font-semibold uppercase tracking-wide">Best time to call you back</span>
+                      <span className="text-xs font-semibold uppercase tracking-wide">
+                        Best time to call you back
+                      </span>
                     </div>
                     <div className="mt-2 flex items-center gap-1.5">
                       <GlobeIcon size={13} className="shrink-0 text-ink-muted" />
@@ -387,7 +424,9 @@ export function QuoteRequestForm({
                         />
                       </div>
                     </div>
-                    {isSubmitted && errors.timezone && <p className={errorClass}>{errors.timezone.message}</p>}
+                    {isSubmitted && errors.timezone && (
+                      <p className={errorClass}>{errors.timezone.message}</p>
+                    )}
                     <div className="mt-2 grid grid-cols-3 gap-2">
                       {TIME_SLOTS.map((slot) => {
                         const selected = timeSlot === slot.value;
@@ -396,19 +435,30 @@ export function QuoteRequestForm({
                           <button
                             type="button"
                             key={slot.value}
-                            onClick={() => setValue("time_slot", slot.value, { shouldValidate: false })}
+                            onClick={() =>
+                              setValue("time_slot", slot.value, { shouldValidate: false })
+                            }
                             className={`flex flex-col items-center gap-1 rounded-xl border-2 bg-white px-2 py-2.5 text-center transition ${
                               selected ? "border-brand" : "border-brand-light"
                             }`}
                           >
-                            <Icon size={17} className={selected ? "text-brand" : "text-ink-muted"} />
-                            <span className="text-xs font-semibold text-ink">{slot.label}</span>
-                            <span className="text-[10px] text-ink-muted">{slot.hint}</span>
+                            <Icon
+                              size={17}
+                              className={selected ? "text-brand" : "text-ink-muted"}
+                            />
+                            <span className="text-xs font-semibold text-ink">
+                              {slot.label}
+                            </span>
+                            <span className="text-[10px] text-ink-muted">
+                              {slot.hint}
+                            </span>
                           </button>
                         );
                       })}
                     </div>
-                    {isSubmitted && errors.time_slot && <p className={errorClass}>{errors.time_slot.message}</p>}
+                    {isSubmitted && errors.time_slot && (
+                      <p className={errorClass}>{errors.time_slot.message}</p>
+                    )}
                   </div>
 
                   {submitError && <p className={errorClass}>{submitError}</p>}
@@ -418,7 +468,8 @@ export function QuoteRequestForm({
                     disabled={isSubmitting}
                     className="flex w-full items-center justify-center gap-1.5 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
                   >
-                    {isSubmitting ? "Submitting…" : "Get My Free Quote"} <ArrowRightIcon size={14} />
+                    {isSubmitting ? "Submitting…" : "Get My Free Quote"}{" "}
+                    <ArrowRightIcon size={14} />
                   </button>
                 </div>
               </div>

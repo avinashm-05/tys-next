@@ -50,13 +50,13 @@ export default function CarriersPage() {
       <section className="px-4 py-14 md:px-8">
         <div className="mx-auto max-w-3xl text-center text-ink-muted">
           <p>
-            TYS Global Logistics isn&rsquo;t locked into a single carrier. We compare options
-            across major shipping partners so you get the right balance of speed, cost, and
-            reliability for your specific shipment.
+            TYS Global Logistics isn&rsquo;t locked into a single carrier. We compare
+            options across major shipping partners so you get the right balance of speed,
+            cost, and reliability for your specific shipment.
           </p>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto mt-10 grid grid-cols-1 max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {CARRIERS.map((c) => (
             <div
               key={c.name}

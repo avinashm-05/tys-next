@@ -6,6 +6,14 @@ import type { NextConfig } from "next";
 const GOOGLE_AD_HOSTS =
   "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.g.doubleclick.net https://www.google.com https://*.googleadservices.com";
 
+// Microsoft Clarity (src/components/public/analytics-scripts.tsx) was never
+// added here — its script-src was silently blocked by the CSP the whole
+// time (confirmed live, 2026-08-06: "violates ... script-src directive ...
+// The action has been blocked", browser console). *.clarity.ms is needed
+// too — Clarity's own event-collection requests (not just the initial tag
+// script) go out over rotating subdomains, not just www.
+const CLARITY_HOSTS = "https://www.clarity.ms https://*.clarity.ms";
+
 // Dev needs 'unsafe-eval' for webpack HMR; production doesn't. script-src
 // keeps 'unsafe-inline' for next/script's inline gtag bootstrap snippet — a
 // nonce-based CSP would drop that too, but touches proxy.ts + the root
@@ -14,11 +22,11 @@ const isDev = process.env.NODE_ENV !== "production";
 
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval' " : ""}${GOOGLE_AD_HOSTS}`,
+  `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval' " : ""}${GOOGLE_AD_HOSTS} ${CLARITY_HOSTS}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https://tile.openstreetmap.org ${GOOGLE_AD_HOSTS}`,
   "font-src 'self' data:",
-  `connect-src 'self' ${GOOGLE_AD_HOSTS}`,
+  `connect-src 'self' ${GOOGLE_AD_HOSTS} ${CLARITY_HOSTS}`,
   "frame-ancestors 'self'",
   "object-src 'none'",
   "base-uri 'self'",
@@ -30,9 +38,15 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+  },
   // Only takes effect over HTTPS (production) — harmless no-op on local HTTP.
-  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains; preload",
+  },
 ];
 
 const nextConfig: NextConfig = {

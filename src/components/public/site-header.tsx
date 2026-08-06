@@ -189,12 +189,29 @@ export function SiteHeader() {
         aria-hidden={!mobileOpen}
         style={
           !mobileOpen
-            ? {
+            ? // Anchored from the LEFT with a viewport-relative 100vw shift,
+              // not `right: 0` + `translateX(100%)` — confirmed live,
+              // 2026-08-06: the className below still carries Tailwind's
+              // `right-0`, and inline `style` only overrides the properties
+              // it actually sets. With `left` and `right` BOTH active at
+              // once on a fixed, explicitly-widthed element, that's the
+              // classic CSS over-constrained case — this browser resolved
+              // it by keeping `right: 0` in charge instead of `left`,
+              // landing the "hidden" drawer hundreds of pixels further right
+              // than intended and reintroducing the exact overflow this
+              // fallback exists to prevent. Explicitly setting `right:
+              // "auto"` here removes the conflicting value entirely instead
+              // of hoping `left` wins the tie-break. `translateX(100vw)`
+              // (viewport-relative, not 100% of the element's own width)
+              // guarantees a full viewport-width shift regardless of the
+              // drawer's own computed width.
+              {
                 position: "fixed",
                 top: 0,
                 bottom: 0,
-                right: 0,
-                transform: "translateX(100%)",
+                left: 0,
+                right: "auto",
+                transform: "translateX(100vw)",
               }
             : undefined
         }
