@@ -18,7 +18,7 @@ export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-brand-light px-4 pb-10 pt-5 sm:pb-16 sm:pt-8 md:px-8">
+      <section className="relative overflow-hidden bg-brand-light px-4 pb-10 pt-4 sm:pb-16 sm:pt-8 md:px-8">
         {/* One wrapping container for the whole text+card block. The Figma
             source (published Figma Sites link, DOM-inspected directly) has
             only 2 decorative images in the hero — truck top-left, plane
@@ -68,28 +68,32 @@ export default function HomePage() {
               <span className="font-semibold text-ink">Excellent</span>
               <TrustpilotFullLogo />
             </div>
-            <p className="mt-3 text-sm font-semibold uppercase tracking-wide text-brand-dark sm:mt-5">
+            <p className="mt-2 text-sm font-semibold uppercase tracking-wide text-brand-dark sm:mt-5">
               Trusted Partner for Logistics &amp; Freight Forwarding
             </p>
-            <h1 className="mt-2 text-[1.65rem] sm:mt-3 sm:text-[2.5rem] md:text-[2.75rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
+            <h1 className="mt-1.5 text-[1.5rem] sm:mt-3 sm:text-[2.5rem] md:text-[2.75rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
               Your Trusted Global Shipping Partner
             </h1>
-            {/* Hidden below sm — on a phone this is the single biggest chunk
-                of space between the headline and the actual quote form, for
-                copy that's more elaboration than anything a visitor needs
-                before acting. Dropping it (rather than just shrinking it)
-                is what actually gets "Get a Free Quote" inside the first
-                viewport on a real phone without scrolling — the ask this
-                pass is for. Unchanged on tablet/desktop, where there's
-                plenty of vertical room for it. */}
-            <p className="mx-auto mt-4 hidden max-w-[885px] text-base text-ink-muted sm:block">
+            {/* Same copy at every breakpoint (kept back on request) — just a
+                much smaller, tighter size on mobile (text-xs, leading-snug,
+                a narrower max-width so it wraps to fewer lines) so it still
+                fits alongside the no-scroll quote-button goal from the
+                previous pass. Unchanged on tablet/desktop. Hidden only below
+                375px (max-[374px]) — verified live: even at the smallest
+                text size this still doesn't leave room for both the tagline
+                and a no-scroll quote button on a 320px-wide/568px-tall
+                device (original iPhone SE/5 class, effectively legacy at
+                this point); every 375px+ phone (the smallest currently-sold
+                iPhone, and the vast majority of Android phones) keeps the
+                tagline and still fits. */}
+            <p className="mx-auto mt-2 max-w-xs text-xs leading-snug text-ink-muted max-[374px]:hidden sm:mt-4 sm:max-w-[885px] sm:text-base sm:leading-normal">
               Ship documents, parcels, freight, vehicles, and household goods with
               confidence. TYS Global Logistics delivers secure domestic and international
               shipping backed by competitive rates and dedicated support.
             </p>
           </div>
 
-          <div className="relative mx-auto mt-4 w-full max-w-3xl rounded-3xl bg-white p-4 shadow-[0_20px_60px_rgba(16,24,40,0.08)] sm:mt-10 sm:p-6">
+          <div className="relative mx-auto mt-3 w-full max-w-3xl rounded-3xl bg-white p-4 shadow-[0_20px_60px_rgba(16,24,40,0.08)] sm:mt-10 sm:p-6">
             <MiniQuoteForm layout="columns" />
           </div>
         </div>
