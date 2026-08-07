@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { SHIPMENT_STATUS_LABELS, SHIPMENT_STATUS_TONE, type ShipmentStatus } from "./mock-data";
+import { SHIPMENT_STATUS_LABELS, SHIPMENT_STATUS_TONE, type ShipmentStatus } from "./types";
 
 const DOT_TONE: Record<string, string> = {
   neutral: "bg-muted-foreground/50",

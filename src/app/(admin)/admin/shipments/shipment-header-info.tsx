@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FieldRow } from "@/components/admin/field-row";
-import { SHIPMENT_STATUS_LABELS, type ShipmentDetail, type ShipmentStatus, type ShipmentType } from "./mock-data";
+import { SHIPMENT_STATUS_LABELS, type ShipmentDetail, type ShipmentStatus, type ShipmentType } from "./types";
 
 const SERVICE_TYPES = ["Standard", "Express", "Economy"];
 const SUB_SERVICE_TYPES = ["Door to Door", "Door to Port", "Port to Port"];
@@ -32,7 +32,7 @@ export function ShipmentHeaderInfo({
         </div>
         <h1 className="text-h2">
           Shipment Information
-          {shipment.trackingNumber !== "NEW" && (
+          {shipment.trackingNumber && (
             <span className="text-muted-foreground"> : {shipment.trackingNumber}</span>
           )}
         </h1>
@@ -77,17 +77,12 @@ export function ShipmentHeaderInfo({
           </Select>
         </FieldRow>
         <FieldRow label="Username" htmlFor="shipment-username">
-          <Input
-            id="shipment-username"
-            value={shipment.username}
-            onChange={(e) => onChange({ username: e.target.value })}
-            disabled
-          />
+          <Input id="shipment-username" value={shipment.username ?? ""} readOnly disabled />
         </FieldRow>
         <FieldRow label="Managed By" htmlFor="shipment-managed-by">
           <Input
             id="shipment-managed-by"
-            value={shipment.managedBy}
+            value={shipment.managedBy ?? ""}
             onChange={(e) => onChange({ managedBy: e.target.value })}
             placeholder="Assign a staff member…"
           />
@@ -100,12 +95,13 @@ export function ShipmentHeaderInfo({
             <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="air">Air</SelectItem>
+              <SelectItem value="ground">Ground</SelectItem>
               <SelectItem value="ocean">Ocean</SelectItem>
             </SelectContent>
           </Select>
         </FieldRow>
         <FieldRow label="Service Type">
-          <Select value={shipment.serviceType} onValueChange={(v) => onChange({ serviceType: v })}>
+          <Select value={shipment.serviceType ?? ""} onValueChange={(v) => onChange({ serviceType: v })}>
             <SelectTrigger className="w-full"><SelectValue placeholder="Select…" /></SelectTrigger>
             <SelectContent>
               {SERVICE_TYPES.map((t) => (
@@ -115,7 +111,10 @@ export function ShipmentHeaderInfo({
           </Select>
         </FieldRow>
         <FieldRow label="Sub Service Type">
-          <Select value={shipment.subServiceType} onValueChange={(v) => onChange({ subServiceType: v })}>
+          <Select
+            value={shipment.subServiceType ?? ""}
+            onValueChange={(v) => onChange({ subServiceType: v })}
+          >
             <SelectTrigger className="w-full"><SelectValue placeholder="Select…" /></SelectTrigger>
             <SelectContent>
               {SUB_SERVICE_TYPES.map((t) => (

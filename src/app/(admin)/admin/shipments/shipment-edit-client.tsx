@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { adminApi, ApiError } from "@/lib/admin-api";
 import { Button } from "@/components/ui/button";
 import {
   DetailTabs,
@@ -17,17 +18,21 @@ import { CommercialInvoiceSection } from "./commercial-invoice-section";
 import { AccountsSection } from "./accounts-section";
 import { TrackingSection } from "./tracking-section";
 import { DocumentationSection } from "./documentation-section";
-import { NotesSection } from "./notes-section";
-import type { ShipmentDetail } from "./mock-data";
+import { NotesSection, type NotesSectionHandle } from "./notes-section";
+import type { ShipmentDetail } from "./types";
 
-// Every tab + Notes writes into one shipment object, patched via onChange —
-// there's no Shipment API yet (UI-lock phase, see the plan), so Save/Save &
-// Exit only confirm the shape is right; nothing persists until that backend
-// phase wires this to real endpoints.
+// Real backing: PATCH /api/admin/shipments/[id] (src/app/api/admin/shipments/
+// [id]/route.ts). Notes post immediately on their own (see notes-section.tsx)
+// — flushDraft below is only a safety net for an unposted draft. Accounts
+// (payment) and the automated-carrier half of Tracking stay UI-only stubs —
+// no billing backend and no live FedEx wiring here, see those files' own
+// header comments.
 export function ShipmentEditClient({ initial }: { initial: ShipmentDetail }) {
   const router = useRouter();
   const [shipment, setShipment] = useState(initial);
   const [tab, setTab] = useState("customer");
+  const [saving, setSaving] = useState(false);
+  const notesRef = useRef<NotesSectionHandle>(null);
 
   const pendingScrollY = useRef<number | null>(null);
   useLayoutEffect(() => {
@@ -41,13 +46,64 @@ export function ShipmentEditClient({ initial }: { initial: ShipmentDetail }) {
     setShipment((prev) => ({ ...prev, ...p }));
   }
 
-  function save(andExit: boolean) {
-    toast.success(
-      andExit
-        ? "Shipment saved locally — database wiring comes in a later phase."
-        : "Shipment saved locally.",
-    );
-    if (andExit) router.push("/admin/shipments");
+  async function save(exitAfter: boolean) {
+    setSaving(true);
+    const payload = {
+      status: shipment.status,
+      allClear: shipment.allClear,
+      packageType: shipment.packageType,
+      managedBy: shipment.managedBy,
+      shipmentType: shipment.shipmentType,
+      serviceType: shipment.serviceType,
+      subServiceType: shipment.subServiceType,
+      sender: shipment.sender,
+      recipient: shipment.recipient,
+      pickup: shipment.pickup,
+      additional: shipment.additional,
+      packages: shipment.packages.map((p) => ({
+        id: p.id,
+        quantity: p.quantity,
+        weight: p.weight,
+        weightUnit: p.weightUnit,
+        length: p.length,
+        width: p.width,
+        height: p.height,
+        chargeableWeight: p.chargeableWeight,
+        insuredValue: p.insuredValue,
+      })),
+      doNotShowOnMyShipment: shipment.doNotShowOnMyShipment,
+      commercialInvoice: shipment.commercialInvoice.map((l) => ({
+        id: l.id,
+        packageNumber: l.packageNumber,
+        packageContent: l.packageContent,
+        quantity: l.quantity,
+        valuePerQty: l.valuePerQty,
+      })),
+      documentation: shipment.documentation.map((d) => ({
+        id: d.id,
+        documentType: d.documentType,
+        documentName: d.documentName,
+        status: d.status,
+      })),
+    };
+    try {
+      const [updated] = await Promise.all([
+        adminApi<ShipmentDetail>(`/api/admin/shipments/${shipment.id}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        }),
+        notesRef.current?.flushDraft(),
+      ]);
+      setShipment(updated);
+      toast.success("Shipment saved.");
+      if (exitAfter) router.push("/admin/shipments");
+      return true;
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Couldn't save the shipment.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -83,7 +139,7 @@ export function ShipmentEditClient({ initial }: { initial: ShipmentDetail }) {
             <AccountsSection shipment={shipment} />
           </DetailTabsContent>
           <DetailTabsContent value="tracking">
-            <TrackingSection shipment={shipment} />
+            <TrackingSection shipmentId={shipment.id} />
           </DetailTabsContent>
           <DetailTabsContent value="documentation">
             <DocumentationSection shipment={shipment} onChange={patch} />
@@ -91,21 +147,23 @@ export function ShipmentEditClient({ initial }: { initial: ShipmentDetail }) {
         </div>
       </DetailTabs>
 
-      <NotesSection shipment={shipment} onChange={patch} />
+      <NotesSection ref={notesRef} shipmentId={shipment.id} />
 
       <div className="sticky bottom-0 -mx-6 flex justify-end gap-2 border-t border-tys-mist bg-background/95 px-6 py-3 backdrop-blur">
-        <Button variant="outline" onClick={() => router.push("/admin/shipments")}>
+        <Button variant="outline" onClick={() => router.push("/admin/shipments")} disabled={saving}>
           Cancel
         </Button>
         <Button
           className="bg-tys-rose text-white hover:bg-tys-rose/90"
           onClick={() => save(false)}
+          disabled={saving}
         >
           Save
         </Button>
         <Button
           className="bg-tys-indigo text-white hover:bg-tys-indigo/90"
           onClick={() => save(true)}
+          disabled={saving}
         >
           Save & Exit
         </Button>

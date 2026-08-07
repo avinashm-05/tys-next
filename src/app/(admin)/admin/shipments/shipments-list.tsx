@@ -30,11 +30,10 @@ import type { ShipmentStatus, ShipmentType } from "@prisma/client";
 import { DataTable, sortableHeader } from "@/components/shared/data-table";
 import { LocalDateTime } from "@/components/shared/local-date-time";
 import { RowActions } from "@/components/admin/row-actions";
-import { SHIPMENT_STATUS_LABELS } from "./mock-data";
+import { SHIPMENT_STATUS_LABELS } from "./types";
 import { ShipmentStatusBadge } from "./shipment-status-badge";
 
-// Real row shape from GET /api/admin/shipments — distinct from mock-data.ts's
-// ShipmentRow (which still backs the still-mock "New shipment"/edit flow).
+// Real row shape from GET /api/admin/shipments.
 type ShipmentListRow = {
   id: number;
   date: string | null;

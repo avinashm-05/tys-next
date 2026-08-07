@@ -61,17 +61,19 @@ model User {
   country      String? @db.VarChar(100) // C1 customer profile field (additive)
   postalCode   String? @map("postal_code") @db.VarChar(20) // C1 customer profile field (additive)
 
-  userType        UserType?       @relation(fields: [userTypeId], references: [id], onUpdate: NoAction, map: "users_user_type_id_foreign")
-  sessions        Session[]
-  accounts        Account[]
-  vendorsAdded    Vendor[]        @relation("VendorAddedBy")
-  contactsCreated VendorContact[] @relation("ContactCreatedBy")
-  contactsUpdated VendorContact[] @relation("ContactUpdatedBy")
-  commentsCreated VendorComment[] @relation("CommentCreatedBy")
-  commentsUpdated VendorComment[] @relation("CommentUpdatedBy")
-  serviceAssigns  VendorService[] @relation("AssignedBy")
-  shipments       Shipment[]
-  quoteNotes      QuoteNote[]     @relation("QuoteNoteCreatedBy")
+  userType               UserType?               @relation(fields: [userTypeId], references: [id], onUpdate: NoAction, map: "users_user_type_id_foreign")
+  sessions               Session[]
+  accounts               Account[]
+  vendorsAdded           Vendor[]                @relation("VendorAddedBy")
+  contactsCreated        VendorContact[]         @relation("ContactCreatedBy")
+  contactsUpdated        VendorContact[]         @relation("ContactUpdatedBy")
+  commentsCreated        VendorComment[]         @relation("CommentCreatedBy")
+  commentsUpdated        VendorComment[]         @relation("CommentUpdatedBy")
+  serviceAssigns         VendorService[]         @relation("AssignedBy")
+  shipments              Shipment[]
+  quoteNotes             QuoteNote[]             @relation("QuoteNoteCreatedBy")
+  shipmentNotes          ShipmentNote[]          @relation("ShipmentNoteCreatedBy")
+  shipmentTrackingEvents ShipmentTrackingEvent[] @relation("ShipmentTrackingEventCreatedBy")
 
   @@index([userTypeId], map: "users_user_type_id_index")
   @@map("users")
@@ -164,6 +166,18 @@ model Shipment {
   toCountry      String         @map("to_country") @db.VarChar(100)
   status         ShipmentStatus @default(new_request)
 
+  // Admin "Shipment Information" header tab (previously mock-only — see
+  // mock-data.ts's ShipmentDetail — now real columns so the 6-tab editor
+  // actually persists). allClear/packageType are plain admin-set flags, not
+  // derived from anything; managedBy is free-text staff name (no separate
+  // staff-assignment model exists yet, matches how the mock UI already
+  // treated it as a plain editable field).
+  allClear       AllClearStatus      @default(not_ready) @map("all_clear")
+  packageType    ShipmentPackageType @default(package) @map("package_type")
+  managedBy      String?             @map("managed_by") @db.VarChar(255)
+  serviceType    String?             @map("service_type") @db.VarChar(100)
+  subServiceType String?             @map("sub_service_type") @db.VarChar(100)
+
   // Pickup — not collected by the v1 wizard (matches SFL's own "Schedule
   // Pickup" tab, which only asks shipment type + from/to country); filled in
   // later by staff via the admin editor.
@@ -172,6 +186,17 @@ model Shipment {
   pickupStartTime    String?   @map("pickup_start_time") @db.VarChar(10)
   pickupEndTime      String?   @map("pickup_end_time") @db.VarChar(10)
   specialInstruction String?   @map("special_instruction") @db.Text
+
+  // Admin "Additional Details" panel (Customer Details tab).
+  shipDate          DateTime? @map("ship_date") @db.Date
+  dutiesTaxesPaidBy String?   @map("duties_taxes_paid_by") @db.VarChar(100)
+
+  // Admin "Package" tab footer checkbox + "Accounts" tab status line — the
+  // Accounts tab itself stays a UI-only stub (no payment/billing backend
+  // exists), but the flag is harmless plain data worth persisting now so
+  // that panel already reads real state whenever that backend does land.
+  doNotShowOnMyShipment Boolean @default(false) @map("do_not_show_on_my_shipment")
+  paymentIssued         Boolean @default(false) @map("payment_issued")
 
   senderContactName  String  @map("sender_contact_name") @db.VarChar(255)
   senderCompanyName  String? @map("sender_company_name") @db.VarChar(255)
@@ -203,9 +228,13 @@ model Shipment {
   createdAt DateTime? @map("created_at") @db.Timestamp(0)
   updatedAt DateTime? @map("updated_at") @db.Timestamp(0)
 
-  user     User?                 @relation(fields: [userId], references: [id], onUpdate: NoAction, map: "shipments_user_id_foreign")
-  quote    Quote?                @relation(fields: [linkedQuoteId], references: [id], onUpdate: NoAction, map: "shipments_linked_quote_id_foreign")
-  packages ShipmentPackageLine[]
+  user           User?                   @relation(fields: [userId], references: [id], onUpdate: NoAction, map: "shipments_user_id_foreign")
+  quote          Quote?                  @relation(fields: [linkedQuoteId], references: [id], onUpdate: NoAction, map: "shipments_linked_quote_id_foreign")
+  packages       ShipmentPackageLine[]
+  invoiceLines   ShipmentInvoiceLine[]
+  documents      ShipmentDocument[]
+  trackingEvents ShipmentTrackingEvent[]
+  notes          ShipmentNote[]
 
   @@index([userId], map: "shipments_user_id_index")
   @@index([status], map: "shipments_status_index")
@@ -231,6 +260,89 @@ model ShipmentPackageLine {
 
   @@index([shipmentId], map: "shipment_package_lines_shipment_id_index")
   @@map("shipment_package_lines")
+}
+
+// Admin "Commercial Inv." tab — customs declaration lines, one per package
+// content line (a package can have several: e.g. package #1 might carry
+// both "Documents" and "Electronics" lines). Plain CRUD, no external
+// dependency, unlike Documentation/Accounts/Tracking below.
+model ShipmentInvoiceLine {
+  id             BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  shipmentId     BigInt    @map("shipment_id") @db.UnsignedBigInt
+  packageNumber  Int       @map("package_number")
+  packageContent String    @map("package_content") @db.VarChar(255)
+  quantity       Int       @default(1)
+  valuePerQty    Decimal   @map("value_per_qty") @db.Decimal(10, 2)
+  createdAt      DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt      DateTime? @map("updated_at") @db.Timestamp(0)
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shipment_invoice_lines_shipment_id_foreign")
+
+  @@index([shipmentId], map: "shipment_invoice_lines_shipment_id_index")
+  @@map("shipment_invoice_lines")
+}
+
+// Admin "Documentation" tab — row metadata only (type/name/status). Actual
+// file upload stays a UI-only stub: no cloud object storage is configured
+// yet, same rationale as the Vendor Documents tab (documents-section.tsx).
+// Persisting the metadata now still means the row survives a page reload
+// instead of vanishing, and the table is already correctly shaped for
+// whenever storage does get wired up.
+model ShipmentDocument {
+  id           BigInt                 @id @default(autoincrement()) @db.UnsignedBigInt
+  shipmentId   BigInt                 @map("shipment_id") @db.UnsignedBigInt
+  documentType String                 @map("document_type") @db.VarChar(100)
+  documentName String?                @map("document_name") @db.VarChar(255)
+  status       ShipmentDocumentStatus @default(active)
+  createdAt    DateTime?              @map("created_at") @db.Timestamp(0)
+  updatedAt    DateTime?              @map("updated_at") @db.Timestamp(0)
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shipment_documents_shipment_id_foreign")
+
+  @@index([shipmentId], map: "shipment_documents_shipment_id_index")
+  @@map("shipment_documents")
+}
+
+// Admin "Tracking" tab, manual half only — staff-entered milestones
+// (status/location/note at a point in time). The automated-carrier half
+// (FedEx webhook/poll) stays a UI-only stub deliberately: that needs a live
+// FedEx integration, out of scope for this pass. source exists now so the
+// same table can carry carrier-sourced events later without another
+// migration, even though nothing writes source=carrier yet.
+model ShipmentTrackingEvent {
+  id          BigInt                 @id @default(autoincrement()) @db.UnsignedBigInt
+  shipmentId  BigInt                 @map("shipment_id") @db.UnsignedBigInt
+  source      ShipmentTrackingSource @default(manual)
+  occurredAt  DateTime               @map("occurred_at")
+  status      String                 @db.VarChar(100)
+  location    String?                @db.VarChar(255)
+  note        String?                @db.Text
+  createdById BigInt?                @map("created_by") @db.UnsignedBigInt
+  createdAt   DateTime?              @map("created_at") @db.Timestamp(0)
+
+  shipment  Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shipment_tracking_events_shipment_id_foreign")
+  createdBy User?    @relation("ShipmentTrackingEventCreatedBy", fields: [createdById], references: [id], onUpdate: NoAction, map: "shipment_tracking_events_created_by_foreign")
+
+  @@index([shipmentId], map: "shipment_tracking_events_shipment_id_index")
+  @@map("shipment_tracking_events")
+}
+
+// Admin "Notes" panel — same shape/rationale as QuoteNote, just scoped to a
+// Shipment instead of a Quote.
+model ShipmentNote {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  shipmentId  BigInt    @map("shipment_id") @db.UnsignedBigInt
+  comment     String    @db.Text
+  createdById BigInt?   @map("created_by") @db.UnsignedBigInt
+  createdAt   DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime? @map("updated_at") @db.Timestamp(0)
+
+  shipment  Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "shipment_notes_shipment_id_foreign")
+  createdBy User?    @relation("ShipmentNoteCreatedBy", fields: [createdById], references: [id], onUpdate: NoAction, map: "shipment_notes_created_by_foreign")
+
+  @@index([shipmentId], map: "shipment_notes_shipment_id_index")
+  @@index([createdAt], map: "shipment_notes_created_at_index")
+  @@map("shipment_notes")
 }
 
 // Lightweight alternative to the full /quotes wizard — "call me back" lead
@@ -581,6 +693,27 @@ enum ShipmentStatus {
 enum LocationType {
   residential
   commercial
+}
+
+enum AllClearStatus {
+  ready
+  not_ready
+}
+
+enum ShipmentPackageType {
+  package
+  document
+  pallet
+}
+
+enum ShipmentDocumentStatus {
+  active
+  inactive
+}
+
+enum ShipmentTrackingSource {
+  manual
+  carrier
 }
 
 enum CallbackTimeSlot {

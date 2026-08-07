@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import type { ShipmentDetail } from "./mock-data";
+import type { ShipmentDetail } from "./types";
 
 // UI-first stub: SETU's "Payment Issued" panel opens a full payment-capture
 // flow — no billing/payment backend exists yet, so this renders the same

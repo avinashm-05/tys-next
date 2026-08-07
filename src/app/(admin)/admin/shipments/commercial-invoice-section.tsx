@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { CommercialInvoiceLine, ShipmentDetail } from "./mock-data";
+import type { CommercialInvoiceLine, ShipmentDetail } from "./types";
 
 export function CommercialInvoiceSection({
   shipment,
@@ -32,7 +32,13 @@ export function CommercialInvoiceSection({
     onChange({
       commercialInvoice: [
         ...shipment.commercialInvoice,
-        { packageNumber: nextPackageNumber, packageContent: "", quantity: 1, valuePerQty: "0.00" },
+        {
+          id: -Date.now(),
+          packageNumber: nextPackageNumber,
+          packageContent: "",
+          quantity: 1,
+          valuePerQty: "0.00",
+        },
       ],
     });
   }
@@ -42,7 +48,7 @@ export function CommercialInvoiceSection({
   }
 
   const totalCost = shipment.commercialInvoice.reduce(
-    (sum, row) => sum + row.quantity * (parseFloat(row.valuePerQty) || 0),
+    (sum, row) => sum + row.quantity * (parseFloat(row.valuePerQty ?? "") || 0),
     0,
   );
 
@@ -70,7 +76,7 @@ export function CommercialInvoiceSection({
               </TableRow>
             ) : (
               shipment.commercialInvoice.map((row, i) => (
-                <TableRow key={i}>
+                <TableRow key={row.id}>
                   <TableCell>
                     <Input
                       type="number"
@@ -83,7 +89,7 @@ export function CommercialInvoiceSection({
                   <TableCell>
                     <Input
                       className="h-8"
-                      value={row.packageContent}
+                      value={row.packageContent ?? ""}
                       onChange={(e) => updateRow(i, { packageContent: e.target.value })}
                       placeholder="Documents, Electronics…"
                       aria-label={`Invoice line ${i + 1} content`}
@@ -102,13 +108,13 @@ export function CommercialInvoiceSection({
                   <TableCell>
                     <Input
                       className="h-8 w-24"
-                      value={row.valuePerQty}
+                      value={row.valuePerQty ?? ""}
                       onChange={(e) => updateRow(i, { valuePerQty: e.target.value })}
                       aria-label={`Invoice line ${i + 1} value per quantity`}
                     />
                   </TableCell>
                   <TableCell className="text-sm">
-                    {(row.quantity * (parseFloat(row.valuePerQty) || 0)).toFixed(2)}
+                    {(row.quantity * (parseFloat(row.valuePerQty ?? "") || 0)).toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">

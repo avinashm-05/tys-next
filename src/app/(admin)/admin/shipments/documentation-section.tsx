@@ -21,13 +21,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { DocumentationRow, ShipmentDetail } from "./mock-data";
+import type { DocumentationRow, ShipmentDetail } from "./types";
 
 const DOCUMENT_TYPES = ["Commercial Invoice", "Invoice", "Packing List", "Bill of Lading", "Other"];
 
 // File upload is a stub (same rationale as the Vendor Documents tab) — no
 // cloud object storage is configured yet. The row itself (type/name/status)
-// is real local state so the table's shape is already correct for later.
+// is real, persisted state (PATCH /api/admin/shipments/[id]) — negative ids
+// are client-generated temp ids for a row added this session (create).
 export function DocumentationSection({
   shipment,
   onChange,
@@ -46,7 +47,7 @@ export function DocumentationSection({
       documentation: [
         ...shipment.documentation,
         {
-          id: Date.now(),
+          id: -Date.now(),
           documentType: "Commercial Invoice",
           documentName: "",
           createdOn: new Date().toISOString(),
@@ -94,7 +95,7 @@ export function DocumentationSection({
                   <TableCell>
                     <Input
                       className="h-8"
-                      value={row.documentName}
+                      value={row.documentName ?? ""}
                       onChange={(e) => updateRow(i, { documentName: e.target.value })}
                       placeholder="Enter document name…"
                     />

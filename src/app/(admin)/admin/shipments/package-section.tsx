@@ -13,10 +13,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { ShipmentDetail, ShipmentPackage } from "./mock-data";
+import type { ShipmentDetail, ShipmentPackage } from "./types";
 
-function emptyPackage(number: number): ShipmentPackage {
-  return { number, weight: "", dimL: "", dimW: "", dimH: "", chargeLbs: "0.00", insurance: "0.00" };
+// Negative ids are client-generated temp ids for a row added this session —
+// the PATCH route creates a new ShipmentPackageLine for those instead of
+// updating one (same convention as the Quote admin editor's packages).
+function emptyPackage(tempId: number, number: number): ShipmentPackage {
+  return {
+    id: tempId,
+    number,
+    quantity: 1,
+    weight: null,
+    weightUnit: null,
+    length: null,
+    width: null,
+    height: null,
+    chargeableWeight: "0.00",
+    insuredValue: "0.00",
+  };
 }
 
 export function PackageSection({
@@ -37,18 +51,25 @@ export function PackageSection({
     const packages = shipment.packages
       .filter((_, i) => i !== index)
       .map((p, i) => ({ ...p, number: i + 1 }));
-    onChange({ packages: packages.length > 0 ? packages : [emptyPackage(1)] });
+    onChange({ packages: packages.length > 0 ? packages : [emptyPackage(-Date.now(), 1)] });
   }
 
   function addRows() {
     const count = Math.max(1, Math.min(20, parseInt(addCount, 10) || 1));
     const start = shipment.packages.length;
-    const added = Array.from({ length: count }, (_, i) => emptyPackage(start + i + 1));
+    const base = -Date.now();
+    const added = Array.from({ length: count }, (_, i) => emptyPackage(base - i, start + i + 1));
     onChange({ packages: [...shipment.packages, ...added] });
   }
 
-  const totalCharge = shipment.packages.reduce((sum, p) => sum + (parseFloat(p.chargeLbs) || 0), 0);
-  const totalInsurance = shipment.packages.reduce((sum, p) => sum + (parseFloat(p.insurance) || 0), 0);
+  const totalCharge = shipment.packages.reduce(
+    (sum, p) => sum + (parseFloat(p.chargeableWeight ?? "") || 0),
+    0,
+  );
+  const totalInsurance = shipment.packages.reduce(
+    (sum, p) => sum + (parseFloat(p.insuredValue ?? "") || 0),
+    0,
+  );
 
   return (
     <div className="flex flex-col gap-4 p-6">
@@ -92,11 +113,11 @@ export function PackageSection({
           </TableHeader>
           <TableBody>
             {shipment.packages.map((row, i) => (
-              <TableRow key={i}>
+              <TableRow key={row.id}>
                 <TableCell className="font-medium">{row.number}</TableCell>
                 <TableCell>
                   <Input
-                    value={row.weight}
+                    value={row.weight ?? ""}
                     onChange={(e) => updateRow(i, { weight: e.target.value })}
                     className="h-8 w-24"
                     aria-label={`Package ${row.number} weight`}
@@ -104,40 +125,40 @@ export function PackageSection({
                 </TableCell>
                 <TableCell>
                   <Input
-                    value={row.dimL}
-                    onChange={(e) => updateRow(i, { dimL: e.target.value })}
+                    value={row.length ?? ""}
+                    onChange={(e) => updateRow(i, { length: e.target.value })}
                     className="h-8 w-20"
                     aria-label={`Package ${row.number} length`}
                   />
                 </TableCell>
                 <TableCell>
                   <Input
-                    value={row.dimW}
-                    onChange={(e) => updateRow(i, { dimW: e.target.value })}
+                    value={row.width ?? ""}
+                    onChange={(e) => updateRow(i, { width: e.target.value })}
                     className="h-8 w-20"
                     aria-label={`Package ${row.number} width`}
                   />
                 </TableCell>
                 <TableCell>
                   <Input
-                    value={row.dimH}
-                    onChange={(e) => updateRow(i, { dimH: e.target.value })}
+                    value={row.height ?? ""}
+                    onChange={(e) => updateRow(i, { height: e.target.value })}
                     className="h-8 w-20"
                     aria-label={`Package ${row.number} height`}
                   />
                 </TableCell>
                 <TableCell>
                   <Input
-                    value={row.chargeLbs}
-                    onChange={(e) => updateRow(i, { chargeLbs: e.target.value })}
+                    value={row.chargeableWeight ?? ""}
+                    onChange={(e) => updateRow(i, { chargeableWeight: e.target.value })}
                     className="h-8 w-24"
                     aria-label={`Package ${row.number} charge`}
                   />
                 </TableCell>
                 <TableCell>
                   <Input
-                    value={row.insurance}
-                    onChange={(e) => updateRow(i, { insurance: e.target.value })}
+                    value={row.insuredValue ?? ""}
+                    onChange={(e) => updateRow(i, { insuredValue: e.target.value })}
                     className="h-8 w-24"
                     aria-label={`Package ${row.number} insurance`}
                   />

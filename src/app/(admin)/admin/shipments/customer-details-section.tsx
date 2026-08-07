@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FieldRow, IconInput } from "@/components/admin/field-row";
-import type { Address, ShipmentDetail } from "./mock-data";
+import type { Address, ShipmentDetail } from "./types";
 
 function AddressFields({
   idPrefix,
@@ -30,7 +30,7 @@ function AddressFields({
 }) {
   const field = (key: keyof Address) => ({
     id: `${idPrefix}-${key}`,
-    value: value[key],
+    value: value[key] ?? "",
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange({ [key]: e.target.value }),
   });
   return (
@@ -108,7 +108,7 @@ export function CustomerDetailsSection({
           <FieldRow label="Pickup Provider" htmlFor="pickup-provider">
             <Input
               id="pickup-provider"
-              value={shipment.pickup.pickupProvider}
+              value={shipment.pickup.pickupProvider ?? ""}
               onChange={(e) =>
                 onChange({ pickup: { ...shipment.pickup, pickupProvider: e.target.value } })
               }
@@ -118,7 +118,7 @@ export function CustomerDetailsSection({
             <Input
               id="pickup-date"
               type="date"
-              value={shipment.pickup.pickupDate}
+              value={shipment.pickup.pickupDate?.slice(0, 10) ?? ""}
               onChange={(e) => onChange({ pickup: { ...shipment.pickup, pickupDate: e.target.value } })}
             />
           </FieldRow>
@@ -126,7 +126,7 @@ export function CustomerDetailsSection({
             <Input
               id="pickup-start"
               type="time"
-              value={shipment.pickup.startTime}
+              value={shipment.pickup.startTime ?? ""}
               onChange={(e) => onChange({ pickup: { ...shipment.pickup, startTime: e.target.value } })}
             />
           </FieldRow>
@@ -134,7 +134,7 @@ export function CustomerDetailsSection({
             <Input
               id="pickup-end"
               type="time"
-              value={shipment.pickup.endTime}
+              value={shipment.pickup.endTime ?? ""}
               onChange={(e) => onChange({ pickup: { ...shipment.pickup, endTime: e.target.value } })}
             />
           </FieldRow>
@@ -142,7 +142,7 @@ export function CustomerDetailsSection({
             <Input
               id="pickup-instruction"
               maxLength={29}
-              value={shipment.pickup.specialInstruction}
+              value={shipment.pickup.specialInstruction ?? ""}
               onChange={(e) =>
                 onChange({ pickup: { ...shipment.pickup, specialInstruction: e.target.value } })
               }
@@ -158,7 +158,7 @@ export function CustomerDetailsSection({
             <Input
               id="additional-ship-date"
               type="date"
-              value={shipment.additional.shipDate.slice(0, 10)}
+              value={shipment.additional.shipDate?.slice(0, 10) ?? ""}
               onChange={(e) =>
                 onChange({ additional: { ...shipment.additional, shipDate: e.target.value } })
               }
@@ -183,7 +183,7 @@ export function CustomerDetailsSection({
           <FieldRow label="Duties & Taxes Paid By" htmlFor="additional-duties">
             <Input
               id="additional-duties"
-              value={shipment.additional.dutiesTaxesPaidBy}
+              value={shipment.additional.dutiesTaxesPaidBy ?? ""}
               onChange={(e) =>
                 onChange({ additional: { ...shipment.additional, dutiesTaxesPaidBy: e.target.value } })
               }
