@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRightIcon, GlobeIcon, HeadsetIcon } from "@phosphor-icons/react/dist/ssr";
 import { MiniQuoteForm } from "@/components/public/mini-quote-form";
+import { QuoteRequestForm } from "@/components/public/quote-request-form";
 import { FaqAccordion } from "@/components/public/faq-accordion";
 import { TrustpilotFullLogo } from "@/components/public/trustpilot-logo";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
@@ -120,8 +121,14 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="relative mx-auto mt-3 w-full max-w-3xl rounded-3xl bg-white p-4 shadow-[0_20px_60px_rgba(16,24,40,0.08)] sm:mt-10 sm:p-6">
-            <MiniQuoteForm layout="columns" />
+          {/* Full quote form directly in the hero (not just the From/To
+              teaser MiniQuoteForm used to be) — requested so a visitor can
+              go from landing to submitted without a second page. variant=
+              "embedded" drops QuoteRequestForm's own heading + section
+              chrome (this hero already has its own H1 above); the form/
+              card styling and submit behavior are identical to /quotes. */}
+          <div className="relative mx-auto mt-3 w-full sm:mt-10">
+            <QuoteRequestForm variant="embedded" />
           </div>
         </div>
 

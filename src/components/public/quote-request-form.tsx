@@ -98,9 +98,15 @@ function QuoteHero() {
 export function QuoteRequestForm({
   defaultFromCountry,
   defaultToCountry,
+  variant = "standalone",
 }: {
   defaultFromCountry?: string;
   defaultToCountry?: string;
+  /** "standalone" (default) is the full /quotes page: its own heading +
+   * section chrome. "embedded" drops both — used to place this same form
+   * directly inside the home page hero (which already has its own H1), see
+   * page.tsx. The form/validation/submit behavior is identical either way. */
+  variant?: "standalone" | "embedded";
 }) {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -203,17 +209,15 @@ export function QuoteRequestForm({
     }
   }
 
-  return (
-    <>
-      <QuoteHero />
-      {/* Two columns on desktop (route+packages left, contact+callback
-          window right) instead of a tall single stack — spreads the same
-          fields across the screen's actual width so nothing has to scroll. */}
-      <section className="bg-white px-4 py-3 md:px-8 md:py-4">
-        <div className="mx-auto max-w-4xl">
-          <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <div className="rounded-3xl border border-brand-light bg-white p-5 shadow-[0_20px_60px_rgba(16,24,40,0.08)] md:p-7">
-              {/* grid-cols-1 explicitly, not just implicit at the base
+  // Two columns on desktop (route+packages left, contact+callback window
+  // right) instead of a tall single stack — spreads the same fields across
+  // the screen's actual width so nothing has to scroll. Built once and
+  // reused by both variants below — "embedded" skips the heading + section
+  // chrome only, the form itself is identical either way.
+  const formCard = (
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <div className="rounded-3xl border border-brand-light bg-white p-5 shadow-[0_20px_60px_rgba(16,24,40,0.08)] md:p-7">
+        {/* grid-cols-1 explicitly, not just implicit at the base
                   breakpoint — without it, mobile gets a bare `display:grid`
                   with no defined column track, so the browser auto-sizes
                   the single implicit column to its CONTENT's natural width
@@ -225,257 +229,261 @@ export function QuoteRequestForm({
                   at a 280px width: this div measured 284px inside a 206px
                   parent). Same root cause class as CSS Grid/Flexbox's
                   well-known implicit `min-width: auto` trap. */}
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
-                {/* Left: route + package type */}
-                <div className="flex flex-col gap-5">
-                  <div>
-                    <div className="flex items-center gap-2 text-brand">
-                      <MapPinIcon size={16} weight="bold" />
-                      <span className="text-xs font-semibold uppercase tracking-wide">
-                        Shipment route
-                      </span>
-                    </div>
-                    <div className="mt-3 flex flex-col gap-3">
-                      <div>
-                        <label className={labelClass}>Sending From</label>
-                        <div className="mt-1">
-                          <Controller
-                            control={control}
-                            name="from_country"
-                            render={({ field }) => (
-                              <SearchableSelect
-                                options={COUNTRY_OPTIONS}
-                                value={field.value}
-                                onChange={field.onChange}
-                                placeholder="Select Country"
-                                invalid={isSubmitted && !!errors.from_country}
-                              />
-                            )}
-                          />
-                        </div>
-                        {isSubmitted && errors.from_country && (
-                          <p className={errorClass}>{errors.from_country.message}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className={labelClass}>Sending To</label>
-                        <div className="mt-1">
-                          <Controller
-                            control={control}
-                            name="to_country"
-                            render={({ field }) => (
-                              <SearchableSelect
-                                options={COUNTRY_OPTIONS}
-                                value={field.value}
-                                onChange={field.onChange}
-                                placeholder="Sending To"
-                                invalid={isSubmitted && !!errors.to_country}
-                                placeholderIcon
-                              />
-                            )}
-                          />
-                        </div>
-                        {isSubmitted && errors.to_country && (
-                          <p className={errorClass}>{errors.to_country.message}</p>
-                        )}
-                      </div>
-                    </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
+          {/* Left: route + package type */}
+          <div className="flex flex-col gap-5">
+            <div>
+              <div className="flex items-center gap-2 text-brand">
+                <MapPinIcon size={16} weight="bold" />
+                <span className="text-xs font-semibold uppercase tracking-wide">
+                  Shipment route
+                </span>
+              </div>
+              <div className="mt-3 flex flex-col gap-3">
+                <div>
+                  <label className={labelClass}>Sending From</label>
+                  <div className="mt-1">
+                    <Controller
+                      control={control}
+                      name="from_country"
+                      render={({ field }) => (
+                        <SearchableSelect
+                          options={COUNTRY_OPTIONS}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select Country"
+                          invalid={isSubmitted && !!errors.from_country}
+                        />
+                      )}
+                    />
                   </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 text-brand">
-                      <PackageIcon size={16} weight="bold" />
-                      <span className="text-xs font-semibold uppercase tracking-wide">
-                        What are you shipping?
-                      </span>
-                    </div>
-                    <div className="mt-3 grid grid-cols-3 gap-3">
-                      {PACKAGE_TYPES.map((pt) => {
-                        const Icon = PACKAGE_CARD_ICON[pt.value];
-                        const selected = packageTypes.includes(pt.value);
-                        return (
-                          <button
-                            type="button"
-                            key={pt.value}
-                            onClick={() => togglePackageType(pt.value)}
-                            className={`flex min-h-[92px] flex-col items-center justify-center gap-1.5 rounded-xl border-2 bg-white p-3 text-center transition ${
-                              selected ? "border-brand" : "border-brand-light"
-                            }`}
-                          >
-                            <span
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${selected ? "bg-brand text-white" : "bg-gray-100 text-ink-muted"}`}
-                            >
-                              <Icon size={17} />
-                            </span>
-                            <span className="text-xs font-medium leading-tight text-ink">
-                              {pt.label}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {isSubmitted && errors.package_types && (
-                      <p className={errorClass}>{errors.package_types.message}</p>
-                    )}
-                  </div>
+                  {isSubmitted && errors.from_country && (
+                    <p className={errorClass}>{errors.from_country.message}</p>
+                  )}
                 </div>
 
-                {/* Right: contact, then the (smaller) callback window below it */}
-                <div className="flex flex-col gap-5">
-                  <div>
-                    <div className="flex items-center gap-2 text-brand">
-                      <HeadsetIcon size={16} weight="bold" />
-                      <span className="text-xs font-semibold uppercase tracking-wide">
-                        Your details
-                      </span>
-                    </div>
-                    <div className="mt-3 flex flex-col gap-3">
-                      <div>
-                        <label className={labelClass}>Name</label>
-                        <input
-                          className={`mt-1 ${inputClass}`}
-                          placeholder="Enter name"
-                          {...register("contact.name")}
+                <div>
+                  <label className={labelClass}>Sending To</label>
+                  <div className="mt-1">
+                    <Controller
+                      control={control}
+                      name="to_country"
+                      render={({ field }) => (
+                        <SearchableSelect
+                          options={COUNTRY_OPTIONS}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Sending To"
+                          invalid={isSubmitted && !!errors.to_country}
+                          placeholderIcon
                         />
-                        {isSubmitted && errors.contact?.name && (
-                          <p className={errorClass}>{errors.contact.name.message}</p>
-                        )}
-                      </div>
-                      <div>
-                        <label className={labelClass}>Email Address</label>
-                        <input
-                          className={`mt-1 ${inputClass}`}
-                          placeholder="Enter Email"
-                          {...register("contact.email")}
-                        />
-                        {isSubmitted && errors.contact?.email && (
-                          <p className={errorClass}>{errors.contact.email.message}</p>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-[minmax(0,120px)_1fr] gap-3">
-                        <div>
-                          <label className={labelClass}>Code</label>
-                          <div className="mt-1">
-                            <Controller
-                              control={control}
-                              name="contact.country_code"
-                              render={({ field }) => (
-                                <SearchableSelect
-                                  options={DIAL_CODE_OPTIONS}
-                                  value={countryCodeIso}
-                                  onChange={(iso) => {
-                                    phoneCountryTouchedRef.current = true;
-                                    setCountryCodeIso(iso);
-                                    field.onChange(DIAL_BY_ISO.get(iso) ?? "");
-                                  }}
-                                  placeholder="Code"
-                                  invalid={isSubmitted && !!errors.contact?.country_code}
-                                />
-                              )}
-                            />
-                          </div>
-                          {isSubmitted && errors.contact?.country_code && (
-                            <p className={errorClass}>
-                              {errors.contact.country_code.message}
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          <label className={labelClass}>Phone Number</label>
-                          <input
-                            className={`mt-1 ${inputClass}`}
-                            placeholder="Enter Phone Number"
-                            {...register("contact.phone")}
-                          />
-                          {isSubmitted && errors.contact?.phone && (
-                            <p className={errorClass}>{errors.contact.phone.message}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                      )}
+                    />
                   </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 text-brand">
-                      <ClockIcon size={16} weight="bold" />
-                      <span className="text-xs font-semibold uppercase tracking-wide">
-                        Best time to call you back
-                      </span>
-                    </div>
-                    <div className="mt-2 flex items-center gap-1.5">
-                      <GlobeIcon size={13} className="shrink-0 text-ink-muted" />
-                      <div className="flex-1">
-                        <Controller
-                          control={control}
-                          name="timezone"
-                          render={({ field }) => (
-                            <SearchableSelect
-                              options={timezoneOptions}
-                              value={timezone}
-                              onChange={(v) => {
-                                timezoneTouchedRef.current = true;
-                                field.onChange(v);
-                              }}
-                              placeholder="Your timezone"
-                              invalid={isSubmitted && !!errors.timezone}
-                            />
-                          )}
-                        />
-                      </div>
-                    </div>
-                    {isSubmitted && errors.timezone && (
-                      <p className={errorClass}>{errors.timezone.message}</p>
-                    )}
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      {TIME_SLOTS.map((slot) => {
-                        const selected = timeSlot === slot.value;
-                        const Icon = TIME_SLOT_ICON[slot.value] ?? ClockIcon;
-                        return (
-                          <button
-                            type="button"
-                            key={slot.value}
-                            onClick={() =>
-                              setValue("time_slot", slot.value, { shouldValidate: false })
-                            }
-                            className={`flex flex-col items-center gap-1 rounded-xl border-2 bg-white px-2 py-2.5 text-center transition ${
-                              selected ? "border-brand" : "border-brand-light"
-                            }`}
-                          >
-                            <Icon
-                              size={17}
-                              className={selected ? "text-brand" : "text-ink-muted"}
-                            />
-                            <span className="text-xs font-semibold text-ink">
-                              {slot.label}
-                            </span>
-                            <span className="text-[10px] text-ink-muted">
-                              {slot.hint}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {isSubmitted && errors.time_slot && (
-                      <p className={errorClass}>{errors.time_slot.message}</p>
-                    )}
-                  </div>
-
-                  {submitError && <p className={errorClass}>{submitError}</p>}
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
-                  >
-                    {isSubmitting ? "Submitting…" : "Get My Free Quote"}{" "}
-                    <ArrowRightIcon size={14} />
-                  </button>
+                  {isSubmitted && errors.to_country && (
+                    <p className={errorClass}>{errors.to_country.message}</p>
+                  )}
                 </div>
               </div>
             </div>
-          </form>
+
+            <div>
+              <div className="flex items-center gap-2 text-brand">
+                <PackageIcon size={16} weight="bold" />
+                <span className="text-xs font-semibold uppercase tracking-wide">
+                  What are you shipping?
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-3">
+                {PACKAGE_TYPES.map((pt) => {
+                  const Icon = PACKAGE_CARD_ICON[pt.value];
+                  const selected = packageTypes.includes(pt.value);
+                  return (
+                    <button
+                      type="button"
+                      key={pt.value}
+                      onClick={() => togglePackageType(pt.value)}
+                      className={`flex min-h-[92px] flex-col items-center justify-center gap-1.5 rounded-xl border-2 bg-white p-3 text-center transition ${
+                        selected ? "border-brand" : "border-brand-light"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${selected ? "bg-brand text-white" : "bg-gray-100 text-ink-muted"}`}
+                      >
+                        <Icon size={17} />
+                      </span>
+                      <span className="text-xs font-medium leading-tight text-ink">
+                        {pt.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {isSubmitted && errors.package_types && (
+                <p className={errorClass}>{errors.package_types.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Right: contact, then the (smaller) callback window below it */}
+          <div className="flex flex-col gap-5">
+            <div>
+              <div className="flex items-center gap-2 text-brand">
+                <HeadsetIcon size={16} weight="bold" />
+                <span className="text-xs font-semibold uppercase tracking-wide">
+                  Your details
+                </span>
+              </div>
+              <div className="mt-3 flex flex-col gap-3">
+                <div>
+                  <label className={labelClass}>Name</label>
+                  <input
+                    className={`mt-1 ${inputClass}`}
+                    placeholder="Enter name"
+                    {...register("contact.name")}
+                  />
+                  {isSubmitted && errors.contact?.name && (
+                    <p className={errorClass}>{errors.contact.name.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className={labelClass}>Email Address</label>
+                  <input
+                    className={`mt-1 ${inputClass}`}
+                    placeholder="Enter Email"
+                    {...register("contact.email")}
+                  />
+                  {isSubmitted && errors.contact?.email && (
+                    <p className={errorClass}>{errors.contact.email.message}</p>
+                  )}
+                </div>
+                <div className="grid grid-cols-[minmax(0,120px)_1fr] gap-3">
+                  <div>
+                    <label className={labelClass}>Code</label>
+                    <div className="mt-1">
+                      <Controller
+                        control={control}
+                        name="contact.country_code"
+                        render={({ field }) => (
+                          <SearchableSelect
+                            options={DIAL_CODE_OPTIONS}
+                            value={countryCodeIso}
+                            onChange={(iso) => {
+                              phoneCountryTouchedRef.current = true;
+                              setCountryCodeIso(iso);
+                              field.onChange(DIAL_BY_ISO.get(iso) ?? "");
+                            }}
+                            placeholder="Code"
+                            invalid={isSubmitted && !!errors.contact?.country_code}
+                          />
+                        )}
+                      />
+                    </div>
+                    {isSubmitted && errors.contact?.country_code && (
+                      <p className={errorClass}>{errors.contact.country_code.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className={labelClass}>Phone Number</label>
+                    <input
+                      className={`mt-1 ${inputClass}`}
+                      placeholder="Enter Phone Number"
+                      {...register("contact.phone")}
+                    />
+                    {isSubmitted && errors.contact?.phone && (
+                      <p className={errorClass}>{errors.contact.phone.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 text-brand">
+                <ClockIcon size={16} weight="bold" />
+                <span className="text-xs font-semibold uppercase tracking-wide">
+                  Best time to call you back
+                </span>
+              </div>
+              <div className="mt-2 flex items-center gap-1.5">
+                <GlobeIcon size={13} className="shrink-0 text-ink-muted" />
+                <div className="flex-1">
+                  <Controller
+                    control={control}
+                    name="timezone"
+                    render={({ field }) => (
+                      <SearchableSelect
+                        options={timezoneOptions}
+                        value={timezone}
+                        onChange={(v) => {
+                          timezoneTouchedRef.current = true;
+                          field.onChange(v);
+                        }}
+                        placeholder="Your timezone"
+                        invalid={isSubmitted && !!errors.timezone}
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+              {isSubmitted && errors.timezone && (
+                <p className={errorClass}>{errors.timezone.message}</p>
+              )}
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {TIME_SLOTS.map((slot) => {
+                  const selected = timeSlot === slot.value;
+                  const Icon = TIME_SLOT_ICON[slot.value] ?? ClockIcon;
+                  return (
+                    <button
+                      type="button"
+                      key={slot.value}
+                      onClick={() =>
+                        setValue("time_slot", slot.value, { shouldValidate: false })
+                      }
+                      className={`flex flex-col items-center gap-1 rounded-xl border-2 bg-white px-2 py-2.5 text-center transition ${
+                        selected ? "border-brand" : "border-brand-light"
+                      }`}
+                    >
+                      <Icon
+                        size={17}
+                        className={selected ? "text-brand" : "text-ink-muted"}
+                      />
+                      <span className="text-xs font-semibold text-ink">{slot.label}</span>
+                      <span className="text-[10px] text-ink-muted">{slot.hint}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {isSubmitted && errors.time_slot && (
+                <p className={errorClass}>{errors.time_slot.message}</p>
+              )}
+            </div>
+
+            {submitError && <p className={errorClass}>{submitError}</p>}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
+            >
+              {isSubmitting ? "Submitting…" : "Get My Free Quote"}{" "}
+              <ArrowRightIcon size={14} />
+            </button>
+          </div>
         </div>
+      </div>
+    </form>
+  );
+
+  if (variant === "embedded") {
+    return <div className="mx-auto max-w-4xl">{formCard}</div>;
+  }
+
+  return (
+    <>
+      <QuoteHero />
+      <section className="bg-white px-4 py-3 md:px-8 md:py-4">
+        <div className="mx-auto max-w-4xl">{formCard}</div>
       </section>
     </>
   );
