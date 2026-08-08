@@ -11,7 +11,7 @@ const GROUPS: { title: string; links: { href: string; label: string }[] }[] = [
     title: "Main",
     links: [
       { href: "/", label: "Home" },
-      { href: "/quotes", label: "Get a Free Quote" },
+      { href: "/#get-quote", label: "Get a Free Quote" },
       { href: "/tracking", label: "Track a Shipment" },
       { href: "/contact-us", label: "Contact Us" },
       { href: "/contact-us/support", label: "Contact Support" },

@@ -37,40 +37,44 @@ export default function ShippingDocumentsChecklistPostPage() {
 
           <LegalSection title="Why Documentation Matters More Than People Expect">
             <p>
-              Customs authorities don&rsquo;t open every box that crosses a border. Instead, they
-              rely on paperwork to tell them what&rsquo;s inside, who it belongs to, what it&rsquo;s
-              worth, and why it&rsquo;s being shipped. When that paperwork is incomplete or doesn&rsquo;t
-              match the shipment, the package gets held for review rather than cleared automatically,
-              and that&rsquo;s where most international shipping delays actually come from.
+              Customs authorities don&rsquo;t open every box that crosses a border.
+              Instead, they rely on paperwork to tell them what&rsquo;s inside, who it
+              belongs to, what it&rsquo;s worth, and why it&rsquo;s being shipped. When
+              that paperwork is incomplete or doesn&rsquo;t match the shipment, the
+              package gets held for review rather than cleared automatically, and
+              that&rsquo;s where most international shipping delays actually come from.
             </p>
             <p>
-              Getting your documents right the first time is almost always faster than trying to
-              fix them after a shipment is already sitting in a customs warehouse.
+              Getting your documents right the first time is almost always faster than
+              trying to fix them after a shipment is already sitting in a customs
+              warehouse.
             </p>
           </LegalSection>
 
           <LegalSection title="The Core Documents Every Shipment Needs">
             <ul>
               <li>
-                <strong>Commercial invoice.</strong> A description of the goods, their declared
-                value, the sender, and the recipient. Customs uses this to assess duties and taxes,
-                so the description should be specific (&ldquo;men&rsquo;s cotton t shirts, 12
-                units&rdquo;) rather than vague (&ldquo;clothing&rdquo;).
+                <strong>Commercial invoice.</strong> A description of the goods, their
+                declared value, the sender, and the recipient. Customs uses this to assess
+                duties and taxes, so the description should be specific
+                (&ldquo;men&rsquo;s cotton t shirts, 12 units&rdquo;) rather than vague
+                (&ldquo;clothing&rdquo;).
               </li>
               <li>
-                <strong>Packing list.</strong> An itemized breakdown of what&rsquo;s in each box,
-                including quantities and weights. It doesn&rsquo;t need to match the commercial
-                invoice word for word, but the numbers should agree.
+                <strong>Packing list.</strong> An itemized breakdown of what&rsquo;s in
+                each box, including quantities and weights. It doesn&rsquo;t need to match
+                the commercial invoice word for word, but the numbers should agree.
               </li>
               <li>
-                <strong>Bill of lading or air waybill.</strong> The contract between you and the
-                carrier, and the document that proves ownership and lets your shipment be tracked
-                and released to the correct recipient.
+                <strong>Bill of lading or air waybill.</strong> The contract between you
+                and the carrier, and the document that proves ownership and lets your
+                shipment be tracked and released to the correct recipient.
               </li>
               <li>
-                <strong>Certificate of origin.</strong> States which country the goods were made in.
-                Some destination countries use this to apply reduced duty rates under trade
-                agreements, so it&rsquo;s worth including even when it isn&rsquo;t strictly required.
+                <strong>Certificate of origin.</strong> States which country the goods
+                were made in. Some destination countries use this to apply reduced duty
+                rates under trade agreements, so it&rsquo;s worth including even when it
+                isn&rsquo;t strictly required.
               </li>
             </ul>
           </LegalSection>
@@ -78,21 +82,22 @@ export default function ShippingDocumentsChecklistPostPage() {
           <LegalSection title="Documents You May Also Need">
             <ul>
               <li>
-                <strong>Export license.</strong> Required for certain regulated or restricted
-                goods. Most personal and household shipments don&rsquo;t need one, but check if
-                you&rsquo;re shipping anything technical, medical, or controlled.
+                <strong>Export license.</strong> Required for certain regulated or
+                restricted goods. Most personal and household shipments don&rsquo;t need
+                one, but check if you&rsquo;re shipping anything technical, medical, or
+                controlled.
               </li>
               <li>
-                <strong>Insurance certificate.</strong> Proof of coverage, useful if you&rsquo;ve
-                insured a high value shipment and need to file a claim.
+                <strong>Insurance certificate.</strong> Proof of coverage, useful if
+                you&rsquo;ve insured a high value shipment and need to file a claim.
               </li>
               <li>
-                <strong>Import permit.</strong> Some countries require a permit before certain
-                goods, like food, plants, or electronics, are allowed to enter.
+                <strong>Import permit.</strong> Some countries require a permit before
+                certain goods, like food, plants, or electronics, are allowed to enter.
               </li>
               <li>
-                <strong>Power of attorney.</strong> Authorizes a customs broker to clear a shipment
-                on your behalf, common for commercial or high value freight.
+                <strong>Power of attorney.</strong> Authorizes a customs broker to clear a
+                shipment on your behalf, common for commercial or high value freight.
               </li>
             </ul>
           </LegalSection>
@@ -100,21 +105,21 @@ export default function ShippingDocumentsChecklistPostPage() {
           <LegalSection title="Common Mistakes That Cause Delays">
             <ul>
               <li>
-                Declaring a value that seems too low for the described goods, which invites extra
-                scrutiny rather than lower duties.
+                Declaring a value that seems too low for the described goods, which
+                invites extra scrutiny rather than lower duties.
               </li>
               <li>
-                Using generic item descriptions instead of specific ones on the commercial invoice.
+                Using generic item descriptions instead of specific ones on the commercial
+                invoice.
               </li>
               <li>
-                Mismatched information between the invoice, packing list, and shipping label.
+                Mismatched information between the invoice, packing list, and shipping
+                label.
               </li>
+              <li>Missing a signature or date on a document that requires one.</li>
               <li>
-                Missing a signature or date on a document that requires one.
-              </li>
-              <li>
-                Not checking the destination country&rsquo;s specific import requirements before
-                the shipment leaves.
+                Not checking the destination country&rsquo;s specific import requirements
+                before the shipment leaves.
               </li>
             </ul>
           </LegalSection>
@@ -125,21 +130,25 @@ export default function ShippingDocumentsChecklistPostPage() {
               <li>Packing list itemized with accurate quantities and weights</li>
               <li>Certificate of origin included if applicable</li>
               <li>Any required permits or licenses confirmed before booking</li>
-              <li>Recipient&rsquo;s full name, address, and phone number double checked</li>
+              <li>
+                Recipient&rsquo;s full name, address, and phone number double checked
+              </li>
               <li>Declared value reflects the goods&rsquo; actual, honest worth</li>
             </ul>
           </LegalSection>
 
           <LegalSection title="How TYS Helps">
             <p>
-              Our team reviews documentation as part of every international shipment we handle, so
-              issues get caught before your package leaves, not after it&rsquo;s already stuck at a
-              border. If you&rsquo;re shipping documents themselves internationally, our{" "}
-              <Link href="/services/document-shipping">document shipping service</Link> is built
-              specifically for time sensitive paperwork. For freight and commercial cargo, see our{" "}
+              Our team reviews documentation as part of every international shipment we
+              handle, so issues get caught before your package leaves, not after
+              it&rsquo;s already stuck at a border. If you&rsquo;re shipping documents
+              themselves internationally, our{" "}
+              <Link href="/services/document-shipping">document shipping service</Link> is
+              built specifically for time sensitive paperwork. For freight and commercial
+              cargo, see our{" "}
               <Link href="/services/freight-forwarding">freight forwarding</Link> page, or{" "}
-              <Link href="/quotes">get a quote</Link> and we&rsquo;ll walk you through exactly what
-              your shipment needs.
+              <Link href="/#get-quote">get a quote</Link> and we&rsquo;ll walk you through
+              exactly what your shipment needs.
             </p>
           </LegalSection>
         </div>

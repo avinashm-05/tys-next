@@ -1,11 +1,18 @@
 import type { MetadataRoute } from "next";
 import { BLOG_POSTS } from "@/lib/blog-posts";
 
-const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(/\/+$/, "");
+const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(
+  /\/+$/,
+  "",
+);
 
 // Real, public, indexable marketing routes only — /account/*, /thank-you,
 // and everything under /admin + /api are excluded (see robots.ts).
-const STATIC_ROUTES: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }[] = [
+const STATIC_ROUTES: {
+  path: string;
+  priority: number;
+  changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
+}[] = [
   { path: "/", priority: 1, changeFrequency: "weekly" },
   { path: "/about-us", priority: 0.6, changeFrequency: "monthly" },
   { path: "/blog", priority: 0.7, changeFrequency: "weekly" },
@@ -20,7 +27,6 @@ const STATIC_ROUTES: { path: string; priority: number; changeFrequency: Metadata
   { path: "/faqs", priority: 0.6, changeFrequency: "monthly" },
   { path: "/locations", priority: 0.5, changeFrequency: "monthly" },
   { path: "/privacy-policy", priority: 0.2, changeFrequency: "yearly" },
-  { path: "/quotes", priority: 0.9, changeFrequency: "monthly" },
   { path: "/resources", priority: 0.6, changeFrequency: "monthly" },
   { path: "/resources/customs-duty", priority: 0.5, changeFrequency: "monthly" },
   { path: "/resources/prohibited-items", priority: 0.5, changeFrequency: "monthly" },
@@ -33,7 +39,11 @@ const STATIC_ROUTES: { path: string; priority: number; changeFrequency: Metadata
   { path: "/services/domestic-shipping", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/freight-forwarding", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/global-shopper", priority: 0.7, changeFrequency: "monthly" },
-  { path: "/services/international-relocation", priority: 0.7, changeFrequency: "monthly" },
+  {
+    path: "/services/international-relocation",
+    priority: 0.7,
+    changeFrequency: "monthly",
+  },
   { path: "/services/parcel-shipping", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/retailer-shipping", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/volume-shipping", priority: 0.7, changeFrequency: "monthly" },

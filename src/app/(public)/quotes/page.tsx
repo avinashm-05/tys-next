@@ -1,29 +1,13 @@
-import type { Metadata } from "next";
-import { QuoteRequestForm } from "@/components/public/quote-request-form";
-import { normalizeCode } from "@/lib/countries";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Get a Free Quote — TYS Global Logistics",
-  description: "Get a free domestic or international shipping quote in under a minute.",
-};
-
-// Single-page quote request (replaces the old 4-step wizard, folded together
-// with what used to be the separate /quick-quote callback form — see
-// QuoteRequestForm's header comment). from_country/to_country are read from
-// the query string so the home page's mini quote form can hand off a
-// prefilled route (mirrors what the old Laravel QuoteController@index did
-// with the same params).
-export default async function QuotesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ from_country?: string; to_country?: string }>;
-}) {
-  const { from_country, to_country } = await searchParams;
-
-  return (
-    <QuoteRequestForm
-      defaultFromCountry={normalizeCode(from_country) || undefined}
-      defaultToCountry={normalizeCode(to_country) || undefined}
-    />
-  );
+// The single-page quote form used to live here; it's now embedded directly
+// in the home page hero (id="get-quote", see page.tsx) so a visitor never
+// has to leave the home page to submit one. This route stays as a redirect
+// — not a hard 404 — for anyone with an old /quotes bookmark or inbound
+// link. from_country/to_country prefill params aren't carried forward:
+// nothing currently sends this route those params anymore (the mini-quote-
+// form.tsx "Need a Quote" card links to /#get-quote too), and the embedded
+// form doesn't read query params off the home page URL.
+export default function QuotesPage() {
+  redirect("/#get-quote");
 }

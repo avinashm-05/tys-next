@@ -53,7 +53,7 @@ const MOBILE_MENU_ITEMS = [
   { href: "/blog", label: "Blog", icon: BookOpenIcon },
   { href: "/contact-us/pay", label: "Pay Online", icon: CreditCardIcon },
   { href: "/tracking", label: "Tracking", icon: ClockIcon },
-  { href: "/quotes", label: "Get Quote", icon: NotePencilIcon },
+  { href: "/#get-quote", label: "Get Quote", icon: NotePencilIcon },
   { href: "/contact-us", label: "Contact Us", icon: HeadsetIcon },
   // "My Account" hidden for now — see the comment above NAV_LINKS.
 ] as const;
@@ -126,7 +126,7 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-4 whitespace-nowrap xl:flex">
           <Link
-            href="/quotes"
+            href="/#get-quote"
             className="flex items-center gap-1.5 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark"
           >
             Get a Free Quote
@@ -262,7 +262,7 @@ export function SiteHeader() {
 
         <div className="mt-4 flex flex-col gap-2 px-5">
           <Link
-            href="/quotes"
+            href="/#get-quote"
             tabIndex={mobileOpen ? 0 : -1}
             onClick={() => setMobileOpen(false)}
             className="rounded-full bg-brand px-5 py-3 text-center text-sm font-semibold text-white"

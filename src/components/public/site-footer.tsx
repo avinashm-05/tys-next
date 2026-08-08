@@ -20,7 +20,7 @@ const RESOURCES = [
 // "Book Shipment" temporarily hidden — see the matching note in site-header.tsx.
 const HELP = [
   { href: "/tracking", label: "Track Shipment" },
-  { href: "/quotes", label: "Get Quote" },
+  { href: "/#get-quote", label: "Get Quote" },
   { href: "/contact-us", label: "Contact Us" },
 ] as const;
 

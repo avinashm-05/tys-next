@@ -25,7 +25,7 @@ export function ComingSoon({
         <h1 className="mt-5 text-2xl font-extrabold text-ink">{title}</h1>
         <p className="mt-3 text-ink-muted">{body}</p>
         <Link
-          href="/quotes"
+          href="/#get-quote"
           className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-dark"
         >
           Get a Free Quote <ArrowRightIcon size={14} />

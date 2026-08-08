@@ -127,7 +127,10 @@ export default function HomePage() {
               "embedded" drops QuoteRequestForm's own heading + section
               chrome (this hero already has its own H1 above); the form/
               card styling and submit behavior are identical to /quotes. */}
-          <div className="relative mx-auto mt-3 w-full sm:mt-10">
+          <div
+            id="get-quote"
+            className="relative mx-auto mt-3 w-full scroll-mt-28 sm:mt-10"
+          >
             <QuoteRequestForm variant="embedded" />
           </div>
         </div>
@@ -327,7 +330,7 @@ export default function HomePage() {
             ))}
           </div>
           <Link
-            href="/quotes"
+            href="/#get-quote"
             className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
           >
             Get a Free Quote <ArrowRightIcon size={26} />
@@ -439,7 +442,7 @@ export default function HomePage() {
               ))}
             </div>
             <Link
-              href="/quotes"
+              href="/#get-quote"
               className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
             >
               Get a Free Quote <ArrowRightIcon size={26} />
@@ -551,7 +554,7 @@ export default function HomePage() {
             ))}
           </div>
           <Link
-            href="/quotes"
+            href="/#get-quote"
             className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
           >
             Get a Free Quote <ArrowRightIcon size={26} />
@@ -614,7 +617,7 @@ export default function HomePage() {
               </div>
             </div>
             <Link
-              href="/quotes"
+              href="/#get-quote"
               className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
             >
               Get a Free Quote <ArrowRightIcon size={26} />

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { COUNTRY_LIST } from "@/lib/countries-list";
 import { SearchableSelect } from "@/components/public/searchable-select";
@@ -11,15 +10,18 @@ const COUNTRY_OPTIONS = COUNTRY_LIST.map(([code, name]) => ({
   flag: code,
 }));
 
-// Hero / "Need a Quote" mini form — collects From/To only, then hands off to
-// the full /quotes wizard (Step 1 reads these as prefill query params). Not
-// itself a validated form; the wizard is the single source of truth for
-// quote data and validation.
+// "Need a Quote" mini form further down the home page — collects From/To,
+// then scrolls back up to the real quote form (id="get-quote" in the hero,
+// see page.tsx), which is now the only quote form on the site. There's no
+// separate page to hand these values off to anymore (that used to be
+// /quotes — see that route's own comment), so the selections here are a
+// lightweight preview before scrolling, not passed through automatically;
+// not itself a validated form either way.
 //
 // `layout="columns"` is the wide desktop hero treatment (From/To side by
-// side, pill inputs) — stacks on mobile since it's a real design, not a
-// scaled-down desktop one. `layout="stacked"` (default) is the narrower
-// treatment used in the "Need a Quote" card lower on the page.
+// side, pill inputs) — unused now that the hero itself embeds the full
+// form directly, kept for the narrower "Need a Quote" card's own use of
+// this component. `layout="stacked"` (default) is that card's treatment.
 export function MiniQuoteForm({
   className = "",
   layout = "stacked",
@@ -27,16 +29,14 @@ export function MiniQuoteForm({
   className?: string;
   layout?: "stacked" | "columns";
 }) {
-  const router = useRouter();
   const [fromCountry, setFromCountry] = useState("US");
   const [toCountry, setToCountry] = useState("");
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    const params = new URLSearchParams();
-    if (fromCountry) params.set("from_country", fromCountry);
-    if (toCountry) params.set("to_country", toCountry);
-    router.push(`/quotes?${params.toString()}`);
+    document
+      .getElementById("get-quote")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   const pill = layout === "columns";
@@ -45,7 +45,9 @@ export function MiniQuoteForm({
     <form onSubmit={submit} className={className}>
       <div className={layout === "columns" ? "grid gap-4 md:grid-cols-2" : ""}>
         <div>
-          <label className="block text-lg font-medium tracking-[-0.9px] text-black">Sending From</label>
+          <label className="block text-lg font-medium tracking-[-0.9px] text-black">
+            Sending From
+          </label>
           <div className="mt-1.5">
             <SearchableSelect
               options={COUNTRY_OPTIONS}
@@ -59,7 +61,9 @@ export function MiniQuoteForm({
         </div>
 
         <div className={layout === "columns" ? "" : "mt-4"}>
-          <label className="block text-lg font-medium tracking-[-0.9px] text-black">Sending To</label>
+          <label className="block text-lg font-medium tracking-[-0.9px] text-black">
+            Sending To
+          </label>
           <div className="mt-1.5">
             <SearchableSelect
               options={COUNTRY_OPTIONS}
