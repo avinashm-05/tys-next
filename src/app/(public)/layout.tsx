@@ -8,6 +8,7 @@ import { OrganizationJsonLd } from "@/components/public/organization-json-ld";
 import { WebsiteJsonLd } from "@/components/public/website-json-ld";
 import { AnalyticsScripts, GtmNoscript } from "@/components/public/analytics-scripts";
 import { PageLoader } from "@/components/public/page-loader";
+import { HashScrollFix } from "@/components/public/hash-scroll-fix";
 
 // Public brand fonts (B1 redesign) — Inter for body/UI, Oldschool Grotesk for
 // display headings. Scoped to this layout only (via the .variable className
@@ -48,6 +49,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       className={`flex min-h-full flex-col bg-white font-body text-ink ${inter.variable} ${oldschoolGrotesk.variable}`}
     >
       <PageLoader />
+      <HashScrollFix />
       <GtmNoscript />
       <AnalyticsScripts />
       <OrganizationJsonLd />
