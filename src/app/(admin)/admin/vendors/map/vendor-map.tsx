@@ -35,6 +35,23 @@ const VENDOR_PIN = L.divIcon({
   popupAnchor: [0, -32],
 });
 
+// The dropped search pin (pincode/address search) gets its own red teardrop
+// — same shape/size as VENDOR_PIN so it reads as "a pin", but a color no
+// vendor marker ever uses, so it's unambiguous which one is "where you
+// searched" versus "a vendor" once there are a dozen navy pins clustered
+// around it.
+const SEARCH_PIN = L.divIcon({
+  className: "",
+  html:
+    '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="39" viewBox="0 0 24 36" aria-hidden="true">' +
+    '<path fill="#dc2626" stroke="#ffffff" stroke-width="1" d="M12 .5C5.6.5.5 5.6.5 12c0 8.8 11.5 23 11.5 23s11.5-14.2 11.5-23C23.5 5.6 18.4.5 12 .5z"/>' +
+    '<circle cx="12" cy="12" r="4.5" fill="#ffffff"/>' +
+    "</svg>",
+  iconSize: [26, 39],
+  iconAnchor: [13, 39],
+  popupAnchor: [0, -35],
+});
+
 type MapVendor = {
   id: number;
   name: string;
@@ -61,7 +78,7 @@ const escapeHtml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /** Clustered markers (maxClusterRadius 50, spiderfy — like Laravel's map). */
-function ClusterLayer({ vendors }: { vendors: MapVendor[] }) {
+function ClusterLayer({ vendors, distanceUnit }: { vendors: MapVendor[]; distanceUnit: "miles" | "kilometers" }) {
   const map = useMap();
   useEffect(() => {
     const group = L.markerClusterGroup({ maxClusterRadius: 50, spiderfyOnMaxZoom: true });
@@ -72,14 +89,23 @@ function ClusterLayer({ vendors }: { vendors: MapVendor[] }) {
         alt: v.name,
         title: v.name,
       });
+      // v.distance only exists after a radius/pincode search (the API only
+      // computes it relative to that search point — plain pan/zoom bounds
+      // fetches never do) — omit the line entirely rather than show a
+      // meaningless distance for a bounds-only view.
+      const distanceLine =
+        v.distance != null
+          ? `<br><span style="color:#dc2626">${v.distance} ${distanceUnit === "miles" ? "mi" : "km"} from search pin</span>`
+          : "";
       marker.bindPopup("Loading…", { minWidth: 180 });
       marker.on("popupopen", async () => {
         try {
           const d = await adminApi<VendorDetails>(`/api/admin/vendors/${v.id}/map-details`);
           marker.setPopupContent(
             `<strong>${escapeHtml(d.name)}</strong><br>` +
-              `${escapeHtml(d.vendorType)} &middot; ${escapeHtml(d.status)}<br>` +
-              `<a href="${d.edit_url}">Edit vendor</a>`,
+              `${escapeHtml(d.vendorType)} &middot; ${escapeHtml(d.status)}` +
+              distanceLine +
+              `<br><a href="${d.edit_url}">Edit vendor</a>`,
           );
         } catch {
           marker.setPopupContent("Couldn't load vendor details.");
@@ -91,7 +117,7 @@ function ClusterLayer({ vendors }: { vendors: MapVendor[] }) {
     return () => {
       map.removeLayer(group);
     };
-  }, [vendors, map]);
+  }, [vendors, map, distanceUnit]);
   return null;
 }
 
@@ -420,12 +446,18 @@ export function VendorMap() {
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <BoundsWatcher onBounds={fetchInBounds} suspended={circle !== null} />
-          <ClusterLayer vendors={vendors} />
-          {circle && <Circle center={[circle.lat, circle.lng]} radius={circle.meters} />}
+          <ClusterLayer vendors={vendors} distanceUnit={unit} />
+          {circle && (
+            <Circle
+              center={[circle.lat, circle.lng]}
+              radius={circle.meters}
+              pathOptions={{ color: "#dc2626", fillColor: "#dc2626", fillOpacity: 0.08, weight: 1.5 }}
+            />
+          )}
           {addressPin && (
             <Marker
               position={[addressPin.lat, addressPin.lng]}
-              icon={VENDOR_PIN}
+              icon={SEARCH_PIN}
               alt="Searched address"
               title="Searched address"
             />
