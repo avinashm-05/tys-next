@@ -1,7 +1,7 @@
 "use client";
 
 import type { Icon } from "@phosphor-icons/react";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CurrencyDollarIcon,
@@ -9,6 +9,7 @@ import {
   MapPinLineIcon,
   ShippingContainerIcon,
   SlidersHorizontalIcon,
+  SpinnerIcon,
   SquaresFourIcon,
   TruckIcon,
   UsersIcon,
@@ -59,6 +60,27 @@ const ACTIVE =
   "rounded-xl data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:hover:bg-sidebar-primary data-active:hover:text-sidebar-primary-foreground";
 
 /**
+ * The nav item's own icon, swapped for a spinner while its navigation is in
+ * flight. useLinkStatus reports the pending state of the enclosing <Link>,
+ * so this has to render *inside* one.
+ *
+ * Pairs with admin/loading.tsx: the fallback says "a page is coming", this
+ * says *which* item you actually hit. Swapping the glyph in place (rather
+ * than adding a spinner beside it) keeps the icon rail from reflowing, which
+ * matters most in the collapsed state where the icon is the whole control.
+ */
+function NavIcon({ icon: IconComp }: { icon: Icon }) {
+  const { pending } = useLinkStatus();
+  return pending ? <SpinnerIcon className="animate-spin" /> : <IconComp />;
+}
+
+/** Sub-links are text-only, so their pending hint trails the label. */
+function NavSubSpinner() {
+  const { pending } = useLinkStatus();
+  return pending ? <SpinnerIcon className="ml-auto size-3.5 animate-spin" /> : null;
+}
+
+/**
  * A nav item with sub-links (Vendors, Settings). The icon always navigates
  * straight to `href` (its default/first sub-item) — collapsed or expanded —
  * same as every other nav item; it never requires an extra picker step.
@@ -84,7 +106,7 @@ function SidebarNavGroup({
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isSectionActive} tooltip={title} className={ACTIVE}>
         <Link href={href}>
-          <IconComp />
+          <NavIcon icon={IconComp} />
           <span>{title}</span>
         </Link>
       </SidebarMenuButton>
@@ -92,7 +114,10 @@ function SidebarNavGroup({
         {items.map((item) => (
           <SidebarMenuSubItem key={item.href}>
             <SidebarMenuSubButton asChild isActive={isActive(item.href)} className={ACTIVE}>
-              <Link href={item.href}>{item.title}</Link>
+              <Link href={item.href}>
+                {item.title}
+                <NavSubSpinner />
+              </Link>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
         ))}
@@ -153,7 +178,7 @@ export function AppSidebar({
                     className={ACTIVE}
                   >
                     <Link href={item.href}>
-                      <item.icon />
+                      <NavIcon icon={item.icon} />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
