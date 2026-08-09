@@ -66,6 +66,17 @@ const staticAssetCacheHeaders = [
   { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
 ];
 
+// Microsoft Clarity session replays were rendering the public pages with no
+// layout at all (reported 2026-08-09). Clarity replays the captured DOM from
+// clarity.microsoft.com and pulls the stylesheets back off this origin — a
+// cross-origin read, and confirmed live that /_next/static/chunks/*.css came
+// back 200 with no Access-Control-Allow-Origin, so the replayer can't read
+// them and falls back to unstyled markup. These are hashed, public, static
+// build assets with no user data and no cookies involved, so a wildcard ACAO
+// gives away nothing that a plain GET didn't already. Applied to the fonts
+// too, which need CORS for the same reason in any cross-origin context.
+const crossOriginReadableHeaders = [{ key: "Access-Control-Allow-Origin", value: "*" }];
+
 const nextConfig: NextConfig = {
   // Standalone output: `next build` also emits .next/standalone, a
   // self-contained server (server.js + only the production node_modules it
@@ -83,6 +94,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/:path*", headers: securityHeaders },
       { source: "/frontend/:path*", headers: staticAssetCacheHeaders },
+      { source: "/_next/static/:path*", headers: crossOriginReadableHeaders },
+      { source: "/frontend/:path*", headers: crossOriginReadableHeaders },
     ];
   },
 };
