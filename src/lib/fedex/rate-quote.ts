@@ -108,11 +108,11 @@ export class FedExRateQuoteService {
    * domestic, but sends the real origin/destination country codes and applies
    * the INTERNATIONAL markup. Transport charges only: freight services are
    * excluded (parcels-only rule) and dutiesTaxesIncluded is false — no
-   * customs/duties/taxes estimation is attempted. Customs clearance is on by
-   * default (see `rate()`'s customsClearance opt) — FedEx's international
-   * parcel rate types need a customs declaration on the request to be
-   * returned at all; without one, cross-border requests can silently come
-   * back short of the services a dutiable shipment actually qualifies for.
+   * customs/duties/taxes estimation is attempted. Customs clearance is on
+   * (see `rate()`) — FedEx's international parcel rate types need a customs
+   * declaration on the request to be returned at all; without one,
+   * cross-border requests can silently come back short of the services a
+   * dutiable shipment actually qualifies for.
    */
   async quoteInternational(
     shipment: ShipmentInput,
@@ -122,19 +122,22 @@ export class FedExRateQuoteService {
   ): Promise<QuoteResult> {
     const result = await this.rate(shipment, originCountry, destCountry, markupPercent, {
       filterFreight: true,
-      customsClearance: true,
     });
     return result.success ? { ...result, dutiesTaxesIncluded: false } : result;
   }
 
   /**
-   * Shared rate call. The ONLY thing that differs between domestic and
-   * international is the shipper/recipient countryCode plus (international
-   * only) the customs declaration — the account check, line-item build,
-   * payload shape, request, and parse are otherwise identical, so the
-   * fixture-verified domestic output is preserved byte-for-byte (guarded by
-   * `npm run fedex:check`). Domestic passes ("US","US") and never sets
-   * customsClearance, so its payload is byte-for-byte unchanged.
+   * Shared rate call. The only thing that differs between domestic and
+   * international is the shipper/recipient countryCode — the account check,
+   * line-item build, payload shape, request, and parse are identical.
+   *
+   * Customs clearance is sent on EVERY rate request, domestic included
+   * (2026-08-09, by request). It's load-bearing internationally. Domestically
+   * FedEx ignores it outright — verified against the production Rate API with
+   * and without the block on a US→US request: both returned the same 7
+   * services at identical prices to the cent (FEDEX_GROUND 14.73,
+   * FIRST_OVERNIGHT 204.79, …). So this is safe rather than useful on
+   * domestic, and sending it unconditionally is one code path instead of two.
    */
   private async rate(
     shipment: ShipmentInput,
@@ -143,6 +146,8 @@ export class FedExRateQuoteService {
     markupPercent: number,
     opts: { filterFreight?: boolean; customsClearance?: boolean } = {},
   ): Promise<QuoteResult> {
+    // Defaults ON — callers only pass this to deliberately opt out.
+    const customsClearance = opts.customsClearance ?? true;
     const accountNumber = this.cfg.accountNumber.trim();
     if (accountNumber === "") {
       return { success: false, message: "FedEx account number is not configured." };
@@ -177,8 +182,9 @@ export class FedExRateQuoteService {
           payor: { responsibleParty: { accountNumber: { value: accountNumber } } },
         },
         requestedPackageLineItems: lineItems,
-        // International only, on by default (see quoteInternational): tells
-        // FedEx this is a dutiable cross-border shipment, sender pays duties.
+        // Sent on every rate request now, domestic included (see `rate()`'s
+        // doc comment for the measurement): tells FedEx this is a dutiable
+        // cross-border shipment, sender pays duties. Ignored on US→US.
         // `commodities` is required too — confirmed live against production
         // 2026-08-06 (the earlier "minimal declaration, no per-commodity
         // value/description" note above was wrong for production; sandbox
@@ -192,7 +198,7 @@ export class FedExRateQuoteService {
         // (rateRequestType here is ["ACCOUNT","LIST"], not a duties/taxes
         // estimate) — they only need to be present and non-zero to pass
         // FedEx's validation.
-        ...(opts.customsClearance
+        ...(customsClearance
           ? {
               customsClearanceDetail: {
                 dutiesPayment: { paymentType: "SENDER" },
