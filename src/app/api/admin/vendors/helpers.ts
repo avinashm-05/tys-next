@@ -80,6 +80,31 @@ export function serializeMapVendor(v: MapVendorRow) {
   };
 }
 
+// Separate from MAP_SELECT/serializeMapVendor on purpose: bounds/search
+// return dozens of vendors at once just to place markers, so they stay
+// lean. Only the single-vendor popup (map-details) needs contact info, so
+// only it pays for the extra columns.
+export const MAP_DETAIL_SELECT = {
+  ...MAP_SELECT,
+  email: true,
+  phoneNumber: true,
+  countryCode: true,
+} satisfies Prisma.VendorSelect;
+
+type MapVendorDetailRow = MapVendorRow & {
+  email: string;
+  phoneNumber: string;
+  countryCode: string;
+};
+
+export function serializeMapVendorDetail(v: MapVendorDetailRow) {
+  return {
+    ...serializeMapVendor(v),
+    email: v.email,
+    phone: `${v.countryCode} ${v.phoneNumber}`.trim(),
+  };
+}
+
 /** Shared by bounds/radius: 422 when the optional vendor_type_id doesn't exist. */
 export async function checkVendorTypeFilter(
   vendorTypeId: number | null | undefined,

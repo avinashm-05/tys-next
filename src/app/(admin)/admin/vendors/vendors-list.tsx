@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import {
@@ -10,6 +9,7 @@ import {
   CheckIcon,
   ListChecksIcon,
   MapPinIcon,
+  PencilSimpleIcon,
   PlusIcon,
   StorefrontIcon,
   TagIcon,
@@ -151,7 +151,6 @@ function CheckboxFilterDropdown({
 }
 
 export function VendorsList() {
-  const router = useRouter();
   const [serviceOptions, setServiceOptions] = useState<Option[]>([]);
   const [vendorTypeOptions, setVendorTypeOptions] = useState<Option[]>([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<number>>(new Set());
@@ -354,14 +353,18 @@ export function VendorsList() {
       {
         id: "actions",
         header: () => <span className="sr-only">Actions</span>,
+        // Edit is a direct icon (the thing every row exists to let staff
+        // do) rather than buried behind the ⋯ menu; Delete stays there —
+        // destructive, so it keeps the extra deliberate step.
         cell: ({ row }) => (
-          <div className="text-right">
+          <div className="flex items-center justify-end gap-1">
+            <Button variant="ghost" size="icon" className="size-8" asChild>
+              <Link href={`/admin/vendors/${row.original.id}/edit`} aria-label="Edit vendor">
+                <PencilSimpleIcon weight="bold" />
+              </Link>
+            </Button>
             <RowActions
               actions={[
-                {
-                  label: "Edit",
-                  onSelect: () => router.push(`/admin/vendors/${row.original.id}/edit`),
-                },
                 { label: "Delete", destructive: true, onSelect: () => setToDelete(row.original) },
               ]}
             />
@@ -369,7 +372,7 @@ export function VendorsList() {
         ),
       },
     ],
-    [router, allPageSelected, pageIds, selectedRows],
+    [allPageSelected, pageIds, selectedRows],
   );
 
   return (

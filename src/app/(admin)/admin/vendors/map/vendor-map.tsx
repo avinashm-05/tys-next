@@ -72,7 +72,7 @@ type Bootstrap = {
   };
 };
 
-type VendorDetails = MapVendor & { edit_url: string };
+type VendorDetails = MapVendor & { edit_url: string; email: string; phone: string };
 
 const escapeHtml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -97,7 +97,7 @@ function ClusterLayer({ vendors, distanceUnit }: { vendors: MapVendor[]; distanc
         v.distance != null
           ? `<br><span style="color:#dc2626">${v.distance} ${distanceUnit === "miles" ? "mi" : "km"} from search pin</span>`
           : "";
-      marker.bindPopup("Loading…", { minWidth: 180 });
+      marker.bindPopup("Loading…", { minWidth: 200 });
       marker.on("popupopen", async () => {
         try {
           const d = await adminApi<VendorDetails>(`/api/admin/vendors/${v.id}/map-details`);
@@ -105,6 +105,8 @@ function ClusterLayer({ vendors, distanceUnit }: { vendors: MapVendor[]; distanc
             `<strong>${escapeHtml(d.name)}</strong><br>` +
               `${escapeHtml(d.vendorType)} &middot; ${escapeHtml(d.status)}` +
               distanceLine +
+              `<br><span style="color:#6b7280">${escapeHtml(d.email)}</span>` +
+              `<br><span style="color:#6b7280">${escapeHtml(d.phone)}</span>` +
               `<br><a href="${d.edit_url}">Edit vendor</a>`,
           );
         } catch {
