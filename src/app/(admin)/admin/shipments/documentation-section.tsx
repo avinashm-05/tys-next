@@ -50,18 +50,30 @@ export function DocumentationSection({
 }) {
   const [generating, setGenerating] = useState(false);
 
-  async function generateLabel() {
+  async function generateLabel(row: DocumentationRow) {
     setGenerating(true);
     try {
       const res = await adminApi<{
         masterTrackingNumber: string;
         documents: DocumentationRow[];
-      }>(`/api/admin/shipments/${shipment.id}/label`, { method: "POST" });
-      // The generated rows come back already persisted, so they replace any
-      // unsaved placeholder Label row rather than stacking on top of it.
+      }>(`/api/admin/shipments/${shipment.id}/label`, {
+        method: "POST",
+        // Negative ids are rows added this session that were never saved, so
+        // there's nothing on the server to fill in — the server creates a row
+        // instead and the unsaved placeholder is dropped below.
+        body: JSON.stringify({ documentId: row.id > 0 ? row.id : undefined }),
+      });
+
+      const returnedIds = new Set(res.documents.map((d) => d.id));
       onChange({
+        // Drop the row we generated from (the server either replaced it and
+        // returns it, or it was an unsaved placeholder) plus any other unsaved
+        // Label placeholder, then append what came back persisted.
         documentation: [
-          ...shipment.documentation.filter((r) => !(r.documentType === LABEL_TYPE && r.id < 0)),
+          ...shipment.documentation.filter(
+            (r) =>
+              r.id !== row.id && !returnedIds.has(r.id) && !(r.documentType === LABEL_TYPE && r.id < 0),
+          ),
           ...res.documents,
         ],
         trackingNumber: res.masterTrackingNumber,
@@ -157,7 +169,7 @@ export function DocumentationSection({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={generateLabel}
+                        onClick={() => generateLabel(row)}
                         disabled={generating}
                       >
                         {generating ? (

@@ -9,6 +9,17 @@ import { serializeDocument } from "../../helpers";
 
 type Ctx = { params: Promise<{ id: string }> };
 
+/** The body is optional — a bare POST with no body is a valid request. */
+async function readBody(req: Request): Promise<unknown> {
+  return req.json().catch(() => null);
+}
+
+function documentIdFromBody(body: unknown): bigint | null {
+  const raw = (body as { documentId?: unknown } | null)?.documentId;
+  if (typeof raw !== "number" || !Number.isInteger(raw) || raw <= 0) return null;
+  return BigInt(raw);
+}
+
 /**
  * Generates a FedEx shipping label for this shipment, stores each returned
  * label, and records it as a Documentation row.
@@ -17,7 +28,7 @@ type Ctx = { params: Promise<{ id: string }> };
  * a successful call here books real freight with the carrier and bills the
  * account. A double-clicked button must not be able to buy two shipments.
  */
-export const POST = adminRoute<Ctx>(async (_req, ctx) => {
+export const POST = adminRoute<Ctx>(async (req, ctx) => {
   const id = parseId((await ctx.params).id);
   if (id === null) throw new HttpError(404, "Shipment not found.");
 
@@ -32,6 +43,25 @@ export const POST = adminRoute<Ctx>(async (_req, ctx) => {
   });
   if (!shipment) throw new HttpError(404, "Shipment not found.");
 
+  // The row the operator clicked Generate on, when it's an already-saved
+  // Label row with no file. The first label fills that row in rather than
+  // creating a second one beside it — otherwise every generation leaves the
+  // empty placeholder row behind, which is what the operator was looking at
+  // when they clicked. Extra pieces still get their own rows.
+  const requestedDocumentId = documentIdFromBody(await readBody(req));
+  const targetRow =
+    requestedDocumentId === null
+      ? null
+      : await db.shipmentDocument.findFirst({
+          where: {
+            id: requestedDocumentId,
+            shipmentId: shipment.id,
+            documentType: "Label",
+            storageKey: null,
+          },
+          select: { id: true },
+        });
+
   const result = await generateLabel(shipment);
   // Every failure mode is already a specific, actionable sentence (missing
   // service type, empty customs tab, FedEx's own rejection reason), so it
@@ -44,20 +74,25 @@ export const POST = adminRoute<Ctx>(async (_req, ctx) => {
     await putFile(key, label.bytes);
 
     const suffix = result.labels.length > 1 ? ` (${index + 1} of ${result.labels.length})` : "";
+    const data = {
+      documentType: "Label",
+      documentName: `FedEx label ${label.trackingNumber}${suffix}`,
+      status: "active" as const,
+      storageKey: key,
+      contentType: label.contentType,
+      sizeBytes: label.bytes.byteLength,
+      trackingNumber: label.trackingNumber,
+    };
+
     documents.push(
-      await db.shipmentDocument.create({
-        data: {
-          shipmentId: shipment.id,
-          documentType: "Label",
-          documentName: `FedEx label ${label.trackingNumber}${suffix}`,
-          status: "active",
-          storageKey: key,
-          contentType: label.contentType,
-          sizeBytes: label.bytes.byteLength,
-          trackingNumber: label.trackingNumber,
-          createdAt: new Date(),
-        },
-      }),
+      index === 0 && targetRow
+        ? await db.shipmentDocument.update({
+            where: { id: targetRow.id },
+            data: { ...data, updatedAt: new Date() },
+          })
+        : await db.shipmentDocument.create({
+            data: { ...data, shipmentId: shipment.id, createdAt: new Date() },
+          }),
     );
   }
 

@@ -86,6 +86,26 @@ function buildPackageLineItems(s: ShippableShipment) {
 }
 
 /**
+ * FedEx splits US domestic ground into two services by destination type, and
+ * enforces the split: FEDEX_GROUND to a residential address is rejected with
+ * REQUESTEDSHIPMENT.SERVICETYPEANDADDRESS.MISMATCH ("this shipment qualifies
+ * for FedEx Home Delivery"), reproduced against the sandbox. The Service Type
+ * dropdown and the Customer Details residential/commercial flag are set by
+ * different people at different times, so leaving them to agree by hand means
+ * a rejection staff can't act on. Ground to a US residential address is
+ * therefore mapped to Home Delivery here — it's the same service, and it's
+ * what FedEx's own Rate response already calls it.
+ */
+function resolveServiceType(s: ShippableShipment, isInternational: boolean): string {
+  const service = s.serviceType ?? "";
+  if (isInternational) return service;
+  if (service === "FEDEX_GROUND" && s.recipientLocationType === "residential") {
+    return "GROUND_HOME_DELIVERY";
+  }
+  return service;
+}
+
+/**
  * Customs for international labels, built from the Commercial Invoice tab's
  * lines. FedEx will not produce an international label without this, so a
  * shipment crossing a border with an empty invoice tab is refused up front
@@ -211,7 +231,7 @@ export async function generateLabel(
         },
       ],
       shipDatestamp: new Date().toISOString().slice(0, 10),
-      serviceType: shipment.serviceType,
+      serviceType: resolveServiceType(shipment, isInternational),
       packagingType: "YOUR_PACKAGING",
       pickupType: cfg.pickupType,
       // SENDER-pay must name the payor account explicitly and it has to match
@@ -252,7 +272,11 @@ export async function generateLabel(
       labels.push({
         trackingNumber: piece.trackingNumber ?? txn?.masterTrackingNumber ?? "",
         bytes: Buffer.from(doc.encodedLabel, "base64"),
-        contentType: doc.contentType ?? contentType,
+        // Derived from the image type we asked for, NOT from FedEx's own
+        // packageDocuments[].contentType — that field is the document *kind*
+        // and comes back as the literal "LABEL", which would end up in a
+        // Content-Type header and stop the browser rendering the PDF.
+        contentType,
         extension,
       });
     }
