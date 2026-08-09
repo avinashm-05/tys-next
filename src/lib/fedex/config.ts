@@ -24,6 +24,21 @@ export function fedexConfig() {
     trackClientId: process.env.FEDEX_TRACK_CLIENT_ID || process.env.FEDEX_CLIENT_ID || "",
     trackClientSecret: process.env.FEDEX_TRACK_CLIENT_SECRET || process.env.FEDEX_CLIENT_SECRET || "",
     trackBaseUrl: process.env.FEDEX_TRACK_BASE_URL || process.env.FEDEX_BASE_URL || "https://apis-sandbox.fedex.com",
+    // Ship (label generation) is its own FedEx project again, and it is the
+    // one API here that MOVES REAL FREIGHT — a call against a production
+    // project books a real shipment and bills the account. So unlike Rate
+    // and Track, this deliberately does NOT fall back to the shared
+    // FEDEX_CLIENT_ID/SECRET pair: if the Ship-specific vars are unset the
+    // credentials stay empty and generateLabel() refuses to run, rather than
+    // quietly borrowing whatever project happens to be configured.
+    shipClientId: process.env.FEDEX_SHIP_CLIENT_ID ?? "",
+    shipClientSecret: process.env.FEDEX_SHIP_CLIENT_SECRET ?? "",
+    shipBaseUrl: process.env.FEDEX_SHIP_BASE_URL || "https://apis-sandbox.fedex.com",
+    shipAccountNumber: process.env.FEDEX_SHIP_ACCOUNT_NUMBER || process.env.FEDEX_ACCOUNT_NUMBER || "",
+    // STOCK_4X6 PDF: the standard shipping-label size, prints on a thermal
+    // label printer and on plain paper alike. Overridable without a deploy.
+    shipLabelStockType: process.env.FEDEX_SHIP_LABEL_STOCK_TYPE || "PAPER_4X6",
+    shipLabelImageType: process.env.FEDEX_SHIP_LABEL_IMAGE_TYPE || "PDF",
     accountNumber: process.env.FEDEX_ACCOUNT_NUMBER ?? "",
     baseUrl: process.env.FEDEX_BASE_URL ?? "https://apis-sandbox.fedex.com",
     locale: process.env.FEDEX_LOCALE ?? "en_US",
@@ -32,6 +47,8 @@ export function fedexConfig() {
     tokenCacheKey: "fedex:oauth_token",
     rateTokenCacheKey: "fedex:rate_oauth_token",
     trackTokenCacheKey: "fedex:track_oauth_token",
+    shipTokenCacheKey: "fedex:ship_oauth_token",
+    shipEndpoint: "ship/v1/shipments",
     tokenTtlBuffer: 60,
     ratesQuotesEndpoint: "rate/v1/rates/quotes",
     rateRequestTypes: ["ACCOUNT", "LIST"] as const,
@@ -60,6 +77,23 @@ export function trackCredentials() {
     tokenCacheKey: cfg.trackTokenCacheKey,
     baseUrl: cfg.trackBaseUrl,
   };
+}
+
+export function shipCredentials() {
+  const cfg = fedexConfig();
+  return {
+    clientId: cfg.shipClientId,
+    clientSecret: cfg.shipClientSecret,
+    tokenCacheKey: cfg.shipTokenCacheKey,
+    baseUrl: cfg.shipBaseUrl,
+  };
+}
+
+/** True once a Ship project's own credentials are configured (see above —
+ * there is intentionally no fallback to the shared pair). */
+export function shipConfigured(): boolean {
+  const cfg = fedexConfig();
+  return Boolean(cfg.shipClientId && cfg.shipClientSecret && cfg.shipAccountNumber);
 }
 
 // config/fedex.php package_defaults — used for envelope/furniture/auto lines.

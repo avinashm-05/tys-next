@@ -45,3 +45,6 @@ next-env.d.ts
 reference/
 reference/
 *.zip
+# Local file storage for shipment/vendor documents (src/lib/storage.ts).
+# Production sets STORAGE_ROOT to a path outside the deployed app dir.
+/storage

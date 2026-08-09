@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { toast } from "sonner";
-import { PlusIcon, UploadIcon } from "@phosphor-icons/react";
+import { DownloadSimpleIcon, PlusIcon, SpinnerIcon, TagIcon, UploadIcon } from "@phosphor-icons/react";
+import { adminApi, ApiError } from "@/lib/admin-api";
 import { LocalDateTime } from "@/components/shared/local-date-time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,12 +25,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { DocumentationRow, ShipmentDetail } from "./types";
 
-const DOCUMENT_TYPES = ["Commercial Invoice", "Invoice", "Packing List", "Bill of Lading", "Other"];
+const LABEL_TYPE = "Label";
+const DOCUMENT_TYPES = [
+  LABEL_TYPE,
+  "Commercial Invoice",
+  "Invoice",
+  "Packing List",
+  "Bill of Lading",
+  "Other",
+];
 
-// File upload is a stub (same rationale as the Vendor Documents tab) — no
-// cloud object storage is configured yet. The row itself (type/name/status)
-// is real, persisted state (PATCH /api/admin/shipments/[id]) — negative ids
-// are client-generated temp ids for a row added this session (create).
+// Generic file upload is still a stub (no upload endpoint yet) — but a row
+// whose type is "Label" can produce its own file: Generate Label calls FedEx
+// Ship, stores the returned PDF, and the row becomes downloadable. The row
+// itself (type/name/status) is real, persisted state (PATCH
+// /api/admin/shipments/[id]) — negative ids are client-generated temp ids
+// for a row added this session (create).
 export function DocumentationSection({
   shipment,
   onChange,
@@ -36,6 +48,32 @@ export function DocumentationSection({
   shipment: ShipmentDetail;
   onChange: (patch: Partial<ShipmentDetail>) => void;
 }) {
+  const [generating, setGenerating] = useState(false);
+
+  async function generateLabel() {
+    setGenerating(true);
+    try {
+      const res = await adminApi<{
+        masterTrackingNumber: string;
+        documents: DocumentationRow[];
+      }>(`/api/admin/shipments/${shipment.id}/label`, { method: "POST" });
+      // The generated rows come back already persisted, so they replace any
+      // unsaved placeholder Label row rather than stacking on top of it.
+      onChange({
+        documentation: [
+          ...shipment.documentation.filter((r) => !(r.documentType === LABEL_TYPE && r.id < 0)),
+          ...res.documents,
+        ],
+        trackingNumber: res.masterTrackingNumber,
+      });
+      toast.success(`Label generated — tracking ${res.masterTrackingNumber}`);
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Couldn't generate the label.");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   function updateRow(index: number, patch: Partial<DocumentationRow>) {
     onChange({
       documentation: shipment.documentation.map((row, i) => (i === index ? { ...row, ...patch } : row)),
@@ -104,14 +142,41 @@ export function DocumentationSection({
                     <LocalDateTime iso={row.createdOn} />
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toast.info("Document storage isn't configured yet.")}
-                    >
-                      <UploadIcon size={14} />
-                      Upload
-                    </Button>
+                    {row.hasFile ? (
+                      <Button variant="outline" size="sm" asChild>
+                        <a
+                          href={`/api/admin/shipments/${shipment.id}/documents/${row.id}/download`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <DownloadSimpleIcon size={14} />
+                          Download
+                        </a>
+                      </Button>
+                    ) : row.documentType === LABEL_TYPE ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={generateLabel}
+                        disabled={generating}
+                      >
+                        {generating ? (
+                          <SpinnerIcon size={14} className="animate-spin" />
+                        ) : (
+                          <TagIcon size={14} />
+                        )}
+                        {generating ? "Generating…" : "Generate label"}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toast.info("Document storage isn't configured yet.")}
+                      >
+                        <UploadIcon size={14} />
+                        Upload
+                      </Button>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="uppercase">{row.status}</Badge>

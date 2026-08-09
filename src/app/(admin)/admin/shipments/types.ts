@@ -77,6 +77,13 @@ export type DocumentationRow = {
   documentName: string | null;
   createdOn: string | null; // ISO — Response.json() serializes Date to string
   status: "active" | "inactive";
+  // Set once a file is attached (a generated label today, uploads later).
+  // The storage key itself stays server-side; the client only needs to know
+  // that a file exists so it can offer the download route.
+  hasFile?: boolean;
+  contentType?: string | null;
+  sizeBytes?: number | null;
+  trackingNumber?: string | null;
 };
 
 export type NoteRow = {

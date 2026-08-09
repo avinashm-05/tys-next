@@ -84,13 +84,19 @@ function serializeInvoiceLine(l: ShipmentWithDetail["invoiceLines"][number]) {
   };
 }
 
-function serializeDocument(d: ShipmentWithDetail["documents"][number]) {
+export function serializeDocument(d: ShipmentWithDetail["documents"][number]) {
   return {
     id: Number(d.id),
     documentType: d.documentType,
     documentName: d.documentName,
     createdOn: isoOrNull(d.createdAt),
     status: d.status,
+    // storageKey is deliberately NOT exposed — the client only needs to know
+    // whether a file exists, and the download route resolves the key itself.
+    hasFile: Boolean(d.storageKey),
+    contentType: d.contentType,
+    sizeBytes: d.sizeBytes,
+    trackingNumber: d.trackingNumber,
   };
 }
 
