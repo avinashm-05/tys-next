@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   AirplaneTiltIcon,
   BoatIcon,
   CaretDownIcon,
   CheckIcon,
+  PencilSimpleIcon,
   PlusIcon,
   PulseIcon,
   ShippingContainerIcon,
@@ -29,7 +29,6 @@ import {
 import type { ShipmentStatus, ShipmentType } from "@prisma/client";
 import { DataTable, sortableHeader } from "@/components/shared/data-table";
 import { LocalDateTime } from "@/components/shared/local-date-time";
-import { RowActions } from "@/components/admin/row-actions";
 import { SHIPMENT_STATUS_LABELS } from "./types";
 import { ShipmentStatusBadge } from "./shipment-status-badge";
 
@@ -140,7 +139,6 @@ function TypeIcon({ type }: { type: ShipmentType }) {
 }
 
 export function ShipmentsList() {
-  const router = useRouter();
   const [selectedStatuses, setSelectedStatuses] = useState<Set<ShipmentStatus>>(new Set());
   const [selectedTypes, setSelectedTypes] = useState<Set<ShipmentType>>(new Set());
 
@@ -210,13 +208,17 @@ export function ShipmentsList() {
     {
       id: "actions",
       header: () => <span className="sr-only">Actions</span>,
+      // Direct edit icon instead of a ⋯ menu with a single "Edit" entry —
+      // there's nothing else to pick between here, so the menu was just
+      // adding a step (open menu, then click Edit) to the one thing every
+      // row exists to let staff do.
       cell: ({ row }) => (
         <div className="text-right">
-          <RowActions
-            actions={[
-              { label: "Edit", onSelect: () => router.push(`/admin/shipments/${row.original.id}/edit`) },
-            ]}
-          />
+          <Button variant="ghost" size="icon" className="size-8" asChild>
+            <Link href={`/admin/shipments/${row.original.id}/edit`} aria-label="Edit shipment">
+              <PencilSimpleIcon weight="bold" />
+            </Link>
+          </Button>
         </div>
       ),
     },
