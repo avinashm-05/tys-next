@@ -284,6 +284,7 @@ export function VendorsList() {
     () => [
       {
         id: "select",
+        size: 40,
         header: () => (
           <Checkbox
             aria-label="Select all on this page"
@@ -317,6 +318,7 @@ export function VendorsList() {
       },
       {
         accessorKey: "name",
+        size: 220,
         header: sortableHeader("Name"),
         cell: ({ row }) => (
           <div>
@@ -327,11 +329,13 @@ export function VendorsList() {
       },
       {
         id: "vendorType",
+        size: 140,
         header: "Type",
         cell: ({ row }) => row.original.vendorType.name,
       },
       {
         id: "services",
+        size: 220,
         header: "Services",
         cell: ({ row }) => {
           const names = row.original.serviceNames ?? [];
@@ -347,21 +351,25 @@ export function VendorsList() {
       },
       {
         accessorKey: "city",
+        size: 160,
         header: sortableHeader("Location"),
         cell: ({ row }) => `${row.original.city}, ${row.original.country}`,
       },
       {
         id: "createdBy",
+        size: 140,
         header: "Created By",
         cell: ({ row }) => row.original.createdByName ?? "—",
       },
       {
         accessorKey: "status",
+        size: 110,
         header: "Status",
         cell: ({ row }) => <StatusBadge status={row.original.status} />,
       },
       {
         id: "actions",
+        size: 90,
         header: () => <span className="sr-only">Actions</span>,
         // Edit is a direct icon (the thing every row exists to let staff
         // do) rather than buried behind the ⋯ menu; Delete stays there —

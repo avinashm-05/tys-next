@@ -202,16 +202,19 @@ export function ShipmentsList() {
   const columns: ColumnDef<ShipmentListRow>[] = [
     {
       accessorKey: "date",
+      size: 190,
       header: sortableHeader("Date"),
       cell: ({ row }) => <LocalDateTime iso={row.original.date} />,
     },
     {
       accessorKey: "trackingNumber",
+      size: 130,
       header: sortableHeader("Tracking"),
       cell: ({ row }) => <span className="font-mono text-xs">{row.original.trackingNumber ?? "—"}</span>,
     },
     {
       id: "sender",
+      size: 200,
       header: "Sender",
       cell: ({ row }) => (
         <div className="text-xs">
@@ -224,6 +227,7 @@ export function ShipmentsList() {
     },
     {
       id: "receiver",
+      size: 200,
       header: "Receiver",
       cell: ({ row }) => (
         <div className="text-xs">
@@ -236,6 +240,7 @@ export function ShipmentsList() {
     },
     {
       id: "shipmentType",
+      size: 120,
       header: "Type",
       cell: ({ row }) => (
         <span className="inline-flex items-center gap-1.5 text-xs font-medium">
@@ -246,11 +251,13 @@ export function ShipmentsList() {
     },
     {
       id: "status",
+      size: 140,
       header: "Status",
       cell: ({ row }) => <ShipmentStatusBadge status={row.original.status} />,
     },
     {
       id: "actions",
+      size: 70,
       header: () => <span className="sr-only">Actions</span>,
       // Direct edit icon instead of a ⋯ menu with a single "Edit" entry —
       // there's nothing else to pick between here, so the menu was just

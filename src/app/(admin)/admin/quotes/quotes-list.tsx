@@ -155,6 +155,7 @@ export function QuotesList() {
   const columns: ColumnDef<QuoteRow>[] = [
     {
       id: "route",
+      size: 160,
       header: "Route",
       cell: ({ row }) => (
         <div className="text-xs">
@@ -170,6 +171,7 @@ export function QuotesList() {
     },
     {
       id: "contact",
+      size: 200,
       header: "Contact",
       cell: ({ row }) => (
         <div className="text-xs">
@@ -181,16 +183,19 @@ export function QuotesList() {
     },
     {
       id: "packageType",
+      size: 130,
       header: "Packages",
       cell: ({ row }) => formatPackageTypes(row.original.packageType),
     },
     {
       accessorKey: "totalChargeableWeight",
+      size: 110,
       header: sortableHeader("Chg. weight"),
       cell: ({ row }) => row.original.totalChargeableWeight ?? "—",
     },
     {
       accessorKey: "estimatedCost",
+      size: 120,
       header: sortableHeader("Est. cost"),
       cell: ({ row }) =>
         row.original.estimatedCost == null
@@ -199,16 +204,19 @@ export function QuotesList() {
     },
     {
       id: "opens",
+      size: 110,
       header: "Email opens",
       cell: ({ row }) => row.original.emailStatistic?.openCount ?? "—",
     },
     {
       accessorKey: "createdAt",
+      size: 190,
       header: sortableHeader("Created"),
       cell: ({ row }) => <LocalDateTime iso={row.original.createdAt} />,
     },
     {
       id: "status",
+      size: 160,
       header: "Status",
       cell: ({ row }) => (
         <QuoteStatusControl
@@ -221,6 +229,7 @@ export function QuotesList() {
     },
     {
       id: "actions",
+      size: 180,
       header: () => <span className="sr-only">Actions</span>,
       cell: ({ row }) => (
         <div className="flex justify-end gap-2">

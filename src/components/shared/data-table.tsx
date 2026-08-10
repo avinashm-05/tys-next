@@ -119,12 +119,18 @@ export function DataTable<TData, TValue>({
           server?.loading && "pointer-events-none opacity-60",
         )}
       >
-        <Table>
+        {/* table-fixed + an explicit width per column (ColumnDef.size) locks
+            the grid to the header row's widths permanently — without this,
+            the browser resizes every column to fit whatever's currently in
+            the body, so a search/filter that changes row content (a longer
+            name matches, a row disappears) visibly shifts the whole table
+            sideways/around on every keystroke. Report: 2026-08-10. */}
+        <Table className="table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} style={{ width: header.getSize() }}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -137,7 +143,11 @@ export function DataTable<TData, TValue>({
                 {table.getHeaderGroups()[0]?.headers.map((header) => {
                   const filter = columnFilters.find((f) => f.id === header.column.id);
                   return (
-                    <TableHead key={`filter-${header.id}`} className="py-1.5">
+                    <TableHead
+                      key={`filter-${header.id}`}
+                      className="py-1.5"
+                      style={{ width: header.getSize() }}
+                    >
                       {filter && (
                         <Input
                           value={filter.value}
@@ -158,7 +168,11 @@ export function DataTable<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell
+                      key={cell.id}
+                      style={{ width: cell.column.getSize() }}
+                      className="overflow-hidden text-ellipsis"
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
