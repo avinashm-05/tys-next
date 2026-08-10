@@ -1,8 +1,21 @@
 import type { Post } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import type sanitizeHtml from "sanitize-html";
 import { db } from "@/lib/db";
 import { resolvePostSlug, UNIQUE_SLUG_MESSAGE, type PostInput } from "@/lib/validation/post";
 import { validationError } from "@/lib/validation/errors";
+
+// Shared by both the create and update routes, and kept in exact lockstep
+// with the admin editor's toolbar (src/components/admin/rich-text-editor.tsx)
+// — the editor's StarterKit config has every one of these nodes/marks
+// explicitly enabled and nothing else, so nothing a user can actually
+// produce in the UI is silently dropped here, and nothing outside what the
+// UI offers survives a tampered request either.
+export const POST_BODY_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: ["p", "br", "strong", "em", "s", "h2", "h3", "ul", "ol", "li", "a", "blockquote"],
+  allowedAttributes: { a: ["href", "target", "rel"] },
+  allowedSchemes: ["http", "https", "mailto"],
+};
 
 export function serializePost(p: Post) {
   return {

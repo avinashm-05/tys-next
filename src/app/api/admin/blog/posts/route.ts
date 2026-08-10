@@ -8,22 +8,12 @@ import { postInput } from "@/lib/validation/post";
 import {
   checkPostSlugUnique,
   postData,
+  POST_BODY_SANITIZE_OPTIONS,
   resolvePostSlug,
   resolvePublishedAt,
   revalidatePublicBlog,
   serializePost,
 } from "./helpers";
-
-// A plain rich-text toolbar (bold/italic/headings/lists/links) is all the
-// admin editor offers, so the allowlist matches that exactly — anything
-// else surviving into `body` would have to have come from a tampered
-// request, not the editor UI, and gets silently stripped rather than
-// rejected (matches sanitize-html's normal behavior).
-const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-  allowedTags: ["p", "br", "strong", "em", "u", "s", "h2", "h3", "ul", "ol", "li", "a", "blockquote"],
-  allowedAttributes: { a: ["href", "target", "rel"] },
-  allowedSchemes: ["http", "https", "mailto"],
-};
 
 export const GET = adminRoute(async (req) => {
   const p = parseListParams(req, {
@@ -65,7 +55,7 @@ export const POST = adminRoute(async (req, _ctx, session) => {
     data: {
       ...postData(data),
       slug,
-      body: sanitizeHtml(data.body, SANITIZE_OPTIONS),
+      body: sanitizeHtml(data.body, POST_BODY_SANITIZE_OPTIONS),
       publishedAt: resolvePublishedAt(data, null),
       createdById: BigInt(session.user.id),
       createdAt: now,

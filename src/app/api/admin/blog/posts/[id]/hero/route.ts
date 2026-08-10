@@ -58,3 +58,28 @@ export const POST = adminRoute<Ctx>(async (req, ctx) => {
 
   return Response.json(serializePost(updated));
 });
+
+/** Removes a post's hero image entirely (not a replace — the editor's own
+ * "Remove" button calls this directly, immediately, rather than deferring
+ * to the next Save, since the post already has a real id to act on). */
+export const DELETE = adminRoute<Ctx>(async (_req, ctx) => {
+  const id = parseId((await ctx.params).id);
+  if (id === null) throw new HttpError(404, "Post not found.");
+
+  const post = await db.post.findUnique({ where: { id } });
+  if (!post) throw new HttpError(404, "Post not found.");
+  if (!post.heroImageKey) return Response.json(serializePost(post));
+
+  await deleteFile(post.heroImageKey);
+  const updated = await db.post.update({
+    where: { id },
+    data: {
+      heroImageKey: null,
+      heroImageContentType: null,
+      heroImageSizeBytes: null,
+      updatedAt: new Date(),
+    },
+  });
+
+  return Response.json(serializePost(updated));
+});

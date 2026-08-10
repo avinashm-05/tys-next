@@ -9,6 +9,7 @@ import { deleteFile } from "@/lib/storage";
 import {
   checkPostSlugUnique,
   postData,
+  POST_BODY_SANITIZE_OPTIONS,
   resolvePostSlug,
   resolvePublishedAt,
   revalidatePublicBlog,
@@ -16,12 +17,6 @@ import {
 } from "../helpers";
 
 type Ctx = { params: Promise<{ id: string }> };
-
-const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-  allowedTags: ["p", "br", "strong", "em", "u", "s", "h2", "h3", "ul", "ol", "li", "a", "blockquote"],
-  allowedAttributes: { a: ["href", "target", "rel"] },
-  allowedSchemes: ["http", "https", "mailto"],
-};
 
 async function findOr404(param: string) {
   const id = parseId(param);
@@ -48,7 +43,7 @@ export const PATCH = adminRoute<Ctx>(async (req, ctx) => {
     data: {
       ...postData(data),
       slug,
-      body: sanitizeHtml(data.body, SANITIZE_OPTIONS),
+      body: sanitizeHtml(data.body, POST_BODY_SANITIZE_OPTIONS),
       publishedAt: resolvePublishedAt(data, existing),
       updatedAt: new Date(),
     },

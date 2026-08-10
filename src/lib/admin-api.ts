@@ -14,9 +14,18 @@ export class ApiError extends Error {
 }
 
 export async function adminApi<T = unknown>(path: string, init?: RequestInit): Promise<T> {
+  // A FormData body (file uploads — see the blog hero uploader) must NOT get
+  // an explicit Content-Type: the browser needs to set its own
+  // multipart/form-data; boundary=... value from the FormData object itself.
+  // Forcing application/json here silently breaks the server's
+  // req.formData() parse — confirmed live: identical requests succeeded via
+  // a raw fetch() (no Content-Type) and failed through this wrapper before
+  // this fix, with no client-visible sign beyond the upload having no
+  // effect.
+  const isFormData = init?.body instanceof FormData;
   const res = await fetch(path, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: isFormData ? init?.headers : { "Content-Type": "application/json", ...init?.headers },
   });
   if (res.ok) return res.json() as Promise<T>;
   const body = (await res.json().catch(() => ({}))) as {

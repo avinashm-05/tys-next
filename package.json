@@ -23,7 +23,6 @@
     "@prisma/client": "^6.19.3",
     "@tailwindcss/typography": "^0.5.20",
     "@tanstack/react-table": "^8.21.3",
-    "@tiptap/extension-link": "^3.29.2",
     "@tiptap/pm": "^3.29.2",
     "@tiptap/react": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",
