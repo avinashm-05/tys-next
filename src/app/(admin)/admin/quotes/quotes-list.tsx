@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { formatPackageTypes, PACKAGE_TYPE_OPTIONS } from "@/lib/package-type";
 import { adminApi, ApiError } from "@/lib/admin-api";
 import { useAdminList } from "@/hooks/use-admin-list";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { QUOTE_STATUS_LABELS } from "@/lib/quote-status";
 import { Button } from "@/components/ui/button";
 import { LocalDateTime } from "@/components/shared/local-date-time";
@@ -95,6 +96,10 @@ export function QuotesList() {
   // given one: raw from/to zip text was deliberately dropped before in favor
   // of the domestic/international Select above (see that filter's comment).
   const [contactFilter, setContactFilter] = useState("");
+  // Live value for the input, debounced value for the actual query — a
+  // request (and the resulting loading-flicker + row-count/height change)
+  // on every keystroke is what "jittering while typing" actually was.
+  const debouncedContact = useDebouncedValue(contactFilter);
 
   async function convertToShipment(quoteId: number) {
     setConvertingId(quoteId);
@@ -117,7 +122,7 @@ export function QuotesList() {
     ...(route !== "all" ? { route } : {}),
     ...(fromDate ? { fromDate } : {}),
     ...(toDate ? { toDate } : {}),
-    ...(contactFilter ? { contact: contactFilter } : {}),
+    ...(debouncedContact ? { contact: debouncedContact } : {}),
   });
 
   const columnFilters: ColumnFilterConfig[] = [

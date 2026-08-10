@@ -16,6 +16,7 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useAdminList } from "@/hooks/use-admin-list";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -146,13 +147,20 @@ export function ShipmentsList() {
   const [trackingFilter, setTrackingFilter] = useState("");
   const [senderFilter, setSenderFilter] = useState("");
   const [receiverFilter, setReceiverFilter] = useState("");
+  // Debounced: the input's own `value` stays bound to the live state above
+  // (so typing itself never lags), but only the settled value feeds the
+  // query — otherwise every keystroke fires a request, and the resulting
+  // loading-flicker + row-count/height change reads as the page jittering.
+  const debouncedTracking = useDebouncedValue(trackingFilter);
+  const debouncedSender = useDebouncedValue(senderFilter);
+  const debouncedReceiver = useDebouncedValue(receiverFilter);
 
   const list = useAdminList<ShipmentListRow>("/api/admin/shipments", [{ id: "createdAt", desc: true }], {
     ...(selectedStatuses.size > 0 ? { status: [...selectedStatuses].join(",") } : {}),
     ...(selectedTypes.size > 0 ? { type: [...selectedTypes].join(",") } : {}),
-    ...(trackingFilter ? { trackingNumber: trackingFilter } : {}),
-    ...(senderFilter ? { sender: senderFilter } : {}),
-    ...(receiverFilter ? { receiver: receiverFilter } : {}),
+    ...(debouncedTracking ? { trackingNumber: debouncedTracking } : {}),
+    ...(debouncedSender ? { sender: debouncedSender } : {}),
+    ...(debouncedReceiver ? { receiver: debouncedReceiver } : {}),
   });
 
   function toggleSet<T>(setter: (v: Set<T>) => void, current: Set<T>, value: T, on: boolean) {

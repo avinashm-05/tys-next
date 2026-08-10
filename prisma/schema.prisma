@@ -74,6 +74,7 @@ model User {
   quoteNotes             QuoteNote[]             @relation("QuoteNoteCreatedBy")
   shipmentNotes          ShipmentNote[]          @relation("ShipmentNoteCreatedBy")
   shipmentTrackingEvents ShipmentTrackingEvent[] @relation("ShipmentTrackingEventCreatedBy")
+  postsCreated           Post[]
 
   @@index([userTypeId], map: "users_user_type_id_index")
   @@map("users")
@@ -591,6 +592,49 @@ model Setting {
   @@map("settings")
 }
 
+// Admin-managed blog content (replaces the old hand-written page.tsx-per-post
+// pattern). See src/app/api/admin/blog/posts for the CRUD API and
+// src/app/(public)/blog/[slug]/page.tsx for public rendering.
+model Post {
+  id          BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  slug        String     @unique(map: "posts_slug_unique") @db.VarChar(255)
+  title       String     @db.VarChar(255)
+  // Dual-purpose, same as the old BLOG_POSTS array: meta description AND
+  // the listing-card teaser.
+  description String     @db.VarChar(500)
+  // Free text, not an enum — the public listing resolves an icon from a
+  // lookup map keyed on this string, with a generic fallback, so a new
+  // category never needs a migration.
+  category    String     @db.VarChar(100)
+  // Sanitized HTML from the admin rich-text editor (sanitize-html strips it
+  // server-side on every write, before it ever reaches this column).
+  body        String     @db.LongText
+  // A byline, not a login — matches the hardcoded JSON-LD author today.
+  // Deliberately not a User relation: whoever writes a post shouldn't need
+  // an admin account to be credited for it.
+  authorName  String     @default("Avinash") @db.VarChar(255)
+  status      PostStatus @default(draft)
+  // Set automatically the first time a post is published; editable
+  // afterward to backdate. Null while still a draft.
+  publishedAt DateTime?  @db.Timestamp(0)
+
+  // Nullable — a post can exist with no hero image (the public listing
+  // falls back to the existing decorative BlogBanner icon treatment).
+  heroImageKey         String? @map("hero_image_key") @db.VarChar(255)
+  heroImageContentType String? @map("hero_image_content_type") @db.VarChar(100)
+  heroImageSizeBytes   Int?    @map("hero_image_size_bytes")
+
+  createdById BigInt? @map("created_by") @db.UnsignedBigInt
+  createdBy   User?   @relation(fields: [createdById], references: [id], onUpdate: NoAction, map: "posts_created_by_foreign")
+
+  createdAt DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @map("updated_at") @db.Timestamp(0)
+
+  @@index([status], map: "posts_status_index")
+  @@index([publishedAt], map: "posts_published_at_index")
+  @@map("posts")
+}
+
 // ---------------------------------------------------------------------------
 // Better Auth tables (new — created by db/migrations/001_nextjs_additive.sql)
 // Field names match Better Auth's defaults so no field mapping is needed in
@@ -746,6 +790,11 @@ enum ServiceStatus {
 enum ActiveInactive {
   active
   inactive
+}
+
+enum PostStatus {
+  draft
+  published
 }
 
 enum VendorCommentCategory {

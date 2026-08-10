@@ -16,6 +16,7 @@ import {
 } from "@phosphor-icons/react";
 import { adminApi } from "@/lib/admin-api";
 import { useAdminList } from "@/hooks/use-admin-list";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -163,17 +164,26 @@ export function VendorsList() {
   const [countryFilter, setCountryFilter] = useState("");
   const [createdByFilter, setCreatedByFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  // Live value feeds the input (typing never lags), debounced value feeds
+  // the query — a request (and the resulting loading-flicker + row-count/
+  // height change) on every keystroke is what "jittering while typing" was.
+  const debouncedName = useDebouncedValue(nameFilter);
+  const debouncedVendorType = useDebouncedValue(vendorTypeFilter);
+  const debouncedServiceName = useDebouncedValue(serviceNameFilter);
+  const debouncedCountry = useDebouncedValue(countryFilter);
+  const debouncedCreatedBy = useDebouncedValue(createdByFilter);
+  const debouncedStatus = useDebouncedValue(statusFilter);
   const list = useAdminList<VendorRow>("/api/admin/vendors", [{ id: "createdAt", desc: true }], {
     ...(selectedServiceIds.size > 0 ? { serviceIds: [...selectedServiceIds].join(",") } : {}),
     ...(selectedVendorTypeIds.size > 0
       ? { vendorTypeIds: [...selectedVendorTypeIds].join(",") }
       : {}),
-    ...(nameFilter ? { name: nameFilter } : {}),
-    ...(vendorTypeFilter ? { vendorType: vendorTypeFilter } : {}),
-    ...(serviceNameFilter ? { serviceName: serviceNameFilter } : {}),
-    ...(countryFilter ? { country: countryFilter } : {}),
-    ...(createdByFilter ? { createdBy: createdByFilter } : {}),
-    ...(statusFilter ? { status: statusFilter } : {}),
+    ...(debouncedName ? { name: debouncedName } : {}),
+    ...(debouncedVendorType ? { vendorType: debouncedVendorType } : {}),
+    ...(debouncedServiceName ? { serviceName: debouncedServiceName } : {}),
+    ...(debouncedCountry ? { country: debouncedCountry } : {}),
+    ...(debouncedCreatedBy ? { createdBy: debouncedCreatedBy } : {}),
+    ...(debouncedStatus ? { status: debouncedStatus } : {}),
   });
   const [toDelete, setToDelete] = useState<VendorRow | null>(null);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());

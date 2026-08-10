@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Styles the raw HTML the blog admin's rich-text editor outputs (used only
+   inside `.prose` on the public post page) — that HTML has no per-element
+   classes of its own, unlike the hand-styled LegalSection pages. */
+@plugin "@tailwindcss/typography";
 /* Real per-country flag artwork (SVG-backed `.fi.fi-us` classes) — used
    instead of Unicode flag emoji, which render as plain two-letter text on
    Windows Chrome/Edge and many Linux browsers (no colored glyph installed).
