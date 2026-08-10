@@ -1,3 +1,4 @@
+import path from "node:path";
 import { getFile } from "@/lib/storage";
 
 type Ctx = { params: Promise<{ key: string[] }> };
@@ -23,8 +24,15 @@ const CONTENT_TYPES: Record<string, string> = {
  */
 export async function GET(_req: Request, ctx: Ctx) {
   const segments = (await ctx.params).key;
-  const key = segments.join("/");
-  if (!key.startsWith("blog/")) {
+  // Normalized before the prefix check, not after: the raw key
+  // "blog/../shipments/<uuid>.pdf" passes startsWith("blog/") but resolves
+  // to a FedEx label, and storage.ts's own guard only rejects keys that
+  // escape STORAGE_ROOT entirely — this one stays inside it. Next.js strips
+  // ".." from URL paths today, so that was never reachable over HTTP, but
+  // that's an upstream implementation detail rather than a documented
+  // security boundary, and the check above claims to stand on its own.
+  const key = path.posix.normalize(segments.join("/"));
+  if (!key.startsWith("blog/") || key.split("/").includes("..")) {
     return new Response("Not found.", { status: 404 });
   }
 
