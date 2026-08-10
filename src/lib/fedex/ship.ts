@@ -105,21 +105,61 @@ function resolveServiceType(s: ShippableShipment, isInternational: boolean): str
   return service;
 }
 
+/** Generic descriptions for the domestic placeholder commodity. */
+const PACKAGE_TYPE_DESCRIPTIONS: Record<string, string> = {
+  package: "General merchandise",
+  document: "Documents",
+  pallet: "Palletised freight",
+};
+
 /**
- * Customs for international labels, built from the Commercial Invoice tab's
- * lines. FedEx will not produce an international label without this, so a
- * shipment crossing a border with an empty invoice tab is refused up front
- * (with a message naming the tab) rather than failing deep inside FedEx.
+ * The domestic placeholder commodity. Domestic labels carry a customs block
+ * too (2026-08-09, by request) — FedEx accepts it on a US→US label and does
+ * nothing with it, verified against the sandbox.
+ *
+ * Nothing here is a declaration anyone made: US→US shipments never populate
+ * the Commercial Invoice tab, so the description comes from the package type
+ * and the value from the packages' own insured value (falling back to $1,
+ * since FedEx wants a non-zero customs value). That's fine precisely because
+ * it's inert on a domestic shipment — it must NOT become the fallback for an
+ * international label, where the same numbers would be a real declaration to
+ * a customs authority.
+ */
+function buildPlaceholderCommodity(s: ShippableShipment) {
+  const insured = s.packages.reduce(
+    (sum, p) => sum + Number(p.insuredValue ?? 0) * Math.max(1, p.quantity),
+    0,
+  );
+  const value = insured > 0 ? insured : 1;
+  return {
+    description: PACKAGE_TYPE_DESCRIPTIONS[s.packageType] ?? "General merchandise",
+    quantity: 1,
+    quantityUnits: "PCS",
+    unitPrice: { amount: value, currency: "USD" },
+    customsValue: { amount: value, currency: "USD" },
+    weight: { units: "LB", value: 1 },
+  };
+}
+
+/**
+ * Customs, built from the Commercial Invoice tab's lines when there are any.
+ *
+ * International labels REQUIRE real lines — FedEx won't issue one without a
+ * declaration, and the caller refuses up front (naming the tab) rather than
+ * inventing contents and values for a shipment that a customs authority will
+ * read. Domestic falls back to the inert placeholder above.
  */
 function buildCustomsClearanceDetail(s: ShippableShipment, accountNumber: string) {
-  const commodities = s.invoiceLines.map((l) => ({
-    description: l.packageContent,
-    quantity: l.quantity,
-    quantityUnits: "PCS",
-    unitPrice: { amount: Number(l.valuePerQty), currency: "USD" },
-    customsValue: { amount: Number(l.valuePerQty) * l.quantity, currency: "USD" },
-    weight: { units: "LB", value: 1 },
-  }));
+  const commodities = s.invoiceLines.length
+    ? s.invoiceLines.map((l) => ({
+        description: l.packageContent,
+        quantity: l.quantity,
+        quantityUnits: "PCS",
+        unitPrice: { amount: Number(l.valuePerQty), currency: "USD" },
+        customsValue: { amount: Number(l.valuePerQty) * l.quantity, currency: "USD" },
+        weight: { units: "LB", value: 1 },
+      }))
+    : [buildPlaceholderCommodity(s)];
   const total = commodities.reduce((sum, c) => sum + c.customsValue.amount, 0);
   return {
     dutiesPayment: {

@@ -17,7 +17,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useAdminList } from "@/hooks/use-admin-list";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ShipmentStatus, ShipmentType } from "@prisma/client";
-import { DataTable, sortableHeader } from "@/components/shared/data-table";
+import { DataTable, sortableHeader, type ColumnFilterConfig } from "@/components/shared/data-table";
 import { LocalDateTime } from "@/components/shared/local-date-time";
 import { SHIPMENT_STATUS_LABELS } from "./types";
 import { ShipmentStatusBadge } from "./shipment-status-badge";
@@ -141,10 +140,19 @@ function TypeIcon({ type }: { type: ShipmentType }) {
 export function ShipmentsList() {
   const [selectedStatuses, setSelectedStatuses] = useState<Set<ShipmentStatus>>(new Set());
   const [selectedTypes, setSelectedTypes] = useState<Set<ShipmentType>>(new Set());
+  // Per-column search boxes under the header row (same pattern as the
+  // Vendors list) — Type/Status already have their own checkbox dropdowns
+  // above, so only the free-text columns (Tracking/Sender/Receiver) get one.
+  const [trackingFilter, setTrackingFilter] = useState("");
+  const [senderFilter, setSenderFilter] = useState("");
+  const [receiverFilter, setReceiverFilter] = useState("");
 
   const list = useAdminList<ShipmentListRow>("/api/admin/shipments", [{ id: "createdAt", desc: true }], {
     ...(selectedStatuses.size > 0 ? { status: [...selectedStatuses].join(",") } : {}),
     ...(selectedTypes.size > 0 ? { type: [...selectedTypes].join(",") } : {}),
+    ...(trackingFilter ? { trackingNumber: trackingFilter } : {}),
+    ...(senderFilter ? { sender: senderFilter } : {}),
+    ...(receiverFilter ? { receiver: receiverFilter } : {}),
   });
 
   function toggleSet<T>(setter: (v: Set<T>) => void, current: Set<T>, value: T, on: boolean) {
@@ -154,6 +162,34 @@ export function ShipmentsList() {
     setter(next);
     list.setPage(1);
   }
+
+  function columnFilter(setter: (v: string) => void) {
+    return (v: string) => {
+      setter(v);
+      list.setPage(1);
+    };
+  }
+
+  const columnFilters: ColumnFilterConfig[] = [
+    {
+      id: "trackingNumber",
+      value: trackingFilter,
+      onChange: columnFilter(setTrackingFilter),
+      placeholder: "Search tracking…",
+    },
+    {
+      id: "sender",
+      value: senderFilter,
+      onChange: columnFilter(setSenderFilter),
+      placeholder: "Search sender…",
+    },
+    {
+      id: "receiver",
+      value: receiverFilter,
+      onChange: columnFilter(setReceiverFilter),
+      placeholder: "Search receiver…",
+    },
+  ];
 
   const columns: ColumnDef<ShipmentListRow>[] = [
     {
@@ -234,13 +270,6 @@ export function ShipmentsList() {
           <h1 className="text-h2">Shipments</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Input
-            value={list.search}
-            onChange={(e) => list.setSearch(e.target.value)}
-            placeholder="Search tracking / sender / receiver…"
-            className="max-w-xs"
-            aria-label="Search shipments"
-          />
           <CheckboxFilterDropdown
             label="Status"
             icon={PulseIcon}
@@ -279,6 +308,7 @@ export function ShipmentsList() {
         columns={columns}
         data={list.rows}
         emptyMessage="No shipments match the current filters."
+        columnFilters={columnFilters}
         server={{
           total: list.total,
           page: list.page,

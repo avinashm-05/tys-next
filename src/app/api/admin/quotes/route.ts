@@ -33,6 +33,12 @@ export const GET = adminRoute(async (req) => {
   const route = q.get("route"); // "domestic" | "international" | null
   const fromDate = q.get("fromDate") ? new Date(`${q.get("fromDate")}T00:00:00Z`) : null;
   const toDate = q.get("toDate") ? new Date(`${q.get("toDate")}T23:59:59Z`) : null;
+  // Per-column filter under the Contact header (same pattern as Vendors'
+  // columnFilters) — replaces the old single global search box, same fields.
+  // Folded together with p.search rather than spread as a second `OR` key:
+  // two `OR` keys in one object literal means the later spread silently wins,
+  // so a caller passing both would have had one filter quietly ignored.
+  const contactTerm = q.get("contact")?.trim() || p.search;
 
   const createdAt: Prisma.DateTimeFilter = {};
   if (fromDate && !Number.isNaN(fromDate.getTime())) createdAt.gte = fromDate;
@@ -44,13 +50,19 @@ export const GET = adminRoute(async (req) => {
     ...(route === "domestic" ? { fromCountry: "US", toCountry: "US" } : {}),
     ...(route === "international" ? { NOT: { fromCountry: "US", toCountry: "US" } } : {}),
     ...(Object.keys(createdAt).length ? { createdAt } : {}),
-    ...(p.search
+    ...(contactTerm
       ? {
           OR: [
-            { name: { contains: p.search } },
-            { email: { contains: p.search } },
-            { mobileNumber: { contains: p.search } },
-            { contacts: { some: { OR: [{ name: { contains: p.search } }, { email: { contains: p.search } }] } } },
+            { name: { contains: contactTerm } },
+            { email: { contains: contactTerm } },
+            { mobileNumber: { contains: contactTerm } },
+            {
+              contacts: {
+                some: {
+                  OR: [{ name: { contains: contactTerm } }, { email: { contains: contactTerm } }],
+                },
+              },
+            },
           ],
         }
       : {}),

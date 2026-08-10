@@ -12,7 +12,6 @@ import { adminApi, ApiError } from "@/lib/admin-api";
 import { useAdminList } from "@/hooks/use-admin-list";
 import { QUOTE_STATUS_LABELS } from "@/lib/quote-status";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { LocalDateTime } from "@/components/shared/local-date-time";
 import {
   DropdownMenu,
@@ -29,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DataTable, sortableHeader } from "@/components/shared/data-table";
+import { DataTable, sortableHeader, type ColumnFilterConfig } from "@/components/shared/data-table";
 import { QuoteStatusControl } from "@/components/admin/quote-status-control";
 import { DateRangeFilter } from "@/components/admin/date-range-filter";
 
@@ -91,6 +90,11 @@ export function QuotesList() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [convertingId, setConvertingId] = useState<number | null>(null);
+  // Per-column search box under the Contact header (same pattern as the
+  // Vendors list) — replaces the old single global search box. Route isn't
+  // given one: raw from/to zip text was deliberately dropped before in favor
+  // of the domestic/international Select above (see that filter's comment).
+  const [contactFilter, setContactFilter] = useState("");
 
   async function convertToShipment(quoteId: number) {
     setConvertingId(quoteId);
@@ -113,7 +117,20 @@ export function QuotesList() {
     ...(route !== "all" ? { route } : {}),
     ...(fromDate ? { fromDate } : {}),
     ...(toDate ? { toDate } : {}),
+    ...(contactFilter ? { contact: contactFilter } : {}),
   });
+
+  const columnFilters: ColumnFilterConfig[] = [
+    {
+      id: "contact",
+      value: contactFilter,
+      onChange: (v) => {
+        setContactFilter(v);
+        list.setPage(1);
+      },
+      placeholder: "Search name / email / phone…",
+    },
+  ];
 
   function toggleStatus(value: QuoteStatusValue, on: boolean) {
     setSelectedStatuses((prev) => {
@@ -244,13 +261,6 @@ export function QuotesList() {
         </Button>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Input
-          value={list.search}
-          onChange={(e) => list.setSearch(e.target.value)}
-          placeholder="Search name / email / phone…"
-          className="max-w-xs"
-          aria-label="Search quotes"
-        />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button className="bg-tys-indigo text-white uppercase hover:bg-tys-indigo/90">
@@ -327,6 +337,7 @@ export function QuotesList() {
         columns={columns}
         data={list.rows}
         emptyMessage="No quotes match the current filters."
+        columnFilters={columnFilters}
         server={{
           total: list.total,
           page: list.page,

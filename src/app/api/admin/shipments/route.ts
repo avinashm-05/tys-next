@@ -15,10 +15,19 @@ export const GET = adminRoute(async (req) => {
 
   const statusValues = (q.get("status") ?? "").split(",").filter(Boolean);
   const typeValues = (q.get("type") ?? "").split(",").filter(Boolean);
+  // Per-column filter row under the table header (Tracking/Sender/Receiver) —
+  // same pattern as Vendors' name/vendorType/etc. columnFilters, distinct
+  // per-field boxes instead of one shared search box.
+  const trackingFilter = q.get("trackingNumber")?.trim();
+  const senderFilter = q.get("sender")?.trim();
+  const receiverFilter = q.get("receiver")?.trim();
 
   const where: Prisma.ShipmentWhereInput = {
     ...(statusValues.length ? { status: { in: statusValues as Prisma.EnumShipmentStatusFilter["in"] } } : {}),
     ...(typeValues.length ? { shipmentType: { in: typeValues as Prisma.EnumShipmentTypeFilter["in"] } } : {}),
+    ...(trackingFilter ? { trackingNumber: { contains: trackingFilter } } : {}),
+    ...(senderFilter ? { senderContactName: { contains: senderFilter } } : {}),
+    ...(receiverFilter ? { recipientContactName: { contains: receiverFilter } } : {}),
     ...(p.search
       ? {
           OR: [
