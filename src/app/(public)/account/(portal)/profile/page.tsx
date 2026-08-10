@@ -18,6 +18,8 @@ export default async function ProfilePage() {
       name: true,
       email: true,
       phone: true,
+      displayUsername: true,
+      username: true,
       companyName: true,
       addressLine1: true,
       addressLine2: true,
@@ -49,6 +51,10 @@ export default async function ProfilePage() {
               postalCode: user?.postalCode ?? "",
             }}
             email={user?.email ?? session.user.email}
+            // displayUsername keeps the original casing; username is the
+            // normalized one actually used to sign in. Only ever empty for a
+            // row that predates the column and missed the backfill.
+            username={user?.displayUsername ?? user?.username ?? ""}
           />
         </div>
         <div className="rounded-2xl border border-brand-light bg-white p-6">

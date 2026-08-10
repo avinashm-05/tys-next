@@ -10,7 +10,7 @@ export const SHIPMENT_DETAIL_INCLUDE = {
     orderBy: { occurredAt: "desc" },
     include: { createdBy: { select: { name: true } } },
   },
-  user: { select: { email: true } },
+  user: { select: { email: true, username: true, displayUsername: true } },
 } satisfies Prisma.ShipmentInclude;
 
 type ShipmentWithDetail = Prisma.ShipmentGetPayload<{ include: typeof SHIPMENT_DETAIL_INCLUDE }>;
@@ -122,9 +122,10 @@ export function serializeTrackingEvent(e: ShipmentWithDetail["trackingEvents"][n
 }
 
 /** Detail shape for GET/PATCH /api/admin/shipments/[id] — everything the
- * 6-tab editor needs in one payload. `username` is derived read-only display
- * (the linked customer account's email, if any — there's no separate
- * editable "username" concept on Shipment). */
+ * 6-tab editor needs in one payload. `username` is derived read-only display:
+ * the linked customer account's real handle now that accounts have one,
+ * falling back to their email for rows whose account predates the username
+ * columns (or a shipment with no linked account at all). */
 export function serializeShipmentDetail(s: ShipmentWithDetail) {
   return {
     id: Number(s.id),
@@ -133,7 +134,7 @@ export function serializeShipmentDetail(s: ShipmentWithDetail) {
     status: s.status,
     allClear: s.allClear,
     packageType: s.packageType,
-    username: s.user?.email ?? null,
+    username: s.user?.displayUsername ?? s.user?.username ?? s.user?.email ?? null,
     managedBy: s.managedBy,
     shipmentType: s.shipmentType,
     serviceType: s.serviceType,

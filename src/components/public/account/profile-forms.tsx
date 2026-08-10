@@ -56,11 +56,13 @@ export function ProfileForm({
   initialPhone,
   initialAddress,
   email,
+  username,
 }: {
   initialName: string;
   initialPhone: string;
   initialAddress: ProfileAddress;
   email: string;
+  username: string;
 }) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
@@ -141,6 +143,13 @@ export function ProfileForm({
         <input className={inputClass} value={email} disabled />
         <p className="m-0 mt-1 text-xs text-ink-muted">
           Your email links your quotes to this account and can&apos;t be changed here.
+        </p>
+      </div>
+      <div>
+        <label className={labelClass}>Username</label>
+        <input className={inputClass} value={username} disabled />
+        <p className="m-0 mt-1 text-xs text-ink-muted">
+          You can sign in with this instead of your email address.
         </p>
       </div>
       <div>

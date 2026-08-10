@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { username } from "better-auth/plugins";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { cache } from "react";
 import { headers } from "next/headers";
@@ -9,6 +10,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { AUTH_COOKIE_PREFIX } from "@/lib/auth-cookie";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
+import { generateUniqueUsername } from "@/lib/username";
 import { HttpError, toErrorResponse } from "@/lib/validation/errors";
 
 export const ADMIN_ROLES = ["super-admin", "admin"] as const;
@@ -91,9 +93,27 @@ export const auth = betterAuth({
         // input:false below, so it can't arrive from the client at all.
         // Admin creation never passes through here (admin:create is direct
         // Prisma) and is unaffected.
-        before: async (user) => ({
-          data: { ...user, role: "user", createdAt: new Date(), updatedAt: new Date() },
-        }),
+        // Usernames are assigned here, not chosen at signup — the form stays
+        // Name/Email/Password. Derived from the name (falling back to the
+        // email local part) and de-duplicated; users_username_unique is the
+        // real guarantee if two signups race. displayUsername keeps the
+        // same value since nothing user-typed produced it.
+        before: async (user) => {
+          const username = await generateUniqueUsername(
+            "name" in user && typeof user.name === "string" ? user.name : null,
+            "email" in user && typeof user.email === "string" ? user.email : null,
+          );
+          return {
+            data: {
+              ...user,
+              role: "user",
+              username,
+              displayUsername: username,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          };
+        },
         // user_type_id stays Laravel's source of truth — set it via Prisma
         // directly (BigInt column; kept out of Better Auth's field model).
         after: async (user) => {
@@ -132,7 +152,11 @@ export const auth = betterAuth({
   // Laravel contract allows. The route handler enforces Laravel's exact rule
   // instead: 5 per email+IP per minute, 422 body (R33/R15).
   rateLimit: { enabled: false },
-  plugins: [nextCookies()],
+  // `username` adds sign-in by handle (POST /api/auth/sign-in/username)
+  // alongside the existing email path, and owns the username/displayUsername
+  // columns. nextCookies() stays last — it has to observe the other plugins'
+  // Set-Cookie headers.
+  plugins: [username(), nextCookies()],
 });
 
 export type AppSession = typeof auth.$Infer.Session;

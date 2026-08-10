@@ -52,6 +52,14 @@ model User {
   image           String?   @db.VarChar(255)
   role            String? // copy of userType.slug for Better Auth; user_type_id stays Laravel's source of truth
 
+  // Better Auth's username plugin owns both of these. `username` is the
+  // normalized (lowercased) unique handle used to sign in; `displayUsername`
+  // keeps the original casing for display. Nullable because every pre-existing
+  // row predates the feature — scripts/backfill-usernames.ts fills them in,
+  // and new signups get one generated in the user.create hook (lib/auth.ts).
+  username        String? @unique(map: "users_username_unique") @db.VarChar(30)
+  displayUsername String? @map("display_username") @db.VarChar(30)
+
   companyName  String? @map("company_name") @db.VarChar(255) // C1 customer profile field (additive)
   addressLine1 String? @map("address_line_1") @db.VarChar(255) // C1 customer profile field (additive)
   addressLine2 String? @map("address_line_2") @db.VarChar(255) // C1 customer profile field (additive)

@@ -125,12 +125,18 @@ export function RegisterForm() {
 }
 
 export function LoginForm({ verified }: { verified: boolean }) {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [unverified, setUnverified] = useState(false);
   const [resent, setResent] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // An "@" is the whole test: handles are [a-z0-9_] only (see lib/username.ts),
+  // so anything containing one can only be an email attempt. Picking the wrong
+  // endpoint just yields the same 401 as a bad password, so this never leaks
+  // which accounts exist.
+  const looksLikeEmail = identifier.includes("@");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -138,7 +144,9 @@ export function LoginForm({ verified }: { verified: boolean }) {
     setUnverified(false);
     setBusy(true);
     try {
-      const res = await post("/api/auth/sign-in/email", { email, password });
+      const res = looksLikeEmail
+        ? await post("/api/auth/sign-in/email", { email: identifier, password })
+        : await post("/api/auth/sign-in/username", { username: identifier, password });
       if (res.ok) {
         window.location.href = "/account";
         return;
@@ -158,11 +166,14 @@ export function LoginForm({ verified }: { verified: boolean }) {
     }
   }
 
+  // Only reachable when they typed an email — see the unverified block below.
+  // Signing in by handle gives us no address to send to, and the endpoint
+  // needs a real one.
   async function resend() {
     setBusy(true);
     try {
       await post("/api/auth/send-verification-email", {
-        email,
+        email: identifier,
         callbackURL: "/account/login?verified=1",
       });
       setResent(true);
@@ -180,8 +191,17 @@ export function LoginForm({ verified }: { verified: boolean }) {
         </p>
       )}
       <div>
-        <label className={labelClass}>Email address</label>
-        <input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+        <label className={labelClass}>Email or username</label>
+        {/* type="text", not "email" — a handle would trip the browser's own
+            email validation and the field accepts both. */}
+        <input
+          type="text"
+          autoComplete="username"
+          className={inputClass}
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          placeholder="you@example.com or yourhandle"
+        />
       </div>
       <div>
         <label className={labelClass}>Password</label>
@@ -196,7 +216,7 @@ export function LoginForm({ verified }: { verified: boolean }) {
               Your email isn&apos;t verified yet.{" "}
               {resent ? (
                 <strong>Verification email sent — check your inbox.</strong>
-              ) : (
+              ) : looksLikeEmail ? (
                 <button
                   type="button"
                   onClick={resend}
@@ -205,6 +225,10 @@ export function LoginForm({ verified }: { verified: boolean }) {
                 >
                   Resend the verification email
                 </button>
+              ) : (
+                // Signed in by handle, so we have no address to send to —
+                // say so rather than offer a button that can't work.
+                <>Enter your email address above to have the link resent.</>
               )}
             </span>
           </p>
