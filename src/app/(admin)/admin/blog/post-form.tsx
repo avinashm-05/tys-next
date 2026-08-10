@@ -40,6 +40,7 @@ export type PostFormValues = {
   id: number;
   slug: string;
   title: string;
+  metaTitle: string | null;
   description: string;
   category: string;
   body: string;
@@ -53,6 +54,7 @@ type FormInput = z.input<typeof postInput>;
 
 const FIELDS = [
   "title",
+  "meta_title",
   "slug",
   "description",
   "category",
@@ -88,6 +90,7 @@ export function PostForm({ post }: { post?: PostFormValues }) {
     resolver: (values, ctx, opts) => baseResolver(emptyStringsToNull(values) as FormInput, ctx, opts),
     defaultValues: {
       title: post?.title ?? "",
+      meta_title: post?.metaTitle ?? "",
       slug: post?.slug ?? "",
       description: post?.description ?? "",
       category: post?.category ?? "",
@@ -213,6 +216,21 @@ export function PostForm({ post }: { post?: PostFormValues }) {
                       })}
                     />
                     <FieldError errors={[errors.title]} />
+                  </Field>
+
+                  <Field data-invalid={!!errors.meta_title} className="sm:col-span-2">
+                    <FieldLabel htmlFor="meta_title">SEO title (optional)</FieldLabel>
+                    <Input
+                      id="meta_title"
+                      placeholder={form.watch("title") || "Same as title"}
+                      aria-invalid={!!errors.meta_title}
+                      {...form.register("meta_title")}
+                    />
+                    <FieldDescription>
+                      A shorter, keyword-first version for search results and the browser tab.
+                      Leave blank to just use the title above.
+                    </FieldDescription>
+                    <FieldError errors={[errors.meta_title]} />
                   </Field>
 
                   <Field data-invalid={!!errors.slug}>

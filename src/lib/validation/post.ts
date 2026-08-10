@@ -14,6 +14,12 @@ export const postInput = z.object({
     "Title cannot be empty or contain only whitespace.",
     "The title field must not be greater than 255 characters.",
   ),
+  // Optional override for the <title> tag — null/blank means "same as
+  // title". See the Prisma column comment for why this exists separately.
+  meta_title: z
+    .string()
+    .max(255, "The meta title field must not be greater than 255 characters.")
+    .nullish(),
   // Optional on input: the client pre-fills this from the title via the same
   // slugify() the API falls back to, but leaves it editable — an admin might
   // want a shorter/different URL than an exact title-derived one.

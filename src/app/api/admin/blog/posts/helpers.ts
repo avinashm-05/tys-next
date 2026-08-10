@@ -22,6 +22,7 @@ export function serializePost(p: Post) {
     id: Number(p.id),
     slug: p.slug,
     title: p.title,
+    metaTitle: p.metaTitle,
     description: p.description,
     category: p.category,
     body: p.body,
@@ -46,6 +47,7 @@ export function serializePost(p: Post) {
 export function postData(data: PostInput) {
   return {
     title: data.title,
+    metaTitle: data.meta_title?.trim() || null,
     description: data.description,
     category: data.category,
     body: data.body,

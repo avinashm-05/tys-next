@@ -20,6 +20,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
           id: Number(row.id),
           slug: row.slug,
           title: row.title,
+          metaTitle: row.metaTitle,
           description: row.description,
           category: row.category,
           body: row.body,

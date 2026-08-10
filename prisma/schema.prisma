@@ -596,9 +596,17 @@ model Setting {
 // pattern). See src/app/api/admin/blog/posts for the CRUD API and
 // src/app/(public)/blog/[slug]/page.tsx for public rendering.
 model Post {
-  id          BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
-  slug        String     @unique(map: "posts_slug_unique") @db.VarChar(255)
-  title       String     @db.VarChar(255)
+  id    BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  slug  String @unique(map: "posts_slug_unique") @db.VarChar(255)
+  title String @db.VarChar(255)
+  // Optional, separate <title> tag text. The 6 originally hand-written posts
+  // each had a shorter, keyword-front-loaded title tag distinct from their
+  // on-page H1 — standard practice since search results truncate around 60
+  // characters — and collapsing that into one field during the migration to
+  // this table would have silently changed already-indexed meta titles.
+  // Null falls back to `title` (see generateMetadata in the public [slug]
+  // route) — most posts don't need the distinction.
+  metaTitle   String?    @map("meta_title") @db.VarChar(255)
   // Dual-purpose, same as the old BLOG_POSTS array: meta description AND
   // the listing-card teaser.
   description String     @db.VarChar(500)

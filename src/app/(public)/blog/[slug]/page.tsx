@@ -34,7 +34,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const post = await getPost((await params).slug);
   if (!post) return {};
-  return { title: `${post.title} — TYS Blog`, description: post.description };
+  return { title: `${post.metaTitle ?? post.title} — TYS Blog`, description: post.description };
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<Params> }) {
