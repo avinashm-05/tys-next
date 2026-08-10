@@ -1,10 +1,32 @@
 import type { Icon } from "@phosphor-icons/react";
+import Image from "next/image";
 
-// Decorative title image for blog cards/posts. No photo library or
-// image-generation tool available here, so this is a brand-colored graphic
-// banner built from the same icon used for that post elsewhere on the
-// site, rather than a stock or fabricated photo.
-export function BlogBanner({ icon: IconCmp, className = "" }: { icon: Icon; className?: string }) {
+/**
+ * Post title image for blog cards/posts. When the admin has uploaded a
+ * hero image (`imageUrl`, from the public `/api/blog/media/...` route),
+ * that renders as a real photo. Otherwise falls back to the original
+ * decorative brand-colored graphic built from the post's category icon —
+ * no photo library or image-generation tool available here, so that's a
+ * deliberate choice for un-photographed posts, not a placeholder.
+ */
+export function BlogBanner({
+  icon: IconCmp,
+  imageUrl,
+  alt = "",
+  className = "",
+}: {
+  icon: Icon;
+  imageUrl?: string | null;
+  alt?: string;
+  className?: string;
+}) {
+  if (imageUrl) {
+    return (
+      <div className={`relative overflow-hidden rounded-3xl bg-brand-light ${className}`}>
+        <Image src={imageUrl} alt={alt} fill sizes="(min-width: 1024px) 33vw, 100vw" className="object-cover" />
+      </div>
+    );
+  }
   return (
     <div
       aria-hidden

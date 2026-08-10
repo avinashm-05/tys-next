@@ -7,11 +7,13 @@ export function ArticleJsonLd({
   description,
   datePublished,
   slug,
+  authorName = "Avinash",
 }: {
   headline: string;
   description: string;
   datePublished: string;
   slug: string;
+  authorName?: string;
 }) {
   const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(/\/+$/, "");
   const url = `${siteUrl}/blog/${slug}`;
@@ -24,7 +26,7 @@ export function ArticleJsonLd({
     url,
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     datePublished: new Date(datePublished).toISOString(),
-    author: { "@type": "Person", name: "Avinash" },
+    author: { "@type": "Person", name: authorName },
     publisher: {
       "@type": "Organization",
       name: "TYS Global Logistics",

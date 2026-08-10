@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { BLOG_POSTS } from "@/lib/blog-posts";
+import { db } from "@/lib/db";
 
 const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(
   /\/+$/,
@@ -52,7 +52,7 @@ const STATIC_ROUTES: {
   { path: "/tracking", priority: 0.7, changeFrequency: "monthly" },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${siteUrl}${r.path}`,
     lastModified: new Date(),
@@ -60,9 +60,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: r.priority,
   }));
 
-  const blogEntries: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
+  const posts = await db.post.findMany({
+    where: { status: "published" },
+    select: { slug: true, updatedAt: true },
+  });
+  const blogEntries: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${siteUrl}/blog/${post.slug}`,
-    lastModified: new Date(post.date),
+    lastModified: post.updatedAt ?? new Date(),
     changeFrequency: "monthly",
     priority: 0.6,
   }));
