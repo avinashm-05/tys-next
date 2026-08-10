@@ -39,7 +39,9 @@ export function BookShipmentLoginForm() {
     try {
       const res = await post("/api/auth/sign-in/email", { email, password });
       if (res.ok) {
-        window.location.href = "/book-shipment";
+        // Straight to the in-portal wizard rather than back through
+        // /book-shipment, which would only redirect here anyway.
+        window.location.href = "/account/schedule";
         return;
       }
       if (res.status === 403) {

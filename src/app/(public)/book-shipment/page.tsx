@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { BookShipmentLoginForm } from "@/components/public/book-shipment-login-form";
-import { ShipmentWizardForm } from "@/components/public/shipment-wizard-form";
 
 export const metadata: Metadata = { title: "Book Shipment — TYS Global Logistics" };
 
@@ -70,9 +70,13 @@ function VerifyEmailNotice() {
   );
 }
 
+// Kept as the logged-out door into scheduling (old links, bookmarks, and the
+// "log in to book" path all still land here). Once you're signed in the
+// wizard itself lives at /account/schedule, inside the portal shell, so the
+// sidebar doesn't vanish mid-flow — this just forwards you there.
 export default async function BookShipmentPage() {
   const session = await getSession();
   if (!session?.user) return <LoginGate />;
   if (!session.user.emailVerified) return <VerifyEmailNotice />;
-  return <ShipmentWizardForm />;
+  redirect("/account/schedule");
 }

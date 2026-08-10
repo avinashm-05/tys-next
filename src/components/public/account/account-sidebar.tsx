@@ -9,10 +9,11 @@ import { SignOutButton } from "@/components/public/account/sign-out-button";
 // reference's arrangement exactly: just Schedule Shipment + My Shipment(s) +
 // Profile, no Dashboard/Quotes/Tracking items. Those pages still exist
 // (reachable by direct URL) — this only trims what's linked from the nav.
-// "Schedule Shipment" links out to /book-shipment (not under /account) since
-// it's the portal's primary action, same role it plays in the reference.
+// "Schedule Shipment" points at /account/schedule, INSIDE the portal, so the
+// sidebar survives the click; /book-shipment is now just the logged-out door
+// into it. Every item here must stay within the (portal) group for that.
 const NAV_ITEMS = [
-  { href: "/book-shipment", label: "Schedule Shipment", icon: PaperPlaneTiltIcon },
+  { href: "/account/schedule", label: "Schedule Shipment", icon: PaperPlaneTiltIcon },
   { href: "/account/shipments", label: "My Shipments", icon: TruckIcon },
   { href: "/account/profile", label: "Profile", icon: UserIcon },
 ] as const;
