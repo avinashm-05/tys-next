@@ -7,6 +7,7 @@ import {
   CurrencyDollarIcon,
   FileTextIcon,
   MapPinLineIcon,
+  NewspaperIcon,
   ShippingContainerIcon,
   SlidersHorizontalIcon,
   SpinnerIcon,
@@ -40,6 +41,9 @@ const ITEMS = [
   { title: "Get Rates", href: "/admin/price-check", icon: CurrencyDollarIcon },
   { title: "Shipments", href: "/admin/shipments", icon: ShippingContainerIcon },
   { title: "Tracking", href: "/admin/tracking", icon: MapPinLineIcon },
+  // Flat, not nested under Vendors-style sub-items — this resource has no
+  // separate sub-view (no map/settings-equivalent), just the one list.
+  { title: "Blog", href: "/admin/blog", icon: NewspaperIcon },
 ] as const;
 
 // Services and Vendor Types no longer have standalone management pages —
