@@ -18,7 +18,11 @@ const SHIPMENT_TYPE_LABELS: Record<string, string> = { air: "Air", ground: "Grou
 export default async function ShipmentsPage() {
   const session = await requireCustomerPage();
   const shipments = await db.shipment.findMany({
-    where: { userId: BigInt(session.user.id) },
+    // doNotShowOnMyShipment is the admin's "Do not show on My Shipment"
+    // checkbox (Packages tab). It's the customer-facing half of that control
+    // — without it here the box saves happily and changes nothing, which is
+    // what it did until this filter was added.
+    where: { userId: BigInt(session.user.id), doNotShowOnMyShipment: false },
     orderBy: { id: "desc" },
     take: 50,
   });
