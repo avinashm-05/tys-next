@@ -21,6 +21,28 @@ function storageRoot(): string {
 }
 
 /**
+ * Disk storage cannot work on Vercel: the deployment filesystem is read-only
+ * apart from /tmp, and /tmp is per-invocation, so a write would either throw
+ * EROFS or "succeed" and vanish before the next request could read it back.
+ *
+ * Failing loudly here beats letting a blog hero image or a FedEx label upload
+ * look like it worked. Everything that doesn't touch files — the admin, the
+ * portal, the blog CMS minus hero images — runs on Vercel unaffected. Swapping
+ * this module for Vercel Blob or S3 is the fix, and the put/get/remove
+ * interface exists precisely so that stays a one-file change.
+ */
+function assertWritableTarget(): void {
+  if (process.env.VERCEL && !process.env.STORAGE_ROOT) {
+    throw new Error(
+      "File storage is not available on Vercel — the filesystem is ephemeral. " +
+        "This preview deployment can do everything except upload or read stored " +
+        "files (blog hero images, FedEx labels). Point STORAGE_ROOT at a writable " +
+        "volume, or swap src/lib/storage.ts for Vercel Blob / S3.",
+    );
+  }
+}
+
+/**
  * Builds a key for a new file. The caller supplies a prefix describing what
  * owns the file; the filename itself is always a fresh UUID rather than
  * anything user-supplied, so an uploaded name like "../../.env" or a
@@ -48,6 +70,7 @@ function resolveKey(key: string): string {
 }
 
 export async function putFile(key: string, bytes: Buffer): Promise<void> {
+  assertWritableTarget();
   const full = resolveKey(key);
   await mkdir(path.dirname(full), { recursive: true });
   await writeFile(full, bytes);

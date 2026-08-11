@@ -83,7 +83,11 @@ const nextConfig: NextConfig = {
   // actually needs) — the whole point being a manual-upload deploy target
   // that doesn't need `npm install` or a Git connection on the host at all.
   // Doesn't affect `next dev` or a normal `next start` deploy either.
-  output: "standalone",
+  //
+  // Skipped on Vercel: Vercel builds Next with its own serverless adapter and
+  // standalone fights it. `VERCEL=1` is set by their build environment, so
+  // Hostinger (the real deploy target) is unaffected.
+  ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
   images: {
     // Default is 60s — these source assets barely ever change and the CDN
     // cache is purged manually on every deploy anyway, so there's no need
