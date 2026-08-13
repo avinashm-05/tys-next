@@ -73,7 +73,16 @@ function emptyPackageRow() {
   };
 }
 
-export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number | null }) {
+export function ShipmentWizardForm({
+  linkedQuoteId,
+  embedded = false,
+}: {
+  linkedQuoteId?: number | null;
+  /** Inside the account portal, PortalCard already supplies the page padding,
+   *  heading and card chrome — this drops all three so they don't double up.
+   *  The standalone /book-shipment usage keeps them. */
+  embedded?: boolean;
+}) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -275,16 +284,25 @@ export function ShipmentWizardForm({ linkedQuoteId }: { linkedQuoteId?: number |
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 md:px-8 md:py-14">
-      <h1 className="mb-6 text-2xl font-bold text-ink">Schedule Shipment</h1>
+    <div className={embedded ? "" : "mx-auto max-w-4xl px-4 py-10 md:px-8 md:py-14"}>
+      {!embedded && <h1 className="mb-6 text-2xl font-bold text-ink">Schedule Shipment</h1>}
 
-      <div className="rounded-2xl border border-brand-light bg-white">
+      <div
+        className={
+          embedded ? "overflow-hidden rounded-xl border border-brand-light" : "rounded-2xl border border-brand-light bg-white"
+        }
+      >
+        {/* Filled active tab, matching the reference hub's step bar — the
+            previous underline-only treatment read as a link row rather than
+            as progress through a four-step form. */}
         <div className="flex flex-wrap border-b border-brand-light">
           {TABS.map((t) => (
             <div
               key={t.n}
-              className={`px-5 py-4 text-sm font-semibold ${
-                step === t.n ? "border-b-2 border-brand text-brand" : "text-ink-muted"
+              className={`flex-1 px-5 py-4 text-center text-sm font-semibold whitespace-nowrap ${
+                step === t.n
+                  ? "bg-brand text-white"
+                  : "bg-brand-pale/50 text-ink-muted"
               }`}
             >
               {t.label}
