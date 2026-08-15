@@ -193,11 +193,19 @@ export const quoteStoreInput = z
       .min(1, "Please select a package type.")
       .max(255, "The selected package type is invalid."),
 
-    // The single-page public form asks when/what timezone to call back
-    // instead of collecting box/tv/auto dimensions up front — staff fill
-    // those in via the admin editor once they've talked to the customer.
-    time_slot: z.enum(timeSlotValues, { error: () => "Please select a time that works for you." }),
-    timezone: timezoneField,
+    // Both OPTIONAL as of 2026-08-15. The multi-step wizard is the public
+    // form again, and it no longer asks the customer when to call back — that
+    // question was removed as unnecessary friction on a quote form. The
+    // wizard still sends `timezone`, inferred silently from the origin
+    // country, so sales knows what hour it is at the lead's end.
+    //
+    // Keep these OPTIONAL, not deleted: the columns are nullable
+    // (`preferred_time_slot`, `timezone` on `quotes`), older rows still carry
+    // real values, and the admin editor may still submit them. Making them
+    // required again would 422 every public submission — that exact bug was
+    // shipped once already on 2026-08-11.
+    time_slot: z.enum(timeSlotValues, { error: () => "Please select a time that works for you." }).nullish(),
+    timezone: timezoneField.nullish(),
 
     // Still accepted (and still validated below when present) so the admin
     // editor's own writes and any legacy caller keep working — the public

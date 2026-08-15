@@ -31,7 +31,6 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { COUNTRY_LIST } from "@/lib/countries-list";
 import { DIAL_CODES } from "@/lib/dial-codes";
-import { flagEmoji } from "@/lib/flag-emoji";
 import { calculateChargeableWeight } from "@/lib/chargeable-weight";
 import { SearchableSelect } from "@/components/public/searchable-select";
 import { PostalCodeInput } from "@/components/public/postal-code-input";
@@ -43,15 +42,13 @@ import {
   type QuoteWizardInput,
   type QuoteWizardValues,
 } from "@/lib/validation/quote-wizard";
-import { TIME_SLOTS } from "@/lib/validation/quote-store";
-import { detectTimezone, getTimezoneOptions, timezoneForCountry } from "@/lib/timezones";
+import { detectTimezone, timezoneForCountry } from "@/lib/timezones";
 
-const TIMEZONE_OPTIONS = getTimezoneOptions();
 
 const COUNTRY_OPTIONS = COUNTRY_LIST.map(([code, name]) => ({
   value: code,
   label: name,
-  flag: flagEmoji(code),
+  flag: code,
 }));
 
 // Keyed by ISO code, not dial code: NANP (US/CA/Caribbean, all "+1") and
@@ -60,7 +57,7 @@ const COUNTRY_OPTIONS = COUNTRY_LIST.map(([code, name]) => ({
 const DIAL_CODE_OPTIONS = DIAL_CODES.map(([code, dial, name]) => ({
   value: code,
   label: `${name} (${dial})`,
-  flag: flagEmoji(code),
+  flag: code,
 }));
 const DIAL_BY_ISO = new Map(DIAL_CODES.map(([code, dial]) => [code, dial]));
 
@@ -204,19 +201,21 @@ export function QuoteWizardForm({
       box_details: [],
       television_details: [],
       auto_details: [],
-      time_slot: undefined as unknown as QuoteWizardInput["time_slot"],
       timezone: "",
       contact: { name: "", email: "", country_code: "+1", phone: "" },
     },
   });
   const { control, register, watch, setValue, trigger, handleSubmit, formState, reset, getValues } = form;
 
-  // Default the callback timezone off "Sending From" — the shipment's origin
-  // is a better guess than the visitor's own browser zone (someone filling
-  // this in on a customer's behalf shouldn't get their own). Falls back to the
-  // browser zone for a country with no curated mapping. Post-mount only: the
-  // browser's zone can differ from the server's, and setting it during SSR
-  // would desync hydration. Stops once the customer picks their own.
+  // Timezone is captured SILENTLY — there is no timezone field in the form.
+  // The customer-facing "best time to call you back" question was removed
+  // (2026-08-15) as too much friction on a quote form, but sales still wants
+  // to know what hour it is at the lead's end, so we infer it from "Sending
+  // From" — the shipment's origin is a better guess than the visitor's own
+  // browser zone (someone filling this in on a customer's behalf shouldn't
+  // get their own). Falls back to the browser zone for a country with no
+  // curated mapping. Post-mount only: the browser's zone can differ from the
+  // server's, and setting it during SSR would desync hydration.
   const timezoneTouchedRef = useRef(false);
   const watchedFromCountry = watch("from_country");
   const watchedTimezone = watch("timezone");
@@ -686,51 +685,6 @@ export function QuoteWizardForm({
               )}
             </div>
 
-            {/* Callback time + timezone. quoteStoreInput made both REQUIRED
-                after this wizard was first retired, so without them every
-                submission 422s. Asked here, beside the contact details, which
-                is where the single-page form put them. */}
-            <div className="md:col-span-2">
-              <label className={labelClass}>Best Time To Call You Back</label>
-              <div className="mt-1.5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {TIME_SLOTS.map((s) => {
-                  const active = watch("time_slot") === s.value;
-                  return (
-                    <button
-                      key={s.value}
-                      type="button"
-                      onClick={() => setValue("time_slot", s.value, { shouldValidate: isSubmitted })}
-                      className={`rounded-xl border px-3 py-3 text-center transition ${
-                        active
-                          ? "border-brand bg-brand-pale text-brand"
-                          : "border-brand-light bg-white text-ink hover:border-brand"
-                      }`}
-                    >
-                      <span className="block text-sm font-semibold">{s.label}</span>
-                      <span className="block text-xs text-ink-muted">{s.hint}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {isSubmitted && errors.time_slot && (
-                <p className={errorClass}>{errors.time_slot.message}</p>
-              )}
-            </div>
-
-            <div className="md:col-span-2">
-              <label className={labelClass}>Your Timezone</label>
-              <select className={`mt-1.5 ${inputClass}`} {...register("timezone")}>
-                <option value="">Select timezone</option>
-                {TIMEZONE_OPTIONS.map((tz) => (
-                  <option key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </option>
-                ))}
-              </select>
-              {isSubmitted && errors.timezone && (
-                <p className={errorClass}>{errors.timezone.message}</p>
-              )}
-            </div>
           </div>
         )}
 

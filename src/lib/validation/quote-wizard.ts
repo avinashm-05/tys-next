@@ -31,14 +31,13 @@ export const quoteWizardSchema = z
     television_details: z.array(televisionDetail),
     auto_details: z.array(autoDetail),
 
-    // Brought back with the wizard (2026-08-11). quoteStoreInput gained these
-    // AFTER this wizard was first retired, and both are required server-side —
-    // without them every submission 422s. They sit on step 4 beside the
-    // contact details, which is where the single-page form asked for them.
-    time_slot: z.enum(["morning", "afternoon", "evening"], {
-      error: () => "Please select a time that works for you.",
-    }),
-    timezone: z.string().min(1, "Please select your timezone."),
+    // No customer-facing field: the wizard fills this in itself from the
+    // origin country (see quote-wizard-form.tsx). The matching "best time to
+    // call you back" question was dropped from the form on 2026-08-15, so
+    // time_slot is no longer collected here at all and quoteStoreInput now
+    // accepts it as optional. Left unvalidated (no .min(1)) on purpose —
+    // there is no input for the customer to correct if the guess ever fails.
+    timezone: z.string(),
 
     contact: quoteContact,
   })
@@ -70,7 +69,7 @@ export const STEP_FIELDS = {
   1: ["from_country", "from_zip", "to_country", "to_zip", "is_residence"],
   2: ["package_types"],
   3: ["box_details", "television_details", "auto_details"],
-  4: ["contact", "time_slot", "timezone"],
+  4: ["contact"],
 } as const;
 
 // Only these package types have a details sub-section on step 3 — envelope
@@ -95,7 +94,6 @@ export function toApiPayload(values: QuoteWizardValues) {
     box_details: values.package_types.includes("boxes") ? values.box_details : [],
     television_details: values.package_types.includes("television") ? values.television_details : [],
     auto_details: values.package_types.includes("auto") ? values.auto_details : [],
-    time_slot: values.time_slot,
     timezone: values.timezone,
     contact: values.contact,
   };

@@ -272,7 +272,12 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
         packageTypeLabel: emailData.packageTypeLabel,
         estimatedCost: decimal2(full.estimatedCost),
         currency: full.currency ?? "USD",
-        callbackWindow: `${TIME_SLOT_LABELS[data.time_slot] ?? data.time_slot} (${data.timezone})`,
+        // The public wizard stopped asking for a callback slot (2026-08-15)
+        // and now only infers the timezone, so show whichever we actually
+        // have. Both are optional; the email omits the row when it's empty.
+        callbackWindow: data.time_slot
+          ? `${TIME_SLOT_LABELS[data.time_slot] ?? data.time_slot}${data.timezone ? ` (${data.timezone})` : ""}`
+          : data.timezone || undefined,
         adminUrl: `${(process.env.BETTER_AUTH_URL ?? "").replace(/\/+$/, "")}/admin/quotes/${Number(full.id)}`,
       });
     } catch {
