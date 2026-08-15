@@ -124,7 +124,7 @@ export default async function ThankYouPage({
             Back to Home
           </Link>
           <Link
-            href="/#get-quote"
+            href="/quotes"
             className="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-dark"
           >
             Get New Quote

@@ -167,7 +167,7 @@ export function ServiceCtaBanner({ label = "Get a Free Quote" }: { label?: strin
   return (
     <section className="px-4 pb-14 md:px-8">
       <Link
-        href="/#get-quote"
+        href="/quotes"
         className="btn-shine mx-auto flex max-w-6xl items-center justify-end gap-2 rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
       >
         {label} <ArrowRightIcon size={26} />

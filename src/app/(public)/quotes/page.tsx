@@ -1,13 +1,31 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { QuoteWizardForm } from "@/components/public/quote-wizard-form";
+import { normalizeCode } from "@/lib/countries";
 
-// The single-page quote form used to live here; it's now embedded directly
-// in the home page hero (id="get-quote", see page.tsx) so a visitor never
-// has to leave the home page to submit one. This route stays as a redirect
-// — not a hard 404 — for anyone with an old /quotes bookmark or inbound
-// link. from_country/to_country prefill params aren't carried forward:
-// nothing currently sends this route those params anymore (the mini-quote-
-// form.tsx "Need a Quote" card links to /#get-quote too), and the embedded
-// form doesn't read query params off the home page URL.
-export default function QuotesPage() {
-  redirect("/#get-quote");
+export const metadata: Metadata = {
+  title: "Get a Free Quote — TYS Global Logistics",
+  description: "Get a free domestic or international shipping quote in under a minute.",
+};
+
+// B2 redesign — the quote wizard's own route (previously inline-only on the
+// home page). from_country/to_country are read from the query string so the
+// home page's mini quote forms can hand off a prefilled Step 1 (mirrors what
+// the old Laravel QuoteController@index did with the same params).
+//
+// The colored hero band + curve live inside QuoteWizardForm itself now, not
+// here — the title/subtitle need to switch to the customer's own route once
+// results are showing, and only the client component knows that state.
+export default async function QuotesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from_country?: string; to_country?: string }>;
+}) {
+  const { from_country, to_country } = await searchParams;
+
+  return (
+    <QuoteWizardForm
+      defaultFromCountry={normalizeCode(from_country) || undefined}
+      defaultToCountry={normalizeCode(to_country) || undefined}
+    />
+  );
 }

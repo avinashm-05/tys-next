@@ -10,7 +10,7 @@ export function OfferCard({
   icon,
   title,
   body,
-  href = "/#get-quote",
+  href = "/quotes",
 }: {
   icon: string;
   title: string;

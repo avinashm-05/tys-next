@@ -11,5 +11,5 @@ import { redirect } from "next/navigation";
 // unlinked — see feedback_deletion_permission memory (ask before deleting,
 // even confirmed-unused code).
 export default function QuickQuotePage() {
-  redirect("/#get-quote");
+  redirect("/quotes");
 }

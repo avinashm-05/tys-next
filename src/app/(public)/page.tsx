@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRightIcon, GlobeIcon, HeadsetIcon } from "@phosphor-icons/react/dist/ssr";
 import { MiniQuoteForm } from "@/components/public/mini-quote-form";
-import { QuoteRequestForm } from "@/components/public/quote-request-form";
 import { FaqAccordion } from "@/components/public/faq-accordion";
 import { TrustpilotFullLogo } from "@/components/public/trustpilot-logo";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
@@ -121,17 +120,12 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Full quote form directly in the hero (not just the From/To
-              teaser MiniQuoteForm used to be) — requested so a visitor can
-              go from landing to submitted without a second page. variant=
-              "embedded" drops QuoteRequestForm's own heading + section
-              chrome (this hero already has its own H1 above); the form/
-              card styling and submit behavior are identical to /quotes. */}
-          <div
-            id="get-quote"
-            className="relative mx-auto mt-3 w-full scroll-mt-28 sm:mt-10"
-          >
-            <QuoteRequestForm variant="embedded" />
+          {/* From/To teaser only. The full quote flow is the four-step wizard
+              at /quotes again (Location → Package → Details → Contact); this
+              hands its two selections over as a prefilled Step 1 rather than
+              asking everything on the home page. */}
+          <div className="relative mx-auto mt-3 w-full max-w-3xl sm:mt-10">
+            <MiniQuoteForm layout="columns" />
           </div>
         </div>
 
@@ -330,7 +324,7 @@ export default function HomePage() {
             ))}
           </div>
           <Link
-            href="/#get-quote"
+            href="/quotes"
             className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
           >
             Get a Free Quote <ArrowRightIcon size={26} />
@@ -442,7 +436,7 @@ export default function HomePage() {
               ))}
             </div>
             <Link
-              href="/#get-quote"
+              href="/quotes"
               className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
             >
               Get a Free Quote <ArrowRightIcon size={26} />
@@ -554,7 +548,7 @@ export default function HomePage() {
             ))}
           </div>
           <Link
-            href="/#get-quote"
+            href="/quotes"
             className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
           >
             Get a Free Quote <ArrowRightIcon size={26} />
@@ -617,7 +611,7 @@ export default function HomePage() {
               </div>
             </div>
             <Link
-              href="/#get-quote"
+              href="/quotes"
               className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
             >
               Get a Free Quote <ArrowRightIcon size={26} />

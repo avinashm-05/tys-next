@@ -29,8 +29,13 @@ import { UsFlag } from "@/components/public/us-flag";
 // Book Shipment stays out of the marketing nav on purpose: scheduling lives
 // inside the account portal (its sidebar's primary action), matching the
 // reference hub rather than exposing a booking form to logged-out visitors.
-// The account entry points below are live again as of the customer-portal
-// work — the icon here and the "My Account" row in the mobile drawer.
+//
+// The account entry points are hidden again (2026-08-11) — the customer
+// portal isn't being shown to the public yet. The /account routes, auth and
+// portal all still work; this only removes the ways in from the marketing
+// site. To bring them back: re-add the UserCircleIcon link in the desktop
+// cluster below, the "My Account" MOBILE_MENU_ITEMS row, and the footer's
+// Help entry in site-footer.tsx.
 const NAV_LINKS = [
   { href: "/tracking", label: "Tracking" },
   { href: "/contact-us", label: "Contact Us" },
@@ -55,9 +60,9 @@ const MOBILE_MENU_ITEMS = [
   { href: "/blog", label: "Blog", icon: BookOpenIcon },
   { href: "/contact-us/pay", label: "Pay Online", icon: CreditCardIcon },
   { href: "/tracking", label: "Tracking", icon: ClockIcon },
-  { href: "/#get-quote", label: "Get Quote", icon: NotePencilIcon },
+  { href: "/quotes", label: "Get Quote", icon: NotePencilIcon },
   { href: "/contact-us", label: "Contact Us", icon: HeadsetIcon },
-  { href: "/account", label: "My Account", icon: UserCircleIcon },
+  // "My Account" hidden for now — see the comment above NAV_LINKS.
 ] as const;
 
 // B1/B2 redesign — Tailwind rebuild matching the new Figma nav. Replaces the
@@ -128,7 +133,7 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-4 whitespace-nowrap xl:flex">
           <Link
-            href="/#get-quote"
+            href="/quotes"
             className="flex items-center gap-1.5 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark"
           >
             Get a Free Quote
@@ -141,14 +146,8 @@ export function SiteHeader() {
             <PhoneIcon size={16} weight="bold" />
             +1 (404) 793-8759
           </a>
+          {/* "My Account" icon hidden for now — see the comment above NAV_LINKS. */}
           <UsFlag className="h-5 w-auto overflow-hidden rounded-[3px]" />
-          <Link
-            href="/account"
-            aria-label="My account"
-            className="flex items-center justify-center text-ink hover:text-brand"
-          >
-            <UserCircleIcon size={24} />
-          </Link>
         </div>
 
         <button
@@ -270,7 +269,7 @@ export function SiteHeader() {
 
         <div className="mt-4 flex flex-col gap-2 px-5">
           <Link
-            href="/#get-quote"
+            href="/quotes"
             tabIndex={mobileOpen ? 0 : -1}
             onClick={() => setMobileOpen(false)}
             className="rounded-full bg-brand px-5 py-3 text-center text-sm font-semibold text-white"

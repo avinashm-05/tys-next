@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { COUNTRY_LIST } from "@/lib/countries-list";
 import { SearchableSelect } from "@/components/public/searchable-select";
 
@@ -10,18 +11,14 @@ const COUNTRY_OPTIONS = COUNTRY_LIST.map(([code, name]) => ({
   flag: code,
 }));
 
-// "Need a Quote" mini form further down the home page — collects From/To,
-// then scrolls back up to the real quote form (id="get-quote" in the hero,
-// see page.tsx), which is now the only quote form on the site. There's no
-// separate page to hand these values off to anymore (that used to be
-// /quotes — see that route's own comment), so the selections here are a
-// lightweight preview before scrolling, not passed through automatically;
-// not itself a validated form either way.
+// "Need a Quote" mini form — collects From/To and hands them to the full
+// multi-step wizard at /quotes as prefilled Step 1 (that route reads
+// from_country/to_country off the query string, mirroring what the old
+// Laravel QuoteController@index did with the same params). Not itself a
+// validated form: the wizard revalidates everything on Step 1 anyway.
 //
-// `layout="columns"` is the wide desktop hero treatment (From/To side by
-// side, pill inputs) — unused now that the hero itself embeds the full
-// form directly, kept for the narrower "Need a Quote" card's own use of
-// this component. `layout="stacked"` (default) is that card's treatment.
+// `layout="columns"` is the wide hero treatment (From/To side by side, pill
+// inputs); `layout="stacked"` (default) is the narrower "Need a Quote" card.
 export function MiniQuoteForm({
   className = "",
   layout = "stacked",
@@ -29,14 +26,17 @@ export function MiniQuoteForm({
   className?: string;
   layout?: "stacked" | "columns";
 }) {
+  const router = useRouter();
   const [fromCountry, setFromCountry] = useState("US");
   const [toCountry, setToCountry] = useState("");
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    document
-      .getElementById("get-quote")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const params = new URLSearchParams();
+    if (fromCountry) params.set("from_country", fromCountry);
+    if (toCountry) params.set("to_country", toCountry);
+    const qs = params.toString();
+    router.push(qs ? `/quotes?${qs}` : "/quotes");
   }
 
   const pill = layout === "columns";

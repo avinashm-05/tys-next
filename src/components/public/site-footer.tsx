@@ -17,14 +17,12 @@ const RESOURCES = [
   { href: "/blog", label: "Blog" },
 ] as const;
 
-// "Book Shipment" stays out here too — see the matching note in
-// site-header.tsx. "My Account" is the way in to the portal, and scheduling
-// is the portal's own primary action once you're signed in.
+// "Book Shipment" and "My Account" both stay out here — see the matching
+// note in site-header.tsx. The portal isn't being shown to the public yet.
 const HELP = [
   { href: "/tracking", label: "Track Shipment" },
-  { href: "/#get-quote", label: "Get Quote" },
+  { href: "/quotes", label: "Get Quote" },
   { href: "/contact-us", label: "Contact Us" },
-  { href: "/account", label: "My Account" },
 ] as const;
 
 const LEGAL = [
