@@ -255,8 +255,15 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
     };
     try {
       await sendQuoteConfirmationEmail(emailData);
-    } catch {
-      /* sendMail already logged it — never fail the quote on a mail outage. */
+    } catch (err) {
+      // Never fail the quote on a mail outage — but DO say why. These used to
+      // be bare `catch {}`, which meant a silently-failing mailer in
+      // production was undiagnosable: no error, no log, nothing in hPanel's
+      // Runtime logs, and the customer still saw a success page.
+      console.error(
+        `[quote ${Number(full.id)}] customer confirmation email FAILED:`,
+        err instanceof Error ? `${err.name}: ${err.message}` : err,
+      );
     }
     try {
       await sendAdminQuoteNotification({
@@ -280,8 +287,12 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
           : data.timezone || undefined,
         adminUrl: `${(process.env.BETTER_AUTH_URL ?? "").replace(/\/+$/, "")}/admin/quotes/${Number(full.id)}`,
       });
-    } catch {
-      /* admin notification is best-effort too. */
+    } catch (err) {
+      // Best-effort, but logged — see the note on the confirmation catch above.
+      console.error(
+        `[quote ${Number(full.id)}] admin notification email FAILED:`,
+        err instanceof Error ? `${err.name}: ${err.message}` : err,
+      );
     }
   }
 

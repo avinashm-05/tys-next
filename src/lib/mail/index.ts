@@ -518,7 +518,13 @@ export async function sendAdminQuoteNotification(d: AdminQuoteNotification) {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  if (recipients.length === 0) return null;
+  if (recipients.length === 0) {
+    // Say so. An unset or empty ADMIN_NOTIFICATION_EMAILS made this a totally
+    // silent no-op, which from an empty inbox is indistinguishable from the
+    // SMTP server rejecting the message. Now the two are tellable apart.
+    console.warn("[mail] ADMIN_NOTIFICATION_EMAILS is empty — admin notification skipped.");
+    return null;
+  }
 
   const cost = d.estimatedCost
     ? `${esc(d.currency || "USD")} ${esc(d.estimatedCost)}`
@@ -580,7 +586,13 @@ export async function sendAdminCallbackNotification(d: AdminCallbackNotification
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  if (recipients.length === 0) return null;
+  if (recipients.length === 0) {
+    // Say so. An unset or empty ADMIN_NOTIFICATION_EMAILS made this a totally
+    // silent no-op, which from an empty inbox is indistinguishable from the
+    // SMTP server rejecting the message. Now the two are tellable apart.
+    console.warn("[mail] ADMIN_NOTIFICATION_EMAILS is empty — admin notification skipped.");
+    return null;
+  }
 
   const subject = `New callback request #${d.requestId} — ${d.name}`;
   const html = `
