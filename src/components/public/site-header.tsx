@@ -194,37 +194,39 @@ export function SiteHeader() {
       />
       <div
         aria-hidden={!mobileOpen}
-        style={
-          !mobileOpen
-            ? // Anchored from the LEFT with a viewport-relative 100vw shift,
-              // not `right: 0` + `translateX(100%)` — confirmed live,
-              // 2026-08-06: the className below still carries Tailwind's
-              // `right-0`, and inline `style` only overrides the properties
-              // it actually sets. With `left` and `right` BOTH active at
-              // once on a fixed, explicitly-widthed element, that's the
-              // classic CSS over-constrained case — this browser resolved
-              // it by keeping `right: 0` in charge instead of `left`,
-              // landing the "hidden" drawer hundreds of pixels further right
-              // than intended and reintroducing the exact overflow this
-              // fallback exists to prevent. Explicitly setting `right:
-              // "auto"` here removes the conflicting value entirely instead
-              // of hoping `left` wins the tie-break. `translateX(100vw)`
-              // (viewport-relative, not 100% of the element's own width)
-              // guarantees a full viewport-width shift regardless of the
-              // drawer's own computed width.
-              {
-                position: "fixed",
-                top: 0,
-                bottom: 0,
-                left: 0,
-                right: "auto",
-                transform: "translateX(100vw)",
-              }
-            : undefined
-        }
-        className={`fixed inset-y-0 right-0 z-50 flex h-dvh w-[85%] max-w-xs flex-col overflow-y-auto bg-white pb-8 shadow-2xl transition-transform duration-300 ease-out ${
-          mobileOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        // PERMANENT inline override of position/top/right/bottom — applied
+        // unconditionally now, not only while closed. It used to be
+        // conditional and anchored from the LEFT while closed
+        // (`left: 0, right: "auto"`) versus the open state's className
+        // anchoring from the RIGHT (`right-0`) — two different edges. Only
+        // `transform` is in `transition-property` here; `left`/`right`/
+        // `position` are not animatable at all, so every toggle between
+        // those two anchors was an instant, un-transitioned snap sitting
+        // right next to the smooth slide. Most visible on CLOSE — it
+        // snapped while the drawer was still fully on-screen, which is
+        // exactly the "closes in a disrupted way" jerk reported
+        // 2026-08-16. (On open the same snap happened too, just at
+        // translateX(100%) — fully off-screen — before the slide-in became
+        // visible, so it went unnoticed.) Anchoring from the SAME edge
+        // (right: 0, matching the className below exactly) at all times
+        // means only `transform` ever differs between states, so the slide
+        // is the only motion. Still kept inline (not class-only) for the
+        // original reason this existed at all: on a real mobile connection
+        // where the stylesheet lands slightly behind the HTML paint,
+        // class-only `fixed inset-y-0 right-0` is inert and the drawer
+        // renders unstyled, in-flow, overlaid on real content — confirmed
+        // via an actual MobileSafari session recording, 2026-08-06. Being
+        // unconditional (present on every render, including the initial
+        // server-rendered HTML) covers that case even more directly than
+        // before.
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          transform: mobileOpen ? "translateX(0)" : "translateX(100%)",
+        }}
+        className="fixed inset-y-0 right-0 z-50 flex h-dvh w-[85%] max-w-xs flex-col overflow-y-auto bg-white pb-8 shadow-2xl transition-transform duration-300 ease-out"
       >
         <div className="flex items-center justify-between px-5 py-4">
           <img

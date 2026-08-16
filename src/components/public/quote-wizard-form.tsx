@@ -120,8 +120,12 @@ type SubmitResult = {
 function QuoteHero({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mx-auto max-w-2xl text-center">
-      <h1 className="text-3xl font-extrabold text-white md:text-4xl">{title}</h1>
-      {subtitle && <p className="mt-2 text-white/70">{subtitle}</p>}
+      {/* text-2xl on mobile, not text-3xl — this is a compact utility form,
+          not a marketing headline, and the larger size (still used at
+          md+, where there's room) read as oversized next to the tight
+          spacing below it. */}
+      <h1 className="text-2xl font-extrabold text-white md:text-4xl">{title}</h1>
+      {subtitle && <p className="mt-1.5 text-sm text-white/70 md:mt-2 md:text-base">{subtitle}</p>}
     </div>
   );
 }
@@ -336,16 +340,28 @@ export function QuoteWizardForm({
   const activeStep = STEPS[activeIndex] ?? STEPS[0];
 
   return (
-    <section className="bg-ink px-4 pb-12 pt-6 md:px-8 md:pb-16 md:pt-10">
+    // min-h keeps the dark background reaching the bottom of the viewport.
+    // The shared public layout's wrapper is `min-h-full` + `bg-white`, and
+    // `full` resolves against an ancestor height that neither html nor body
+    // actually sets — so on a short page the wrapper stops at its content
+    // height and leaves a white strip below it (reported 2026-08-16, only
+    // appeared once this page got short enough to not fill a tall display).
+    // Fixed here rather than in the layout so nothing outside the quote form
+    // changes. 102px is the header's height — it's the same at every
+    // breakpoint (fixed h-11 logo + py-3 inner + py-4 outer), and the header
+    // is `sticky`, not `fixed`, so it genuinely occupies that much flow space
+    // above this section. dvh (not vh) so mobile browser chrome collapsing
+    // doesn't leave a gap.
+    <section className="min-h-[calc(100dvh-102px)] bg-ink px-4 pb-6 pt-4 md:px-8 md:pb-16 md:pt-10">
       <QuoteHero
         title="Get a Free Quote"
         subtitle="Tell us about your shipment and we'll get you a rate in minutes."
       />
-      <div className="mx-auto mt-8 max-w-5xl">
+      <div className="mx-auto mt-4 max-w-5xl md:mt-8">
     <div>
       {/* Mobile: only the current step's card, matching the reference —
           the full 3-up grid is reserved for md+ where it fits comfortably. */}
-      <div className="flex items-center gap-3 rounded-2xl border-b-2 border-brand bg-white p-4 shadow-sm md:hidden">
+      <div className="flex items-center gap-3 rounded-2xl border-b-2 border-brand bg-white p-3 shadow-sm md:hidden">
         <activeStep.icon size={28} className="shrink-0 text-brand" />
         <div>
           <div className="text-xs text-ink-muted">Step {activeIndex + 1}</div>
@@ -368,9 +384,9 @@ export function QuoteWizardForm({
         ))}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-8">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-4 md:mt-8">
         {step === 1 && (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2 md:gap-6">
             <div>
               <label className={labelClass}>Sending From</label>
               <div className="mt-1.5">
@@ -472,7 +488,10 @@ export function QuoteWizardForm({
 
         {step === 2 && (
           <div>
-            <div className="grid grid-cols-2 gap-5 md:grid-cols-5">
+            {/* Mobile keeps 2 columns but much tighter padding/icon sizing —
+                at p-8 + h-16 icons this step alone ran ~300px past the fold
+                on a 812px-tall phone. Desktop (md:) is unchanged. */}
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-5">
               {PACKAGE_TYPES.map((pt) => {
                 const Icon = PACKAGE_CARD_ICON[pt.value];
                 const selected = packageTypes.includes(pt.value);
@@ -481,16 +500,17 @@ export function QuoteWizardForm({
                     type="button"
                     key={pt.value}
                     onClick={() => togglePackageType(pt.value)}
-                    className={`flex flex-col items-center gap-4 rounded-2xl border-2 bg-white p-8 text-center transition ${
+                    className={`flex flex-col items-center gap-2 rounded-2xl border-2 bg-white p-3 text-center transition md:gap-4 md:p-8 ${
                       selected ? "border-brand" : "border-brand-light"
                     }`}
                   >
                     <span
-                      className={`flex h-16 w-16 items-center justify-center rounded-2xl ${selected ? "bg-brand text-white" : "bg-gray-100 text-ink-muted"}`}
+                      className={`flex h-11 w-11 items-center justify-center rounded-xl md:h-16 md:w-16 md:rounded-2xl ${selected ? "bg-brand text-white" : "bg-gray-100 text-ink-muted"}`}
                     >
-                      <Icon size={28} />
+                      <Icon size={22} className="md:hidden" />
+                      <Icon size={28} className="hidden md:block" />
                     </span>
-                    <span className="text-base font-medium text-ink">{pt.label}</span>
+                    <span className="text-sm font-medium text-ink md:text-base">{pt.label}</span>
                   </button>
                 );
               })}
@@ -500,7 +520,7 @@ export function QuoteWizardForm({
         )}
 
         {step === 3 && (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2 md:gap-6">
             <div>
               <label className={labelClass}>Name</label>
               <input className={`mt-1.5 ${inputClass}`} placeholder="Enter name" {...register("contact.name")} />
@@ -553,7 +573,7 @@ export function QuoteWizardForm({
         {submitError && <p className={`${errorClass} mt-4`}>{submitError}</p>}
 
         <div
-          className={`mt-10 flex items-center justify-between ${justTransitioned ? "pointer-events-none" : ""}`}
+          className={`mt-6 flex items-center justify-between md:mt-10 ${justTransitioned ? "pointer-events-none" : ""}`}
         >
           {step > 1 ? (
             <button
