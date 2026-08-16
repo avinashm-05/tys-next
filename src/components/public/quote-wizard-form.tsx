@@ -79,8 +79,13 @@ const PACKAGE_CARD_ICON: Record<string, typeof PackageIcon> = {
   auto: CarSimpleIcon,
 };
 
+// text-base (16px) on mobile, text-sm only from md up. iOS Safari auto-zooms
+// the whole page when you focus an input smaller than 16px, and never zooms
+// back out — which is the "it zooms while adding data" report (2026-08-16).
+// The search box inside SearchableSelect already had this fix for the same
+// reason; these fields did not.
 const inputClass =
-  "w-full rounded-xl border border-brand-light bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand disabled:bg-brand-pale disabled:text-ink-muted";
+  "w-full rounded-xl border border-brand-light bg-white px-4 py-3 text-base text-ink outline-none focus:border-brand disabled:bg-brand-pale disabled:text-ink-muted md:text-sm";
 // Labels/checkbox text/error text below all sit directly on the page's own
 // dark background (see QuoteHero/the wrapping section), not inside a white
 // card — hence light-on-dark colors here, distinct from `inputClass` above,
@@ -352,7 +357,17 @@ export function QuoteWizardForm({
     // is `sticky`, not `fixed`, so it genuinely occupies that much flow space
     // above this section. dvh (not vh) so mobile browser chrome collapsing
     // doesn't leave a gap.
-    <section className="min-h-[calc(100dvh-102px)] bg-ink px-4 pb-6 pt-4 md:px-8 md:pb-16 md:pt-10">
+    <section className="relative min-h-[calc(100dvh-102px)] bg-ink px-4 pb-6 pt-4 md:px-8 md:pb-16 md:pt-10">
+      {/* Fixed dark backdrop covering the whole viewport, behind everything.
+          The section's own min-height is in dvh, which SHRINKS when the
+          on-screen keyboard opens — so the dark area got shorter than the
+          page and the layout's white wrapper showed through underneath it
+          ("bottom white space while keyboard is up", 2026-08-16). A fixed
+          inset-0 layer is immune to that: it tracks the viewport itself, at
+          whatever size, so there is nothing white left to expose no matter
+          how the keyboard resizes things. -z-10 keeps it under the form;
+          the sticky header is z-50 and unaffected. */}
+      <div aria-hidden className="fixed inset-0 -z-10 bg-ink" />
       <QuoteHero
         title="Get a Free Quote"
         subtitle="Tell us about your shipment and we'll get you a rate in minutes."

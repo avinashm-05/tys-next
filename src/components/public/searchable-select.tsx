@@ -312,7 +312,10 @@ export function SearchableSelect({
         id={id}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={`flex w-full items-center justify-between gap-2 border bg-white text-left text-ink outline-none focus:border-brand ${large ? "px-4 py-4 text-base" : "px-4 py-3 text-sm"} ${pill ? "rounded-full" : "rounded-xl"} ${open ? "border-brand" : invalid ? "border-red-400" : "border-brand-light"}`}
+        // Non-large triggers: text-base on mobile, text-sm from md up. Same
+        // iOS focus-zoom reason as the search input below — a <16px control
+        // makes Safari zoom the page in and not back out.
+        className={`flex w-full items-center justify-between gap-2 border bg-white text-left text-ink outline-none focus:border-brand ${large ? "px-4 py-4 text-base" : "px-4 py-3 text-base md:text-sm"} ${pill ? "rounded-full" : "rounded-xl"} ${open ? "border-brand" : invalid ? "border-red-400" : "border-brand-light"}`}
       >
         <span className="flex min-w-0 items-center gap-2">
           {selected?.flag && <FlagIcon code={selected.flag} className="h-3.5 w-5 shrink-0" />}
