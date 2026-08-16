@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { CaretDownIcon, MagnifyingGlassIcon, MapPinIcon } from "@phosphor-icons/react/dist/ssr";
 import { FlagIcon } from "@/components/public/flag-icon";
 
@@ -69,9 +69,6 @@ export function SearchableSelect({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  // One-shot latch so the focus effect below fires once per open, not on
-  // every re-render (rect updates on every scroll frame).
-  const focusedRef = useRef(false);
   const panelId = `${id ?? "searchable-select"}-panel`;
 
   const selected = options.find((o) => o.value === value);
@@ -91,9 +88,11 @@ export function SearchableSelect({
   // window.visualViewport, not innerHeight: the keyboard shrinks the visual
   // viewport but NOT innerHeight, so innerHeight alone would keep assuming
   // space that the keyboard is now covering.
-  function updateRect() {
+  // Returns the rect rather than setting it, so the open handler can compute
+  // and commit it synchronously (see the flushSync in onOpen below).
+  function computeRect() {
     const btn = buttonRef.current;
-    if (!btn) return;
+    if (!btn) return null;
     const r = btn.getBoundingClientRect();
     const vv = window.visualViewport;
     // visualViewport coords are relative to the visual viewport's own
@@ -110,41 +109,52 @@ export function SearchableSelect({
     const flipUp = spaceBelow < 180 && spaceAbove > spaceBelow;
     const maxHeight = Math.max(140, Math.min(360, flipUp ? spaceAbove : spaceBelow));
 
-    setRect({
+    return {
       top: flipUp ? r.top - GAP - maxHeight : r.bottom + 2,
       left: r.left,
       width: r.width,
       maxHeight,
-    });
+    };
   }
 
-  useEffect(() => {
-    if (!open) return;
-    updateRect();
+  function updateRect() {
+    const next = computeRect();
+    if (next) setRect(next);
+  }
 
-    // On a phone, scroll the field up toward the top of the screen when the
-    // list opens, so the options (and the search box) have the full screen
-    // below them instead of being squeezed against the bottom edge or hidden
-    // behind the keyboard. The scroll listener below keeps the panel pinned
-    // to the trigger while this animates, so it travels with the field
-    // rather than jumping at the end.
-    const isSmallScreen = window.matchMedia("(max-width: 767px)").matches;
+  // Opening has to happen entirely inside the click gesture, synchronously.
+  // iOS Safari only raises the on-screen keyboard for a focus() that occurs
+  // during a user gesture — a focus() from a useEffect (which is what this
+  // used to do) runs after React's async re-render, by which point the
+  // gesture is over and iOS silently refuses the keyboard. That's the
+  // "keyboard didn't come automatically" report. `autoFocus` used to work
+  // for exactly this reason: it ran inside the click's own render pass.
+  //
+  // So: scroll the field up, measure, then flushSync the open+rect commit so
+  // the panel (and its input) actually exist in the DOM before this handler
+  // returns — and only then focus, still inside the gesture.
+  function onOpen() {
     const root = rootRef.current;
-    if (isSmallScreen && root) {
-      // scrollIntoView (not a manual window.scrollBy) so this works whatever
-      // the actual scrolling ancestor is, and honours the scroll-mt-28 on
-      // the root below, which keeps the field clear of the sticky header
-      // instead of tucking it underneath.
-      const tooLow = root.getBoundingClientRect().top > 240;
-      if (tooLow) {
-        // Instant, not smooth. The panel is position:fixed and re-measured
-        // on every scroll event, so animating the page underneath makes it
-        // visibly chase the field for the whole animation. Jumping straight
-        // to the final position keeps the two locked together, and lands
-        // before the panel paints.
+    if (root && window.matchMedia("(max-width: 767px)").matches) {
+      if (root.getBoundingClientRect().top > 240) {
         root.scrollIntoView({ block: "start", behavior: "auto" });
       }
     }
+    const next = computeRect();
+    flushSync(() => {
+      if (next) setRect(next);
+      setOpen(true);
+    });
+    searchRef.current?.focus({ preventScroll: true });
+  }
+
+  // Position/dismiss wiring only — opening (scroll, measure, focus) all
+  // happens synchronously in onOpen above, inside the click gesture.
+  useEffect(() => {
+    if (!open) return;
+    // No updateRect() here: onOpen already committed the rect synchronously
+    // before this effect runs. Calling it again would just be a setState in
+    // an effect body (cascading render) for a value that's already correct.
 
     function onDocClick(e: MouseEvent) {
       const target = e.target as Node;
@@ -173,31 +183,6 @@ export function SearchableSelect({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
-
-  // Focus the search box ourselves instead of via `autoFocus`, for two
-  // reasons, both about what autofocus does on a phone:
-  //   1. Focusing an element makes the browser scroll it into view, which
-  //      cancelled the scroll-into-view above outright (confirmed: the
-  //      manual scroll worked, the effect's identical call did not).
-  //   2. preventScroll keeps the focus without that scroll, so the field
-  //      stays where the effect above put it.
-  //
-  // Mobile focus was briefly skipped here (2026-08-16) because the keyboard
-  // covered the options — but that was before the panel measured itself
-  // against visualViewport. It now re-clamps whenever the keyboard opens
-  // (see the visualViewport listeners above), so the list shrinks to the
-  // space left above the keyboard and stays fully visible. A keyboard on
-  // open is the expected behaviour for a searchable list, so it's back on
-  // every screen size.
-  useEffect(() => {
-    if (!open) {
-      focusedRef.current = false;
-      return;
-    }
-    if (!rect || focusedRef.current) return;
-    focusedRef.current = true;
-    searchRef.current?.focus({ preventScroll: true });
-  }, [open, rect]);
 
   function selectOption(v: string) {
     onChange(v);
@@ -313,7 +298,14 @@ export function SearchableSelect({
         type="button"
         id={id}
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (open) {
+            setOpen(false);
+            setQuery("");
+          } else {
+            onOpen();
+          }
+        }}
         // Non-large triggers: text-base on mobile, text-sm from md up. Same
         // iOS focus-zoom reason as the search input below — a <16px control
         // makes Safari zoom the page in and not back out.

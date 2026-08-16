@@ -124,7 +124,7 @@ type SubmitResult = {
 // exists inside this client component, so the hero lives in here with it.
 function QuoteHero({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="mx-auto max-w-2xl text-center">
+    <div className="relative z-10 mx-auto max-w-2xl text-center">
       {/* text-2xl on mobile, not text-3xl — this is a compact utility form,
           not a marketing headline, and the larger size (still used at
           md+, where there's room) read as oversized next to the tight
@@ -358,21 +358,26 @@ export function QuoteWizardForm({
     // above this section. dvh (not vh) so mobile browser chrome collapsing
     // doesn't leave a gap.
     <section className="relative min-h-[calc(100dvh-102px)] bg-ink px-4 pb-6 pt-4 md:px-8 md:pb-16 md:pt-10">
-      {/* Fixed dark backdrop covering the whole viewport, behind everything.
-          The section's own min-height is in dvh, which SHRINKS when the
-          on-screen keyboard opens — so the dark area got shorter than the
-          page and the layout's white wrapper showed through underneath it
-          ("bottom white space while keyboard is up", 2026-08-16). A fixed
-          inset-0 layer is immune to that: it tracks the viewport itself, at
-          whatever size, so there is nothing white left to expose no matter
-          how the keyboard resizes things. -z-10 keeps it under the form;
-          the sticky header is z-50 and unaffected. */}
-      <div aria-hidden className="fixed inset-0 -z-10 bg-ink" />
+      {/* Fixed dark backdrop covering the whole viewport. The section's own
+          min-height is in dvh, which SHRINKS when the on-screen keyboard
+          opens — so the dark area became shorter than the page and the
+          layout wrapper's bg-white showed through underneath it ("bottom
+          white space while keyboard is up", 2026-08-16). A fixed inset-0
+          layer is immune to that: it tracks the viewport at whatever size
+          the keyboard leaves.
+          z-0, NOT -z-10: a negative z-index puts this *behind* the ancestor
+          wrapper's own white background, so the white simply painted over it
+          and the gap remained (shipped that way once — the local check used
+          elementFromPoint, which reports hit-testing, not paint order, so it
+          passed while the page still looked wrong). At z-0 it paints above
+          the wrapper's background; the hero and form below carry relative
+          z-10 to stay above it in turn. The sticky header is z-50. */}
+      <div aria-hidden className="fixed inset-0 z-0 bg-ink" />
       <QuoteHero
         title="Get a Free Quote"
         subtitle="Tell us about your shipment and we'll get you a rate in minutes."
       />
-      <div className="mx-auto mt-4 max-w-5xl md:mt-8">
+      <div className="relative z-10 mx-auto mt-4 max-w-5xl md:mt-8">
     <div>
       {/* Mobile: only the current step's card, matching the reference —
           the full 3-up grid is reserved for md+ where it fits comfortably. */}
