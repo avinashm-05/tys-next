@@ -26,7 +26,14 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https://tile.openstreetmap.org ${GOOGLE_AD_HOSTS}`,
   "font-src 'self' data:",
-  `connect-src 'self' ${GOOGLE_AD_HOSTS} ${CLARITY_HOSTS}`,
+  // api.zippopotam.us backs the zip/postal-code suggestions under the quote
+  // form's From/To Zip fields (postal-code-input.tsx). It was never in
+  // connect-src, so every lookup was blocked outright ("Refused to connect
+  // because it violates the document's Content Security Policy"). The field
+  // degrades silently by design — it's a confirmation aid, not a validation
+  // gate — which is why this went unnoticed until the console was read
+  // directly, 2026-08-16.
+  `connect-src 'self' https://api.zippopotam.us ${GOOGLE_AD_HOSTS} ${CLARITY_HOSTS}`,
   "frame-ancestors 'self'",
   "object-src 'none'",
   "base-uri 'self'",
