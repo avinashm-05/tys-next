@@ -15,14 +15,15 @@ import { decimal2 } from "@/lib/serialize";
 // Public port of QuoteController@store (10/min, same-origin) — the only public
 // write path. Validate → create the quote + package rows + contact + tracking
 // token IN ONE TRANSACTION (no orphaned partial quote on a mid-write failure)
-// → send emails inline (failure-safe). Honors R1 (CSV backend names), R3
+// → fire the two notification emails and respond without waiting on them
+// (see the fire-and-forget note below). Honors R1 (CSV backend names), R3
 // (decimals as strings), R8 (car_year string).
 //
-// No FedEx auto-rating here (deliberate, as of the /quotes consolidation):
-// the public form now collects a callback window instead of package
-// dimensions, so there's nothing to rate yet — every quote is created with a
-// NULL estimatedCost, and staff pull live rates on demand from the admin
-// quote detail page's "Get live rates" panel (POST
+// No FedEx auto-rating here, at all (deliberate, as of the /quotes
+// consolidation) — this route never calls FedEx. The public form no longer
+// collects package dimensions, so there's nothing to rate yet; every quote
+// is created with a NULL estimatedCost, and staff pull live rates on demand
+// from the admin quote detail page's "Get live rates" panel (POST
 // /api/admin/quotes/[id]/fedex-rates) once they've talked to the customer
 // and filled in the real package details.
 
@@ -253,9 +254,19 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
       currency: full.currency ?? "USD",
       trackingUrl: trackingUrl(token),
     };
-    try {
-      await sendQuoteConfirmationEmail(emailData);
-    } catch (err) {
+    // Fire-and-forget, not awaited: these are two sequential real SMTP
+    // round-trips (connect + STARTTLS + auth + send, twice), which is real
+    // added time on the response the customer is staring at, and there is
+    // nothing about that delay a quote-submission spinner should be
+    // conveying — the quote is already committed above regardless of how
+    // the emails go. This is a persistent Node process (pm2), not a
+    // serverless function that dies the moment the response is sent, so a
+    // detached promise here is safe: it keeps running, and `.catch` (not a
+    // bare await + try/catch) is what stops a failed send from becoming an
+    // unhandled rejection. Errors are still logged exactly as before — see
+    // the notes on each catch — just no longer on the request's critical
+    // path.
+    sendQuoteConfirmationEmail(emailData).catch((err) => {
       // Never fail the quote on a mail outage — but DO say why. These used to
       // be bare `catch {}`, which meant a silently-failing mailer in
       // production was undiagnosable: no error, no log, nothing in hPanel's
@@ -264,36 +275,34 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
         `[quote ${Number(full.id)}] customer confirmation email FAILED:`,
         err instanceof Error ? `${err.name}: ${err.message}` : err,
       );
-    }
-    try {
-      await sendAdminQuoteNotification({
-        quoteId: Number(full.id),
-        customerName: emailData.customerName,
-        customerEmail: emailData.customerEmail,
-        mobileNumber: emailData.mobileNumber,
-        fromCountry: full.fromCountry,
-        fromZip: full.fromZip,
-        toCountry: full.toCountry,
-        toZip: full.toZip,
-        isResidence: full.isResidence,
-        packageTypeLabel: emailData.packageTypeLabel,
-        estimatedCost: decimal2(full.estimatedCost),
-        currency: full.currency ?? "USD",
-        // The public wizard stopped asking for a callback slot (2026-08-15)
-        // and now only infers the timezone, so show whichever we actually
-        // have. Both are optional; the email omits the row when it's empty.
-        callbackWindow: data.time_slot
-          ? `${TIME_SLOT_LABELS[data.time_slot] ?? data.time_slot}${data.timezone ? ` (${data.timezone})` : ""}`
-          : data.timezone || undefined,
-        adminUrl: `${(process.env.BETTER_AUTH_URL ?? "").replace(/\/+$/, "")}/admin/quotes/${Number(full.id)}`,
-      });
-    } catch (err) {
+    });
+    sendAdminQuoteNotification({
+      quoteId: Number(full.id),
+      customerName: emailData.customerName,
+      customerEmail: emailData.customerEmail,
+      mobileNumber: emailData.mobileNumber,
+      fromCountry: full.fromCountry,
+      fromZip: full.fromZip,
+      toCountry: full.toCountry,
+      toZip: full.toZip,
+      isResidence: full.isResidence,
+      packageTypeLabel: emailData.packageTypeLabel,
+      estimatedCost: decimal2(full.estimatedCost),
+      currency: full.currency ?? "USD",
+      // The public wizard stopped asking for a callback slot (2026-08-15)
+      // and now only infers the timezone, so show whichever we actually
+      // have. Both are optional; the email omits the row when it's empty.
+      callbackWindow: data.time_slot
+        ? `${TIME_SLOT_LABELS[data.time_slot] ?? data.time_slot}${data.timezone ? ` (${data.timezone})` : ""}`
+        : data.timezone || undefined,
+      adminUrl: `${(process.env.BETTER_AUTH_URL ?? "").replace(/\/+$/, "")}/admin/quotes/${Number(full.id)}`,
+    }).catch((err) => {
       // Best-effort, but logged — see the note on the confirmation catch above.
       console.error(
         `[quote ${Number(full.id)}] admin notification email FAILED:`,
         err instanceof Error ? `${err.name}: ${err.message}` : err,
       );
-    }
+    });
   }
 
   return Response.json(

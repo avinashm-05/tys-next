@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 // home page's mini quote forms can hand off a prefilled Step 1 (mirrors what
 // the old Laravel QuoteController@index did with the same params).
 //
-// The colored hero band + curve live inside QuoteWizardForm itself now, not
-// here — the title/subtitle need to switch to the customer's own route once
-// results are showing, and only the client component knows that state.
+// The dark hero band lives inside QuoteWizardForm itself, not here — the
+// title/subtitle need to switch to the customer's own route once results are
+// showing, and only the client component knows that state.
 export default async function QuotesPage({
   searchParams,
 }: {

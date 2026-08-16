@@ -4,13 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Controller,
-  useFieldArray,
   useForm,
-  type Control,
-  type FieldErrors,
   type Path,
-  type UseFormRegister,
-  type UseFormWatch,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -21,29 +16,23 @@ import {
   CouchIcon,
   EnvelopeSimpleIcon,
   HeadsetIcon,
-  InfoIcon,
   MapPinIcon,
-  MinusCircleIcon,
   PackageIcon,
   PhoneCallIcon,
-  PlusCircleIcon,
   TelevisionIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { COUNTRY_LIST } from "@/lib/countries-list";
 import { DIAL_CODES } from "@/lib/dial-codes";
-import { calculateChargeableWeight } from "@/lib/chargeable-weight";
 import { SearchableSelect } from "@/components/public/searchable-select";
 import { PostalCodeInput } from "@/components/public/postal-code-input";
 import {
   PACKAGE_TYPES,
   quoteWizardSchema,
-  skipDetailsStep,
   toApiPayload,
   type QuoteWizardInput,
   type QuoteWizardValues,
 } from "@/lib/validation/quote-wizard";
 import { detectTimezone, timezoneForCountry } from "@/lib/timezones";
-
 
 const COUNTRY_OPTIONS = COUNTRY_LIST.map(([code, name]) => ({
   value: code,
@@ -72,11 +61,14 @@ const SUPPORT_PHONE_DISPLAY = "+1 (404) 793-8759";
 const SUPPORT_PHONE_TEL = "tel:+14047938759";
 const SUPPORT_EMAIL = "sales@tysgloballogistics.com";
 
+// 2026-08-16: down to 3 steps — "Package Details" (box/tv/auto dimensions)
+// was removed entirely. Every package type now behaves like envelope always
+// did: staff capture exact dimensions on the callback via the admin editor,
+// not on the public form. See the matching note in quote-wizard.ts.
 const STEPS = [
   { n: 1, label: "Location", icon: MapPinIcon },
   { n: 2, label: "Select Package", icon: PackageIcon },
-  { n: 3, label: "Package Details", icon: PackageIcon },
-  { n: 4, label: "Contact Information", icon: HeadsetIcon },
+  { n: 3, label: "Contact Information", icon: HeadsetIcon },
 ] as const;
 
 const PACKAGE_CARD_ICON: Record<string, typeof PackageIcon> = {
@@ -89,8 +81,12 @@ const PACKAGE_CARD_ICON: Record<string, typeof PackageIcon> = {
 
 const inputClass =
   "w-full rounded-xl border border-brand-light bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand disabled:bg-brand-pale disabled:text-ink-muted";
-const labelClass = "block text-sm font-medium text-ink";
-const errorClass = "mt-1 text-xs text-red-600";
+// Labels/checkbox text/error text below all sit directly on the page's own
+// dark background (see QuoteHero/the wrapping section), not inside a white
+// card — hence light-on-dark colors here, distinct from `inputClass` above,
+// which stays white/dark-text because the inputs themselves stay light.
+const labelClass = "block text-sm font-medium text-white";
+const errorClass = "mt-1 text-xs text-red-400";
 
 type Rate = {
   service_type: string;
@@ -111,26 +107,22 @@ type SubmitResult = {
   rates_error?: string | null;
 };
 
-// The colored band + curve used to live as static markup in page.tsx, but the
-// title needs to change once results are showing (and show what the customer
-// actually submitted, not the generic pitch) — that state only exists inside
-// this client component, so the hero moved in here with it.
+// Dark, full-bleed hero — no separate light band + swoop-curve transition
+// into a white section below it anymore (2026-08-16). That curve needed a
+// lot of extra bottom padding just to have room to swoop without covering
+// the title, which is exactly what was pushing the actual form below the
+// fold on mobile. Now the hero and the form area below share one flat dark
+// background (bg-ink, the same near-black already used site-wide for text
+// and overlays), so there's no seam to leave room for and padding can stay
+// tight. The title needs to change once results are showing (and show what
+// the customer actually submitted, not the generic pitch) — that state only
+// exists inside this client component, so the hero lives in here with it.
 function QuoteHero({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <section className="relative overflow-hidden bg-brand-light px-4 pb-20 pt-6 md:px-8 md:pb-28 md:pt-8">
-      <div className="mx-auto max-w-2xl text-center">
-        <h1 className="text-3xl font-extrabold text-ink md:text-4xl">{title}</h1>
-        {subtitle && <p className="mt-2 text-ink-muted">{subtitle}</p>}
-      </div>
-      <svg
-        aria-hidden
-        viewBox="0 0 1440 100"
-        preserveAspectRatio="none"
-        className="absolute inset-x-0 bottom-0 h-16 w-full text-white md:h-24"
-      >
-        <path d="M0,70 Q720,-30 1440,70 L1440,100 L0,100 Z" fill="currentColor" />
-      </svg>
-    </section>
+    <div className="mx-auto max-w-2xl text-center">
+      <h1 className="text-3xl font-extrabold text-white md:text-4xl">{title}</h1>
+      {subtitle && <p className="mt-2 text-white/70">{subtitle}</p>}
+    </div>
   );
 }
 
@@ -170,7 +162,6 @@ export function QuoteWizardForm({
     const timer = setTimeout(() => setJustTransitioned(false), 300);
     return () => clearTimeout(timer);
   }, [justTransitioned]);
-  const [skippedStep3, setSkippedStep3] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResult | null>(null);
   // Tracks which country's flag/name the phone-code dropdown displays. The
@@ -179,15 +170,11 @@ export function QuoteWizardForm({
   // nation — this local state is the real selection; the dial code is
   // derived from it on change.
   const [countryCodeIso, setCountryCodeIso] = useState("US");
-  // Once the customer manually picks a phone country code, the step-4
+  // Once the customer manually picks a phone country code, the step-3
   // from_country auto-fill (below) stops overwriting it — even if they go
   // back and change from_country again.
   const phoneCountryTouchedRef = useRef(false);
 
-  // Input/output split: the box/tv rows use z.coerce.number() (shared with
-  // the server schema), so RHF's field values (pre-coercion, TQuoteWizardInput)
-  // differ from what zodResolver hands to onSubmit post-coercion
-  // (QuoteWizardValues). See quote-wizard.ts.
   const form = useForm<QuoteWizardInput, unknown, QuoteWizardValues>({
     resolver: zodResolver(quoteWizardSchema),
     mode: "onSubmit",
@@ -198,9 +185,6 @@ export function QuoteWizardForm({
       to_zip: "",
       is_residence: false,
       package_types: [],
-      box_details: [],
-      television_details: [],
-      auto_details: [],
       timezone: "",
       contact: { name: "", email: "", country_code: "+1", phone: "" },
     },
@@ -243,11 +227,11 @@ export function QuoteWizardForm({
 
   // Default the Contact step's phone country code from the shipment's
   // "from" country (nicer starting point than always US) — only on first
-  // arrival at step 4 and only if the customer hasn't already picked their
+  // arrival at step 3 and only if the customer hasn't already picked their
   // own phone country code (phoneCountryTouchedRef), so it never clobbers a
   // manual choice when navigating back and forth.
   useEffect(() => {
-    if (step !== 4 || phoneCountryTouchedRef.current) return;
+    if (step !== 3 || phoneCountryTouchedRef.current) return;
     const fromIso = getValues("from_country");
     const dial = fromIso && DIAL_BY_ISO.get(fromIso);
     if (dial) {
@@ -257,16 +241,12 @@ export function QuoteWizardForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
-  const boxes = useFieldArray({ control, name: "box_details" });
-  const tvs = useFieldArray({ control, name: "television_details" });
-  const autos = useFieldArray({ control, name: "auto_details" });
   const packageTypes = watch("package_types");
 
   async function next() {
     const fieldsByStep: Record<number, Path<QuoteWizardInput>[]> = {
       1: ["from_country", "from_zip", "to_country", "to_zip", "is_residence"],
       2: ["package_types"],
-      3: ["box_details", "television_details", "auto_details"],
     };
     const valid = await trigger(fieldsByStep[step]);
     if (!valid) return;
@@ -283,39 +263,10 @@ export function QuoteWizardForm({
     // finished resolving against the button that was actually visible when
     // the gesture started.
     await new Promise((resolve) => setTimeout(resolve, 120));
-
-    if (step === 2) {
-      const skip = skipDetailsStep(packageTypes);
-      setSkippedStep3(skip);
-      if (skip) {
-        setStep(4);
-        return;
-      }
-      // Seed exactly one row per selected detail type so the step isn't empty.
-      if (packageTypes.includes("boxes") && boxes.fields.length === 0) {
-        boxes.append({ quantity: 1, weight: 0, weight_unit: "lb", length: 0, width: 0, height: 0, chargeable_weight: 0 });
-      }
-      if (packageTypes.includes("television") && tvs.fields.length === 0) {
-        tvs.append({ brand_name: "", tv_model: "", weight: 0, weight_unit: "lb", length: 0, width: 0, height: 0, chargeable_weight: 0 });
-      }
-      if (packageTypes.includes("auto") && autos.fields.length === 0) {
-        autos.append({ brand_name: "", car_model: "", car_year: "" });
-      }
-      setStep(3);
-      return;
-    }
-    setStep((s) => Math.min(4, s + 1));
+    setStep((s) => Math.min(3, s + 1));
   }
 
   function back() {
-    if (step === 4 && skippedStep3) {
-      // Back to the step-2 decision point — un-collapse the stepper right
-      // away rather than leaving it showing 3 steps until skippedStep3 gets
-      // recomputed by a future Next click (or, previously, a page refresh).
-      setSkippedStep3(false);
-      setStep(2);
-      return;
-    }
     setStep((s) => Math.max(1, s - 1));
   }
 
@@ -328,23 +279,6 @@ export function QuoteWizardForm({
       ? current.filter((t) => t !== value)
       : [...current, value];
     setValue("package_types", next, { shouldValidate: false });
-  }
-
-  function recalcRow(kind: "box_details" | "television_details", index: number) {
-    // Reads the live row values via getValues() rather than the row
-    // component's watch() snapshot — RHF's internal store updates
-    // synchronously ahead of this callback, but a watch()-derived closure
-    // only reflects the last completed render, which lags under rapid
-    // programmatic field changes (and is one render behind even for a
-    // single keystroke, since the value that just changed triggered this
-    // very callback).
-    const row = form.getValues(`${kind}.${index}`);
-    const chargeable = calculateChargeableWeight(
-      Number(row.weight) || 0,
-      { length: Number(row.length) || 0, width: Number(row.width) || 0, height: Number(row.height) || 0 },
-      row.weight_unit,
-    );
-    setValue(`${kind}.${index}.chargeable_weight`, Math.round(chargeable * 100) / 100);
   }
 
   async function onSubmit(values: QuoteWizardValues) {
@@ -382,7 +316,7 @@ export function QuoteWizardForm({
 
   if (result?.show_fedex_rates) {
     return (
-      <>
+      <section className="bg-ink px-4 pb-16 pt-6 md:px-8 md:pt-10">
         <QuoteHero
           title="Your Shipping Quote"
           subtitle={
@@ -391,73 +325,41 @@ export function QuoteWizardForm({
               : undefined
           }
         />
-        <section className="bg-white px-4 pb-16 md:px-8">
-          <div className="mx-auto max-w-5xl">
-            <RatesResult result={result} />
-          </div>
-        </section>
-      </>
+        <div className="mx-auto mt-8 max-w-5xl">
+          <RatesResult result={result} />
+        </div>
+      </section>
     );
   }
 
-  // The stepper always starts at the full 4 steps — it only collapses once
-  // `skippedStep3` is actually confirmed by clicking Next off step 2 (not
-  // live as package types are checked/unchecked), so nothing shifts while
-  // the user is still mid-decision on steps 1–2. Once confirmed, step 3 is
-  // dropped from the row and Contact Information is relabeled down to
-  // "Step 3" rather than leaving a numbering gap for a step that won't show.
-  const visibleSteps = skippedStep3 ? STEPS.filter((s) => s.n !== 3) : STEPS;
-  const activeIndex = visibleSteps.findIndex((s) => s.n === step);
-  const activeStep = visibleSteps[activeIndex] ?? visibleSteps[0];
+  const activeIndex = STEPS.findIndex((s) => s.n === step);
+  const activeStep = STEPS[activeIndex] ?? STEPS[0];
 
   return (
-    <>
+    <section className="bg-ink px-4 pb-12 pt-6 md:px-8 md:pb-16 md:pt-10">
       <QuoteHero
         title="Get a Free Quote"
         subtitle="Tell us about your shipment and we'll get you a rate in minutes."
       />
-      <section className="bg-white px-4 pb-16 md:px-8">
-        <div className="mx-auto max-w-5xl">
+      <div className="mx-auto mt-8 max-w-5xl">
     <div>
       {/* Mobile: only the current step's card, matching the reference —
-          the full 4-up grid is reserved for md+ where it fits comfortably. */}
+          the full 3-up grid is reserved for md+ where it fits comfortably. */}
       <div className="flex items-center gap-3 rounded-2xl border-b-2 border-brand bg-white p-4 shadow-sm md:hidden">
-        {activeStep.n === 3 ? (
-          <span className="relative inline-flex shrink-0">
-            <activeStep.icon size={28} className="text-brand" />
-            <InfoIcon
-              size={14}
-              weight="fill"
-              className="absolute -bottom-0.5 -left-0.5 rounded-full bg-white text-brand"
-            />
-          </span>
-        ) : (
-          <activeStep.icon size={28} className="shrink-0 text-brand" />
-        )}
+        <activeStep.icon size={28} className="shrink-0 text-brand" />
         <div>
           <div className="text-xs text-ink-muted">Step {activeIndex + 1}</div>
           <div className="text-sm font-semibold text-brand">{activeStep.label}</div>
         </div>
       </div>
 
-      <div className={`hidden gap-4 md:grid ${skippedStep3 ? "grid-cols-3" : "grid-cols-4"}`}>
-        {visibleSteps.map((s, i) => (
+      <div className="hidden gap-4 md:grid md:grid-cols-3">
+        {STEPS.map((s, i) => (
           <div
             key={s.n}
             className={`flex items-center gap-3 rounded-2xl border-b-2 bg-white p-4 shadow-sm md:p-5 ${step === s.n ? "border-brand" : "border-transparent"}`}
           >
-            {s.n === 3 ? (
-              <span className="relative inline-flex shrink-0">
-                <s.icon size={28} className={step >= s.n ? "text-brand" : "text-ink-muted"} />
-                <InfoIcon
-                  size={14}
-                  weight="fill"
-                  className={`absolute -bottom-0.5 -left-0.5 rounded-full bg-white ${step >= s.n ? "text-brand" : "text-ink-muted"}`}
-                />
-              </span>
-            ) : (
-              <s.icon size={28} className={`shrink-0 ${step >= s.n ? "text-brand" : "text-ink-muted"}`} />
-            )}
+            <s.icon size={28} className={`shrink-0 ${step >= s.n ? "text-brand" : "text-ink-muted"}`} />
             <div>
               <div className="text-xs text-ink-muted">Step {i + 1}</div>
               <div className="text-sm font-semibold text-ink md:text-base">{s.label}</div>
@@ -555,10 +457,10 @@ export function QuoteWizardForm({
             </div>
 
             <div className="md:col-span-2">
-              <label className="flex items-center gap-2 text-sm text-ink">
+              <label className="flex items-center gap-2 text-sm text-white">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-brand-light text-brand focus:ring-brand"
+                  className="h-4 w-4 rounded border-white/40 text-brand focus:ring-brand"
                   checked={watch("is_residence") === true}
                   onChange={(e) => setValue("is_residence", e.target.checked)}
                 />
@@ -598,45 +500,6 @@ export function QuoteWizardForm({
         )}
 
         {step === 3 && (
-          <div className="space-y-8">
-            {packageTypes.includes("boxes") && (
-              <DetailSection title="Box Details" icon={PackageIcon}>
-                {boxes.fields.map((f, i) => (
-                  <BoxRow key={f.id} control={control} register={register} errors={errors} index={i} onRemove={() => boxes.remove(i)} onRecalc={recalcRow} watch={watch} />
-                ))}
-                <AddRowButton
-                  onClick={() =>
-                    boxes.append({ quantity: 1, weight: 0, weight_unit: "lb", length: 0, width: 0, height: 0, chargeable_weight: 0 })
-                  }
-                  label="Add Box"
-                />
-              </DetailSection>
-            )}
-            {packageTypes.includes("television") && (
-              <DetailSection title="Television" icon={TelevisionIcon}>
-                {tvs.fields.map((f, i) => (
-                  <TvRow key={f.id} control={control} register={register} errors={errors} index={i} onRemove={() => tvs.remove(i)} onRecalc={recalcRow} watch={watch} />
-                ))}
-                <AddRowButton
-                  onClick={() =>
-                    tvs.append({ brand_name: "", tv_model: "", weight: 0, weight_unit: "lb", length: 0, width: 0, height: 0, chargeable_weight: 0 })
-                  }
-                  label="Add Television"
-                />
-              </DetailSection>
-            )}
-            {packageTypes.includes("auto") && (
-              <DetailSection title="Auto" icon={CarSimpleIcon}>
-                {autos.fields.map((f, i) => (
-                  <AutoRow key={f.id} register={register} errors={errors} index={i} onRemove={() => autos.remove(i)} />
-                ))}
-                <AddRowButton onClick={() => autos.append({ brand_name: "", car_model: "", car_year: "" })} label="Add Vehicle" />
-              </DetailSection>
-            )}
-          </div>
-        )}
-
-        {step === 4 && (
           <div className="grid gap-6 md:grid-cols-2">
             <div>
               <label className={labelClass}>Name</label>
@@ -684,17 +547,10 @@ export function QuoteWizardForm({
                 <p className={errorClass}>{errors.contact.phone.message}</p>
               )}
             </div>
-
           </div>
         )}
 
         {submitError && <p className={`${errorClass} mt-4`}>{submitError}</p>}
-
-        {isSubmitting && (
-          <p className="mt-4 text-sm text-ink-muted">
-            Getting live rates from FedEx — this can take up to 15 seconds, please don&rsquo;t close this page.
-          </p>
-        )}
 
         <div
           className={`mt-10 flex items-center justify-between ${justTransitioned ? "pointer-events-none" : ""}`}
@@ -710,7 +566,7 @@ export function QuoteWizardForm({
           ) : (
             <span />
           )}
-          {step < 4 ? (
+          {step < 3 ? (
             <button
               type="button"
               onClick={next}
@@ -730,299 +586,8 @@ export function QuoteWizardForm({
         </div>
       </form>
     </div>
-        </div>
-      </section>
-    </>
-  );
-}
-
-function DetailSection({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  icon: typeof PackageIcon;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-brand-light p-6">
-      <div className="flex items-center gap-2 text-ink">
-        <Icon size={20} className="text-brand" />
-        <h3 className="font-semibold">{title}</h3>
       </div>
-      <div className="mt-4 space-y-4">{children}</div>
-    </div>
-  );
-}
-
-function AddRowButton({ onClick, label }: { onClick: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-1.5 text-sm font-semibold text-brand"
-    >
-      <PlusCircleIcon size={18} /> {label}
-    </button>
-  );
-}
-
-type FormBag = {
-  control: Control<QuoteWizardInput>;
-  register: UseFormRegister<QuoteWizardInput>;
-  errors: FieldErrors<QuoteWizardInput>;
-  watch: UseFormWatch<QuoteWizardInput>;
-  onRecalc: (kind: "box_details" | "television_details", index: number) => void;
-};
-
-// L/W/H input for the dimensions row — the letter is a fixed prefix inside
-// the field (not a placeholder), so it stays visible once a real value
-// (including 0) is entered instead of disappearing like a placeholder would.
-function DimensionInput({
-  prefix,
-  ...inputProps
-}: { prefix: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div className="flex flex-1 items-center rounded-xl border border-brand-light bg-white pl-3 focus-within:border-brand">
-      <span className="mr-1 shrink-0 text-xs font-medium text-ink-muted">{prefix}</span>
-      <input
-        type="number"
-        step="0.01"
-        className="w-full min-w-0 bg-transparent py-3 pr-3 text-sm text-ink outline-none"
-        {...inputProps}
-      />
-    </div>
-  );
-}
-
-function BoxRow({
-  index,
-  onRemove,
-  onRecalc,
-  register,
-  errors,
-  watch,
-}: FormBag & { index: number; onRemove: () => void }) {
-  const base = `box_details.${index}` as const;
-  const chargeable = watch(`${base}.chargeable_weight`);
-  const unit = watch(`${base}.weight_unit`);
-  const rowErrors = errors.box_details?.[index];
-
-  function recalc() {
-    onRecalc("box_details", index);
-  }
-
-  return (
-    <div className="rounded-xl border border-brand-light p-4">
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="No. of Boxes">
-          <input type="number" min={1} className={inputClass} {...register(`${base}.quantity`, { valueAsNumber: true })} />
-          {rowErrors?.quantity && <p className={errorClass}>{rowErrors.quantity.message}</p>}
-        </Field>
-        <Field label="Weight">
-          <div className="flex gap-1">
-            <input
-              type="number"
-              step="0.01"
-              className={inputClass}
-              {...register(`${base}.weight`, { valueAsNumber: true, onChange: recalc })}
-            />
-            <select className={`${inputClass} w-20`} {...register(`${base}.weight_unit`, { onChange: recalc })}>
-              <option value="lb">LB/IN</option>
-              <option value="kg">KG/CM</option>
-            </select>
-          </div>
-          {rowErrors?.weight && <p className={errorClass}>{rowErrors.weight.message}</p>}
-        </Field>
-      </div>
-
-      <div className="mt-3">
-        <Field label={`Dimensions (${unit === "kg" ? "CM" : "IN"})`}>
-          <div className="flex items-center gap-2">
-            <DimensionInput prefix="L" {...register(`${base}.length`, { valueAsNumber: true, onChange: recalc })} />
-            <span className="shrink-0 text-ink-muted">×</span>
-            <DimensionInput prefix="W" {...register(`${base}.width`, { valueAsNumber: true, onChange: recalc })} />
-            <span className="shrink-0 text-ink-muted">×</span>
-            <DimensionInput prefix="H" {...register(`${base}.height`, { valueAsNumber: true, onChange: recalc })} />
-          </div>
-        </Field>
-      </div>
-
-      <div className="mt-3">
-        <Field label="Chargeable Weight">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <input disabled className={`${inputClass} pr-9`} value={Number(chargeable) || 0} readOnly />
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                <ChargeableWeightInfo />
-              </span>
-            </div>
-            <button type="button" onClick={onRemove} aria-label="Remove box">
-              <MinusCircleIcon size={20} className="text-red-500" />
-            </button>
-          </div>
-        </Field>
-      </div>
-    </div>
-  );
-}
-
-function TvRow({
-  index,
-  onRemove,
-  onRecalc,
-  register,
-  errors,
-  watch,
-}: FormBag & { index: number; onRemove: () => void }) {
-  const base = `television_details.${index}` as const;
-  const chargeable = watch(`${base}.chargeable_weight`);
-  const unit = watch(`${base}.weight_unit`);
-  const rowErrors = errors.television_details?.[index];
-
-  function recalc() {
-    onRecalc("television_details", index);
-  }
-
-  return (
-    <div className="rounded-xl border border-brand-light p-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <Field label="Brand Name">
-          <input className={inputClass} placeholder="Brand Name" {...register(`${base}.brand_name`)} />
-          {rowErrors?.brand_name && <p className={errorClass}>{rowErrors.brand_name.message}</p>}
-        </Field>
-        <Field label="Model">
-          <input className={inputClass} placeholder="Model" {...register(`${base}.tv_model`)} />
-          {rowErrors?.tv_model && <p className={errorClass}>{rowErrors.tv_model.message}</p>}
-        </Field>
-        <Field label="Weight">
-          <div className="flex gap-1">
-            <input
-              type="number"
-              step="0.01"
-              className={inputClass}
-              {...register(`${base}.weight`, { valueAsNumber: true, onChange: recalc })}
-            />
-            <select className={`${inputClass} w-20`} {...register(`${base}.weight_unit`, { onChange: recalc })}>
-              <option value="lb">LB/IN</option>
-              <option value="kg">KG/CM</option>
-            </select>
-          </div>
-        </Field>
-      </div>
-
-      <div className="mt-3">
-        <Field label={`Dimensions (${unit === "kg" ? "CM" : "IN"})`}>
-          <div className="flex items-center gap-2">
-            <DimensionInput prefix="L" {...register(`${base}.length`, { valueAsNumber: true, onChange: recalc })} />
-            <span className="shrink-0 text-ink-muted">×</span>
-            <DimensionInput prefix="W" {...register(`${base}.width`, { valueAsNumber: true, onChange: recalc })} />
-            <span className="shrink-0 text-ink-muted">×</span>
-            <DimensionInput prefix="H" {...register(`${base}.height`, { valueAsNumber: true, onChange: recalc })} />
-          </div>
-        </Field>
-      </div>
-
-      <div className="mt-3">
-        <Field label="Chargeable Weight">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <input disabled className={`${inputClass} pr-9`} value={Number(chargeable) || 0} readOnly />
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                <ChargeableWeightInfo />
-              </span>
-            </div>
-            <button type="button" onClick={onRemove} aria-label="Remove television">
-              <MinusCircleIcon size={20} className="text-red-500" />
-            </button>
-          </div>
-        </Field>
-      </div>
-    </div>
-  );
-}
-
-function AutoRow({
-  index,
-  onRemove,
-  register,
-  errors,
-}: {
-  index: number;
-  onRemove: () => void;
-  register: UseFormRegister<QuoteWizardInput>;
-  errors: FieldErrors<QuoteWizardInput>;
-}) {
-  const base = `auto_details.${index}` as const;
-  const rowErrors = errors.auto_details?.[index];
-  return (
-    <div className="grid grid-cols-2 gap-3 rounded-xl border border-brand-light p-4 md:grid-cols-4">
-      <Field label="Brand Name">
-        <input className={inputClass} placeholder="Car Name" {...register(`${base}.brand_name`)} />
-        {rowErrors?.brand_name && <p className={errorClass}>{rowErrors.brand_name.message}</p>}
-      </Field>
-      <Field label="Car Model">
-        <input className={inputClass} placeholder="Car Model" {...register(`${base}.car_model`)} />
-        {rowErrors?.car_model && <p className={errorClass}>{rowErrors.car_model.message}</p>}
-      </Field>
-      <Field label="Car Year">
-        <input className={inputClass} placeholder="YYYY" maxLength={4} {...register(`${base}.car_year`)} />
-        {rowErrors?.car_year && <p className={errorClass}>{rowErrors.car_year.message}</p>}
-      </Field>
-      <div className="flex items-end justify-end">
-        <button type="button" onClick={onRemove} aria-label="Remove vehicle">
-          <MinusCircleIcon size={20} className="text-red-500" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="mb-1 block text-xs font-medium text-ink-muted">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-// Click-to-toggle (not hover-only, so it works on touch) explainer for how
-// carriers actually bill a shipment — the greater of actual vs. dimensional
-// weight — since "chargeable weight" reads as jargon without it.
-function ChargeableWeightInfo() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label="What is chargeable weight?"
-        aria-expanded={open}
-        className="flex h-5 w-5 items-center justify-center rounded-full bg-ink-muted/70 text-white"
-      >
-        <InfoIcon size={13} weight="bold" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full z-20 mt-2 w-64 rounded-xl border border-brand-light bg-white p-3 text-xs leading-relaxed text-ink-muted shadow-lg">
-          Chargeable weight is whichever is greater: your package&rsquo;s actual weight, or its
-          dimensional (volumetric) weight — length × width × height ÷ the carrier&rsquo;s
-          divisor. Carriers bill by the larger number, since a bulky-but-light package still
-          takes up the same space in a truck or plane.
-        </div>
-      )}
-    </div>
+    </section>
   );
 }
 
@@ -1036,11 +601,11 @@ function RatesResult({ result }: { result: SubmitResult }) {
         </div>
       </div>
 
-      {result.rates_error && <p className="mt-4 text-sm text-red-600">{result.rates_error}</p>}
+      {result.rates_error && <p className="mt-4 text-sm text-red-400">{result.rates_error}</p>}
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {(result.rates ?? []).map((rate) => (
-          <div key={rate.service_type} className="rounded-2xl border border-brand-light p-6">
+          <div key={rate.service_type} className="rounded-2xl border border-brand-light bg-white p-6">
             <div className="text-sm font-semibold text-ink">{rate.service_name}</div>
             <div className="mt-1 text-xs text-ink-muted">{rate.estimated_delivery}</div>
             <div className="mt-4 flex items-baseline gap-2">
@@ -1064,7 +629,7 @@ function RatesResult({ result }: { result: SubmitResult }) {
         ))}
       </div>
 
-      <div className="mt-6 flex flex-col items-center gap-2 rounded-2xl border border-brand-light bg-brand-pale/40 p-5 text-center sm:flex-row sm:justify-center sm:gap-6 sm:text-left">
+      <div className="mt-6 flex flex-col items-center gap-2 rounded-2xl border border-brand-light bg-white/95 p-5 text-center sm:flex-row sm:justify-center sm:gap-6 sm:text-left">
         <p className="text-sm font-medium text-ink">
           Need help picking a rate or have questions about your shipment?
         </p>
