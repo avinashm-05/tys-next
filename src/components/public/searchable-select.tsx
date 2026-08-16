@@ -179,13 +179,16 @@ export function SearchableSelect({
   //   1. Focusing an element makes the browser scroll it into view, which
   //      cancelled the scroll-into-view above outright (confirmed: the
   //      manual scroll worked, the effect's identical call did not).
-  //   2. On mobile it also opens the on-screen keyboard the instant the
-  //      list appears, covering the options the customer is trying to read
-  //      and shifting the layout under them — the reported confusion. On
-  //      small screens we now leave focus alone: the list is immediately
-  //      browsable, and tapping the search box still works for anyone who
-  //      wants to type. Desktop keeps type-to-search, with preventScroll
-  //      so it can't move the page.
+  //   2. preventScroll keeps the focus without that scroll, so the field
+  //      stays where the effect above put it.
+  //
+  // Mobile focus was briefly skipped here (2026-08-16) because the keyboard
+  // covered the options — but that was before the panel measured itself
+  // against visualViewport. It now re-clamps whenever the keyboard opens
+  // (see the visualViewport listeners above), so the list shrinks to the
+  // space left above the keyboard and stays fully visible. A keyboard on
+  // open is the expected behaviour for a searchable list, so it's back on
+  // every screen size.
   useEffect(() => {
     if (!open) {
       focusedRef.current = false;
@@ -193,7 +196,6 @@ export function SearchableSelect({
     }
     if (!rect || focusedRef.current) return;
     focusedRef.current = true;
-    if (window.matchMedia("(max-width: 767px)").matches) return;
     searchRef.current?.focus({ preventScroll: true });
   }, [open, rect]);
 
