@@ -59,10 +59,19 @@ export function SearchableSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
-  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [rect, setRect] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+  } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  // One-shot latch so the focus effect below fires once per open, not on
+  // every re-render (rect updates on every scroll frame).
+  const focusedRef = useRef(false);
   const panelId = `${id ?? "searchable-select"}-panel`;
 
   const selected = options.find((o) => o.value === value);
@@ -74,16 +83,69 @@ export function SearchableSelect({
           return o.label.toLowerCase().includes(q) || (o.keywords?.toLowerCase().includes(q) ?? false);
         });
 
+  // The panel is position:fixed at the trigger's coords, so it has to be
+  // clamped to what's actually visible — otherwise, with the trigger low on
+  // a phone screen, it renders past the bottom edge (and once the on-screen
+  // keyboard opens, well past it), which is what made the country list look
+  // detached from the field it belongs to. Measured against
+  // window.visualViewport, not innerHeight: the keyboard shrinks the visual
+  // viewport but NOT innerHeight, so innerHeight alone would keep assuming
+  // space that the keyboard is now covering.
   function updateRect() {
     const btn = buttonRef.current;
     if (!btn) return;
     const r = btn.getBoundingClientRect();
-    setRect({ top: r.bottom + 2, left: r.left, width: r.width });
+    const vv = window.visualViewport;
+    // visualViewport coords are relative to the visual viewport's own
+    // origin; offsetTop is how far it's been shifted (keyboard/pinch).
+    const viewTop = vv ? vv.offsetTop : 0;
+    const viewBottom = viewTop + (vv ? vv.height : window.innerHeight);
+    const GAP = 8;
+
+    const spaceBelow = viewBottom - r.bottom - GAP;
+    const spaceAbove = r.top - viewTop - GAP;
+    // Flip above the trigger only when below genuinely can't fit a usable
+    // list and above is roomier — never flip for a marginal difference,
+    // since dropping downward is the expected direction.
+    const flipUp = spaceBelow < 180 && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(140, Math.min(360, flipUp ? spaceAbove : spaceBelow));
+
+    setRect({
+      top: flipUp ? r.top - GAP - maxHeight : r.bottom + 2,
+      left: r.left,
+      width: r.width,
+      maxHeight,
+    });
   }
 
   useEffect(() => {
     if (!open) return;
     updateRect();
+
+    // On a phone, scroll the field up toward the top of the screen when the
+    // list opens, so the options (and the search box) have the full screen
+    // below them instead of being squeezed against the bottom edge or hidden
+    // behind the keyboard. The scroll listener below keeps the panel pinned
+    // to the trigger while this animates, so it travels with the field
+    // rather than jumping at the end.
+    const isSmallScreen = window.matchMedia("(max-width: 767px)").matches;
+    const root = rootRef.current;
+    if (isSmallScreen && root) {
+      // scrollIntoView (not a manual window.scrollBy) so this works whatever
+      // the actual scrolling ancestor is, and honours the scroll-mt-28 on
+      // the root below, which keeps the field clear of the sticky header
+      // instead of tucking it underneath.
+      const tooLow = root.getBoundingClientRect().top > 240;
+      if (tooLow) {
+        // Instant, not smooth. The panel is position:fixed and re-measured
+        // on every scroll event, so animating the page underneath makes it
+        // visibly chase the field for the whole animation. Jumping straight
+        // to the final position keeps the two locked together, and lands
+        // before the panel paints.
+        root.scrollIntoView({ block: "start", behavior: "auto" });
+      }
+    }
+
     function onDocClick(e: MouseEvent) {
       const target = e.target as Node;
       if (
@@ -98,13 +160,42 @@ export function SearchableSelect({
     document.addEventListener("mousedown", onDocClick);
     window.addEventListener("scroll", updateRect, true);
     window.addEventListener("resize", updateRect);
+    // The on-screen keyboard fires these, not window resize — without them
+    // the panel keeps its pre-keyboard height and ends up underneath it.
+    window.visualViewport?.addEventListener("resize", updateRect);
+    window.visualViewport?.addEventListener("scroll", updateRect);
     return () => {
       document.removeEventListener("mousedown", onDocClick);
       window.removeEventListener("scroll", updateRect, true);
       window.removeEventListener("resize", updateRect);
+      window.visualViewport?.removeEventListener("resize", updateRect);
+      window.visualViewport?.removeEventListener("scroll", updateRect);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // Focus the search box ourselves instead of via `autoFocus`, for two
+  // reasons, both about what autofocus does on a phone:
+  //   1. Focusing an element makes the browser scroll it into view, which
+  //      cancelled the scroll-into-view above outright (confirmed: the
+  //      manual scroll worked, the effect's identical call did not).
+  //   2. On mobile it also opens the on-screen keyboard the instant the
+  //      list appears, covering the options the customer is trying to read
+  //      and shifting the layout under them — the reported confusion. On
+  //      small screens we now leave focus alone: the list is immediately
+  //      browsable, and tapping the search box still works for anyone who
+  //      wants to type. Desktop keeps type-to-search, with preventScroll
+  //      so it can't move the page.
+  useEffect(() => {
+    if (!open) {
+      focusedRef.current = false;
+      return;
+    }
+    if (!rect || focusedRef.current) return;
+    focusedRef.current = true;
+    if (window.matchMedia("(max-width: 767px)").matches) return;
+    searchRef.current?.focus({ preventScroll: true });
+  }, [open, rect]);
 
   function selectOption(v: string) {
     onChange(v);
@@ -150,13 +241,22 @@ export function SearchableSelect({
   const panel = open && rect && (
     <div
       id={panelId}
-      style={{ position: "fixed", top: rect.top, left: rect.left, width: Math.max(rect.width, 256) }}
-      className="z-50 rounded-xl border border-brand-light bg-white shadow-lg"
+      style={{
+        position: "fixed",
+        top: rect.top,
+        left: rect.left,
+        width: Math.max(rect.width, 256),
+        // Whole panel (search box + list) is capped to the measured space,
+        // and the list scrolls inside it — so it can never run off the
+        // bottom of the screen or under the keyboard.
+        maxHeight: rect.maxHeight,
+      }}
+      className="z-50 flex flex-col overflow-hidden rounded-xl border border-brand-light bg-white shadow-lg"
     >
-      <div className="flex items-center gap-2 border-b border-brand-light px-3 py-2">
+      <div className="flex shrink-0 items-center gap-2 border-b border-brand-light px-3 py-2">
         <MagnifyingGlassIcon size={14} className="text-ink-muted" />
         <input
-          autoFocus
+          ref={searchRef}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -174,7 +274,10 @@ export function SearchableSelect({
           className="w-full text-base text-ink outline-none placeholder:text-ink-muted"
         />
       </div>
-      <ul ref={listRef} className="max-h-64 overflow-y-auto py-1">
+      {/* flex-1 + min-h-0 instead of a fixed max-h-64: the panel's own
+          measured maxHeight is the real constraint now, and min-h-0 is what
+          lets a flex child actually shrink enough to scroll. */}
+      <ul ref={listRef} className="min-h-0 flex-1 overflow-y-auto py-1">
         {filtered.length === 0 && <li className="px-4 py-2 text-sm text-ink-muted">No matches</li>}
         {filtered.map((o, i) => (
           <li key={o.value} data-index={i}>
@@ -197,7 +300,9 @@ export function SearchableSelect({
   );
 
   return (
-    <div ref={rootRef} className="relative">
+    // scroll-mt-28 is the landing offset for the scrollIntoView above — it
+    // keeps the field below the sticky header rather than under it.
+    <div ref={rootRef} className="relative scroll-mt-28">
       {/* Real, name-bearing input so plain <form> submits and RHF register()
           fallbacks still see the value even if JS interaction is bypassed. */}
       <input type="hidden" name={name} value={value} readOnly />
