@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/public/site-header";
 import { ConditionalFooter } from "@/components/public/conditional-footer";
 import { OrganizationJsonLd } from "@/components/public/organization-json-ld";
 import { WebsiteJsonLd } from "@/components/public/website-json-ld";
-import { AnalyticsScripts, GtmNoscript } from "@/components/public/analytics-scripts";
+import { AnalyticsScripts } from "@/components/public/analytics-scripts";
 import { PageLoader } from "@/components/public/page-loader";
 import { HashScrollFix } from "@/components/public/hash-scroll-fix";
 
@@ -46,11 +46,15 @@ export const metadata: Metadata = {
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className={`flex min-h-full flex-col bg-white font-body text-ink ${inter.variable} ${oldschoolGrotesk.variable}`}
+      // min-h-screen, not min-h-full: `full` resolves against the nearest
+      // ancestor with an explicit height, and neither html nor body sets one,
+      // so on any page shorter than the viewport this wrapper stopped at its
+      // own content height and left the browser's bare background showing
+      // beneath it. `screen` is 100vh and needs no ancestor cooperation.
+      className={`flex min-h-screen flex-col bg-white font-body text-ink ${inter.variable} ${oldschoolGrotesk.variable}`}
     >
       <PageLoader />
       <HashScrollFix />
-      <GtmNoscript />
       <AnalyticsScripts />
       <OrganizationJsonLd />
       <WebsiteJsonLd />

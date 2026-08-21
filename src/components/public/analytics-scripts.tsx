@@ -8,7 +8,6 @@ import Script from "next/script";
 // rendered from (public)/layout.tsx, never loaded on /admin.
 export function AnalyticsScripts() {
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-  const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
   const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID;
   const adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
 
@@ -49,15 +48,11 @@ ${adsId ? `gtag('config', ${JSON.stringify(adsId)});` : ""}`}
           remove the Google Ads tag from the GTM container, or drop adsId
           here and let GTM own it entirely. It can't be fixed from code alone
           without knowing which the container is configured to do. */}
-      {gtmId && (
-        <Script id="gtm-init" strategy="afterInteractive">
-          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer',${JSON.stringify(gtmId)});`}
-        </Script>
-      )}
+      {/* Google Tag Manager is NOT loaded here any more. It moved to the
+          root layout (src/app/layout.tsx) so its snippet can sit in <head>
+          where Google's install instructions require it — a nested layout
+          cannot put anything there, whatever next/script strategy is used.
+          Loading it in both places would install the container twice. */}
       {clarityId && (
         <Script id="clarity-init" strategy="afterInteractive">
           {`(function(c,l,a,r,i,t,y){
@@ -86,26 +81,5 @@ export function GtmConversionEvent({ transactionId }: { transactionId?: string }
       {`window.dataLayer = window.dataLayer || [];
 window.dataLayer.push({ event: 'generate_lead', transaction_id: ${JSON.stringify(transactionId ?? "")} });`}
     </Script>
-  );
-}
-
-// GTM's <noscript> fallback pixel — Google's own guidance is to place this
-// immediately after <body> opens. The root layout (src/app/layout.tsx) owns
-// the actual <body> tag and is shared with /admin, so this renders instead
-// as the first element of the public layout's wrapper — as close to "top of
-// body" as achievable while staying scoped to public pages only.
-export function GtmNoscript() {
-  const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
-  if (!gtmId) return null;
-  return (
-    <noscript>
-      <iframe
-        src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
-        height="0"
-        width="0"
-        style={{ display: "none", visibility: "hidden" }}
-        title="Google Tag Manager"
-      />
-    </noscript>
   );
 }
