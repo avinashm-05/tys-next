@@ -50,6 +50,31 @@ export default function SecurityPage() {
               <a href="tel:+14047938759">+1 (404) 793-8759</a>.
             </p>
           </LegalSection>
+
+          {/* Expanded from 150 words (audit, 2026-08-21). The page previously
+              covered only *data* security; "is my shipment safe" is the other
+              half of what someone landing here is asking. */}
+          <LegalSection title="Keeping Your Shipment Secure">
+            <p>
+              Every shipment we book moves through established global carrier networks — the
+              same chain of custody, facility security and scanning those carriers apply to
+              their own retail traffic. Each shipment is tracked from collection to delivery, so
+              there is a record of every facility it passes through.
+            </p>
+            <p>
+              We ask for accurate contents descriptions on every booking, and we will not carry
+              items that are restricted or prohibited by the carrier or the destination country.
+              That is partly a legal requirement and partly practical: an inaccurate declaration
+              is one of the most common reasons a shipment is held or seized at customs. Our{" "}
+              <a href="/resources/prohibited-items">prohibited items guide</a> sets out what
+              cannot be shipped and why.
+            </p>
+            <p>
+              For high-value shipments we recommend arranging cover before collection. Standard
+              carrier liability is limited and is not the same thing as insurance — talk to us
+              before you book and we will explain what applies to your specific shipment.
+            </p>
+          </LegalSection>
         </div>
       </section>
     </>

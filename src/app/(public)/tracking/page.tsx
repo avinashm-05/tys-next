@@ -55,6 +55,45 @@ export default function TrackingPage() {
           prompt assistance.
         </p>
       </div>
+
+      {/* Expanded from 137 words (audit, 2026-08-21) — under ~300 words
+          rarely gets indexed, and "track my shipment" is a high-intent query
+          we should be able to rank for. Describes only how the existing
+          tracking flow already behaves; no new promises. */}
+      <div className="mx-auto mt-12 max-w-3xl">
+        <h2 className="text-2xl font-bold text-ink md:text-3xl">How tracking works</h2>
+        <div className="mt-4 space-y-4 text-ink-muted">
+          <p>
+            When your shipment is booked we send a tracking reference by email. Enter it above
+            at any time to see where the shipment currently is and what has happened to it so
+            far. The status comes from the carrier handling the shipment, so it reflects the
+            same information their own system holds.
+          </p>
+          <p>
+            Scans update as the shipment passes through the network — collection, departure
+            from the origin facility, arrival in the destination country, customs clearance,
+            and final delivery. International shipments typically show fewer scans than domestic
+            ones, and it is normal for there to be a quiet period while a shipment is in transit
+            between countries or waiting on customs. A gap of a day or two mid-route does not
+            mean anything has gone wrong.
+          </p>
+          <p>
+            Customs clearance is the stage that most often adds unexpected time. It is handled
+            by the destination country&rsquo;s authorities rather than by the carrier, and it can
+            require paperwork or duty payment before the shipment is released — see{" "}
+            <a href="/resources/customs-duty" className="text-brand hover:underline">
+              customs duty explained
+            </a>{" "}
+            for what is usually involved.
+          </p>
+          <p>
+            If your reference is not recognised, it is usually because the first carrier scan
+            has not happened yet; that can take up to 24 hours after collection. If it still
+            shows nothing after that, or a shipment has been static for longer than you would
+            expect, contact us and we will chase it with the carrier directly.
+          </p>
+        </div>
+      </div>
     </section>
   );
 }

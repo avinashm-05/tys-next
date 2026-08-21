@@ -28,7 +28,15 @@ const STATIC_ROUTES: {
   { path: "/contact-us/support", priority: 0.4, changeFrequency: "monthly" },
   { path: "/destinations", priority: 0.7, changeFrequency: "monthly" },
   { path: "/destinations/moving", priority: 0.6, changeFrequency: "monthly" },
+  // Per-country landing pages, added 2026-08-21 against the highest-volume
+  // "ship to <country>" queries the keyword research surfaced.
+  { path: "/destinations/canada", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/destinations/india", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/destinations/uk", priority: 0.8, changeFrequency: "monthly" },
   { path: "/faqs", priority: 0.6, changeFrequency: "monthly" },
+  // Brand defence — answers "is TYS Global Logistics legit", which people
+  // search before paying a company they haven't used before.
+  { path: "/is-tys-global-logistics-legit", priority: 0.5, changeFrequency: "yearly" },
   { path: "/locations", priority: 0.5, changeFrequency: "monthly" },
   { path: "/privacy-policy", priority: 0.2, changeFrequency: "yearly" },
   // Highest priority after the homepage: this is the landing page every paid
@@ -43,6 +51,8 @@ const STATIC_ROUTES: {
   { path: "/services", priority: 0.8, changeFrequency: "monthly" },
   { path: "/shipping-rates", priority: 0.9, changeFrequency: "monthly" },
   { path: "/services/auto-transport", priority: 0.7, changeFrequency: "monthly" },
+  // Highest-volume gap in the research (~70.5k/mo) with no competing page.
+  { path: "/services/baggage-shipping", priority: 0.9, changeFrequency: "monthly" },
   { path: "/services/document-shipping", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/domestic-moving", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/domestic-shipping", priority: 0.7, changeFrequency: "monthly" },

@@ -14,32 +14,41 @@ export function AnalyticsScripts() {
 
   return (
     <>
-      {gaId && (
+      {/* ONE gtag.js load, configuring every Google product we use.
+          gtag.js is a single library — the id in its URL only picks which
+          container it bootstraps with, and every additional `config` call
+          registers another destination on the same loaded script. We used to
+          load it twice (once for GA4, once for Ads), which fetched the same
+          ~100KB library again for no benefit and is what makes Tag Assistant
+          report the same tag installed more than once. Verified live
+          2026-08-21: three gtag.js requests were going out per page load. */}
+      {(gaId || adsId) && (
         <>
-          <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
-          <Script id="ga4-init" strategy="afterInteractive">
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${gaId || adsId}`}
+            strategy="afterInteractive"
+          />
+          <Script id="gtag-init" strategy="afterInteractive">
             {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', ${JSON.stringify(gaId)});`}
+${gaId ? `gtag('config', ${JSON.stringify(gaId)});` : ""}
+${adsId ? `gtag('config', ${JSON.stringify(adsId)});` : ""}`}
           </Script>
         </>
       )}
-      {/* Google Ads base tag — required site-wide (not just the thank-you
-          page) for remarketing/audience signals. Separate from the
-          conversion-specific event in GoogleAdsConversion, which only fires
-          on the thank-you page and reuses the gtag() global this sets up. */}
-      {adsId && (
-        <>
-          <Script src={`https://www.googletagmanager.com/gtag/js?id=${adsId}`} strategy="afterInteractive" />
-          <Script id="google-ads-init" strategy="afterInteractive">
-            {`window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', ${JSON.stringify(adsId)});`}
-          </Script>
-        </>
-      )}
+      {/* The Google Ads base tag is configured by the single gtag block
+          above, not by a second gtag.js load of its own. It still needs to be
+          site-wide (not just the thank-you page) for remarketing/audience
+          signals, and GoogleAdsConversion's thank-you-page event continues to
+          reuse the gtag() global set up above.
+
+          NOTE: the GTM container ALSO loads this same Ads ID (observed live
+          as gtag/js?id=AW-...&gtm=4e68j0). That is a genuine duplicate
+          installation and needs resolving in ONE of the two places — either
+          remove the Google Ads tag from the GTM container, or drop adsId
+          here and let GTM own it entirely. It can't be fixed from code alone
+          without knowing which the container is configured to do. */}
       {gtmId && (
         <Script id="gtm-init" strategy="afterInteractive">
           {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
