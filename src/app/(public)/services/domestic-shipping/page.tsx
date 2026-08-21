@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceJsonLd } from "@/components/public/service-json-ld";
 import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
@@ -20,10 +21,11 @@ import {
   ShieldCheckIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Domestic Shipping — TYS Global Logistics",
   description: "Fast, affordable shipping across all 50 states — parcels, freight, and everything in between.",
-};
+  path: "/services/domestic-shipping",
+});
 
 export default function DomesticShippingPage() {
   return (
@@ -40,6 +42,7 @@ export default function DomesticShippingPage() {
         title="Domestic Shipping"
         subtitle="Fast, affordable shipping across all 50 states — parcels, freight, and everything in between."
       />
+      <ServiceCtaBanner />
 
       <ServiceIntro
         eyebrow="Nationwide Domestic Shipping"
@@ -152,7 +155,6 @@ export default function DomesticShippingPage() {
         ]}
       />
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

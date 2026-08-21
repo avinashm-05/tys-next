@@ -8,7 +8,14 @@ export function OrganizationJsonLd() {
 
   const data = {
     "@context": "https://schema.org",
-    "@type": "MovingCompany",
+    // ["Organization", "LocalBusiness"], not "MovingCompany" (changed
+    // 2026-08-21). MovingCompany told Google to rank this against local
+    // household movers, when the business is primarily international
+    // shipping and freight forwarding — the wrong competitive set entirely.
+    // LocalBusiness is kept alongside Organization so the Atlanta address
+    // still counts for local search, which is the one area a
+    // freight-forwarder competitor can't structurally out-rank.
+    "@type": ["Organization", "LocalBusiness"],
     name: "TYS Global Logistics",
     url: siteUrl,
     logo: `${siteUrl}/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png`,
@@ -21,6 +28,16 @@ export function OrganizationJsonLd() {
       postalCode: "30324",
       addressCountry: "US",
     },
+    areaServed: "US",
+    // Tells answer engines what this business actually does, now that the
+    // @type no longer says "mover".
+    knowsAbout: [
+      "International shipping",
+      "Freight forwarding",
+      "Parcel shipping",
+      "Document shipping",
+      "Package forwarding",
+    ],
     sameAs: [
       "https://www.linkedin.com/company/tys-global-logistics/",
       "https://www.instagram.com/tysgloballogistics",

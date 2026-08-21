@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceJsonLd } from "@/components/public/service-json-ld";
 import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
@@ -13,10 +14,11 @@ import {
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 import { HeadsetIcon, TruckIcon, MapPinLineIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Domestic Moving — TYS Global Logistics",
   description: "A simpler way to move within the United States, from the first box packed to the last one delivered.",
-};
+  path: "/services/domestic-moving",
+});
 
 export default function DomesticMovingPage() {
   return (
@@ -33,6 +35,7 @@ export default function DomesticMovingPage() {
         title="Domestic Moving"
         subtitle="A simpler way to move within the United States — from the first box packed to the last one delivered."
       />
+      <ServiceCtaBanner />
 
       <ServiceIntro
         eyebrow="Nationwide Domestic Relocation"
@@ -146,7 +149,6 @@ export default function DomesticMovingPage() {
         ]}
       />
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

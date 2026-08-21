@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { CalendarIcon, ClockIcon, ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
 import { db } from "@/lib/db";
@@ -7,11 +8,11 @@ import { estimateReadTime, formatBlogDate } from "@/lib/blog-read-time";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { BlogBanner } from "@/components/public/blog-banner";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Shipping & Moving Blog — TYS Global Logistics",
-  description:
-    "Practical, plain English guides on international shipping, moving abroad, auto transport, freight forwarding, and more, from the TYS Global Logistics team.",
-};
+  description: "Practical, plain English guides on international shipping, moving abroad, auto transport, freight forwarding, and more, from the TYS Global Logistics team.",
+  path: "/blog",
+});
 
 // No caching directive needed beyond the default: the admin's publish/edit
 // actions call revalidatePath('/blog') themselves (see

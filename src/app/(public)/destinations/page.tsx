@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ContinentCard, BrandName } from "@/components/public/continent-card";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 import type { DestinationCountry } from "@/components/public/destination-pill-grid";
 
-export const metadata: Metadata = { title: "Worldwide Destinations — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Worldwide Destinations — TYS Global Logistics",
+  description: "We ship from the US to over 200 destinations worldwide. Find transit times, restrictions and pricing for your country.",
+  path: "/destinations",
+});
 
 const ASIA: DestinationCountry[] = [
   { code: "CN", label: "China" },

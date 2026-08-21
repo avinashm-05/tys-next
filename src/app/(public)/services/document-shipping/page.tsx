@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceJsonLd } from "@/components/public/service-json-ld";
 import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
@@ -11,10 +12,11 @@ import {
 } from "@/components/public/service-page-sections";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Document Shipping — TYS Global Logistics",
   description: "Secure, trackable worldwide delivery for contracts, visas, and legal filings.",
-};
+  path: "/services/document-shipping",
+});
 
 export default function DocumentShippingPage() {
   return (
@@ -31,6 +33,7 @@ export default function DocumentShippingPage() {
         title="Document Shipping"
         subtitle="Secure, trackable delivery for contracts, visas, legal filings, and other time-sensitive paperwork."
       />
+      <ServiceCtaBanner />
 
       <ServiceIntro
         eyebrow="Secure Document Delivery"
@@ -107,7 +110,6 @@ export default function DocumentShippingPage() {
         ]}
       />
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceCtaBanner } from "@/components/public/service-page-sections";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Major Carriers — TYS Global Logistics",
-  description: "We ship with the carriers you already trust.",
-};
+  description: "We book with the major global carriers at rates below their retail counter price. Same networks, same tracking, lower cost.",
+  path: "/carriers",
+});
 
 // Wordmark badges use each carrier's real brand colors rather than their
 // actual logo artwork — we don't have rights to redistribute the trademarked
@@ -46,6 +48,7 @@ export default function CarriersPage() {
         title="Major Carriers"
         subtitle="We work with the carriers you already trust, and find the right one for every shipment."
       />
+      <ServiceCtaBanner />
 
       <section className="px-4 py-14 md:px-8">
         <div className="mx-auto max-w-3xl text-center text-ink-muted">
@@ -74,7 +77,6 @@ export default function CarriersPage() {
         </div>
       </section>
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

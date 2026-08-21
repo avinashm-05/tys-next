@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { LegalSection } from "@/components/public/legal-section";
 
-export const metadata: Metadata = { title: "Privacy Policy — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Privacy Policy — TYS Global Logistics",
+  description: "How TYS Global Logistics collects, uses and protects your personal information.",
+  path: "/privacy-policy",
+});
 
 export default function PrivacyPolicyPage() {
   return (

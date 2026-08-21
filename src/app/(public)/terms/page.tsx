@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { LegalSection } from "@/components/public/legal-section";
 
-export const metadata: Metadata = { title: "Terms & Conditions — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Terms & Conditions — TYS Global Logistics",
+  description: "The terms and conditions that apply to shipping and moving services provided by TYS Global Logistics.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

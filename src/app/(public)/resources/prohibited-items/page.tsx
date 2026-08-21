@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { LegalSection } from "@/components/public/legal-section";
 import { ServiceCtaBanner } from "@/components/public/service-page-sections";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Prohibited Shipping Items — TYS Global Logistics",
-  description: "What you can't ship due to carrier, safety, and customs regulations.",
-};
+  description: "What you cannot ship internationally, and why. Carrier restrictions and destination country rules explained simply.",
+  path: "/resources/prohibited-items",
+});
 
 export default function ProhibitedItemsPage() {
   return (
@@ -16,6 +18,7 @@ export default function ProhibitedItemsPage() {
         title="Prohibited Shipping Items"
         subtitle="What you can't ship due to carrier, safety, and customs regulations."
       />
+      <ServiceCtaBanner />
 
       <section className="bg-gray-50 px-4 py-14 md:px-8">
         <div className="mx-auto max-w-3xl rounded-3xl border border-brand-light bg-white p-6 md:p-10">
@@ -60,7 +63,6 @@ export default function ProhibitedItemsPage() {
         </div>
       </section>
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

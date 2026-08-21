@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { LegalSection } from "@/components/public/legal-section";
 
-export const metadata: Metadata = { title: "Security — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Security — TYS Global Logistics",
+  description: "How TYS Global Logistics protects your shipment and your data, from collection through to delivery.",
+  path: "/security",
+});
 
 export default function SecurityPage() {
   return (

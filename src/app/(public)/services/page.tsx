@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceCtaBanner } from "@/components/public/service-page-sections";
@@ -15,10 +16,11 @@ import {
   GlobeIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Our Services — TYS Global Logistics",
   description: "Everything you need to ship, move, or relocate — anywhere in the world.",
-};
+  path: "/services",
+});
 
 const SERVICES = [
   {
@@ -90,6 +92,7 @@ export default function ServicesPage() {
         title="Our Services"
         subtitle="Everything you need to ship, move, or relocate — anywhere in the world."
       />
+      <ServiceCtaBanner />
 
       <section className="px-4 py-14 md:px-8">
         <div className="mx-auto grid grid-cols-1 max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -109,7 +112,6 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

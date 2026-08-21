@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { LegalSection } from "@/components/public/legal-section";
 import { ServiceCtaBanner } from "@/components/public/service-page-sections";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Guide to Customs Duty — TYS Global Logistics",
-  description: "How customs duty works, and what affects the amount you owe.",
-};
+  description: "What customs duty is, how it is calculated, and who pays it when you ship internationally from the United States.",
+  path: "/resources/customs-duty",
+});
 
 export default function CustomsDutyPage() {
   return (
@@ -16,6 +18,7 @@ export default function CustomsDutyPage() {
         title="Guide to Customs Duty"
         subtitle="How customs duty works, and what affects the amount you owe."
       />
+      <ServiceCtaBanner />
 
       <section className="bg-gray-50 px-4 py-14 md:px-8">
         <div className="mx-auto max-w-3xl rounded-3xl border border-brand-light bg-white p-6 md:p-10">
@@ -77,7 +80,6 @@ export default function CustomsDutyPage() {
         </div>
       </section>
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

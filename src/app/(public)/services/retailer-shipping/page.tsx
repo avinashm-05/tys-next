@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceJsonLd } from "@/components/public/service-json-ld";
 import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
@@ -12,10 +13,11 @@ import {
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 import { StorefrontIcon, WarehouseIcon, PackageIcon, CarSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Retailer Shipping — TYS Global Logistics",
   description: "Fulfillment-ready shipping for retailers, e-commerce brands, and wholesalers.",
-};
+  path: "/services/retailer-shipping",
+});
 
 export default function RetailerShippingPage() {
   return (
@@ -32,6 +34,7 @@ export default function RetailerShippingPage() {
         title="Retailer Shipping"
         subtitle="Fulfillment-ready shipping for retailers, e-commerce brands, and wholesalers shipping to customers everywhere."
       />
+      <ServiceCtaBanner />
 
       <ServiceIntro
         eyebrow="For Retailers & E-Commerce"
@@ -113,7 +116,6 @@ export default function RetailerShippingPage() {
         ]}
       />
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

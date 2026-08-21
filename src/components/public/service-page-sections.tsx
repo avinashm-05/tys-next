@@ -31,7 +31,12 @@ export function ServiceIntro({
         <p className="text-sm font-semibold uppercase tracking-[1.6px] text-brand">
           {eyebrow}
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-ink md:text-4xl">{heading}</h1>
+        {/* h2, not h1 (fixed 2026-08-21). Every /services/* page and
+            /about-us rendered TWO h1s — PageHeroBand supplies the real one
+            ("Parcel Shipping"), and this section added a second
+            ("Ship Parcels Anywhere, Any Size"). Two h1s split the page's
+            topical signal; the visual size is unchanged, only the tag. */}
+        <h2 className="mt-2 text-3xl font-bold text-ink md:text-4xl">{heading}</h2>
         <div className="mt-4 space-y-4 text-ink-muted">{children}</div>
       </div>
 

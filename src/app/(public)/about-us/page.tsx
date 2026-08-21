@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceCardGrid, ServiceCtaBanner } from "@/components/public/service-page-sections";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
@@ -12,10 +13,11 @@ import {
   ShieldCheckIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "About Us — TYS Global Logistics",
   description: "Your trusted partner for shipping, moving, and freight — anywhere in the world.",
-};
+  path: "/about-us",
+});
 
 export default function AboutUsPage() {
   return (
@@ -24,6 +26,7 @@ export default function AboutUsPage() {
         title="About Us"
         subtitle="Your trusted partner for shipping, moving, and freight — anywhere in the world."
       />
+      <ServiceCtaBanner />
 
       <section className="px-4 py-14 md:px-8">
         <div className="mx-auto max-w-3xl text-center">
@@ -100,7 +103,6 @@ export default function AboutUsPage() {
         ]}
       />
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { PaymentTabs } from "@/components/public/payment-tabs";
 
-export const metadata: Metadata = { title: "Online Payment — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Online Payment — TYS Global Logistics",
+  description: "Pay for your TYS Global Logistics shipment securely online. Card and bank transfer accepted.",
+  path: "/contact-us/pay",
+  noIndex: true,
+});
 
 export default function PayPage() {
   return (

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRightIcon, GlobeIcon, HeadsetIcon } from "@phosphor-icons/react/dist/ssr";
@@ -7,6 +9,13 @@ import { TrustpilotFullLogo } from "@/components/public/trustpilot-logo";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { ReviewsCarousel } from "@/components/public/reviews-carousel";
 import { OfferCard } from "@/components/public/offer-card";
+
+export const metadata: Metadata = pageMetadata({
+  title: "International Shipping & Freight Forwarding | TYS Global Logistics",
+  description:
+    "Ship parcels, documents and freight from anywhere in the US to 200+ countries. Door to door, fully tracked, free quote in minutes.",
+  path: "/",
+});
 
 // Home page — B1 redesign. Rebuilt section-by-section from the new Figma
 // design (see 03_Website/01_Home_and_form/Home_01.png). Copy is transcribed

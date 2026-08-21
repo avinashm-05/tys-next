@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceCtaBanner } from "@/components/public/service-page-sections";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 import { PhoneIcon, EnvelopeSimpleIcon, MapPinIcon } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = { title: "Locations — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Locations — TYS Global Logistics",
+  description: "TYS Global Logistics is based in Atlanta, Georgia, with nationwide US collection. Find your nearest pickup option.",
+  path: "/locations",
+});
 
 export default function LocationsPage() {
   return (
     <>
       <PageHeroBand title="Our Locations" subtitle="Where to find us" />
+      <ServiceCtaBanner />
 
       <section className="bg-gray-50 px-4 py-14 md:px-8">
         <div className="mx-auto max-w-xl rounded-3xl border border-brand-light bg-white p-8 text-center shadow-[0_2px_16px_rgba(16,24,40,0.04)]">
@@ -33,7 +39,6 @@ export default function LocationsPage() {
         </div>
       </section>
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

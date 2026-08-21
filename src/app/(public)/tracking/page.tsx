@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { TrackingLookupForm } from "@/components/public/tracking-lookup-form";
 
-export const metadata: Metadata = { title: "Track a Shipment — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Track a Shipment — TYS Global Logistics",
+  description: "Track your TYS Global Logistics shipment. Enter your reference number for real-time delivery status.",
+  path: "/tracking",
+});
 
 export default function TrackingPage() {
   return (

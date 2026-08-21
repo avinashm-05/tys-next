@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceJsonLd } from "@/components/public/service-json-ld";
 import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
@@ -12,10 +13,11 @@ import {
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 import { TruckIcon, AirplaneTiltIcon, AnchorIcon } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Parcel Shipping — TYS Global Logistics",
-  description: "Ship parcels of any size to nearly 200 destinations worldwide.",
-};
+  description: "Send parcels of any size from anywhere in the US to 200+ countries. Collected from your door, fully tracked, below counter rates.",
+  path: "/services/parcel-shipping",
+});
 
 export default function ParcelShippingPage() {
   return (
@@ -32,6 +34,7 @@ export default function ParcelShippingPage() {
         title="Parcel Shipping"
         subtitle="Ship parcels of any size to nearly 200 destinations worldwide, with a mode of transport that fits your budget and timeline."
       />
+      <ServiceCtaBanner />
 
       <ServiceIntro
         eyebrow="Worldwide Parcel Shipping"
@@ -128,7 +131,6 @@ export default function ParcelShippingPage() {
         ]}
       />
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

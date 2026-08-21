@@ -8,6 +8,11 @@ const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").re
 
 // Real, public, indexable marketing routes only — /account/*, /thank-you,
 // and everything under /admin + /api are excluded (see robots.ts).
+//
+// Also deliberately absent: /sitemap and /contact-us/pay. Both are thin by
+// nature (31 and 24 words) and are now marked `robots: { index: false }` on
+// the pages themselves — a URL we ask Google not to index should not also be
+// advertised here, which would be a contradictory signal.
 const STATIC_ROUTES: {
   path: string;
   priority: number;
@@ -20,19 +25,23 @@ const STATIC_ROUTES: {
   // site-header.tsx. Re-add when the page is linked again.
   { path: "/carriers", priority: 0.5, changeFrequency: "monthly" },
   { path: "/contact-us", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/contact-us/pay", priority: 0.3, changeFrequency: "yearly" },
   { path: "/contact-us/support", priority: 0.4, changeFrequency: "monthly" },
   { path: "/destinations", priority: 0.7, changeFrequency: "monthly" },
   { path: "/destinations/moving", priority: 0.6, changeFrequency: "monthly" },
   { path: "/faqs", priority: 0.6, changeFrequency: "monthly" },
   { path: "/locations", priority: 0.5, changeFrequency: "monthly" },
   { path: "/privacy-policy", priority: 0.2, changeFrequency: "yearly" },
+  // Highest priority after the homepage: this is the landing page every paid
+  // ad points at. It was missing from the sitemap entirely until 2026-08-21,
+  // so Google had no way to discover it except by following an internal link.
+  { path: "/quotes", priority: 1, changeFrequency: "weekly" },
   { path: "/resources", priority: 0.6, changeFrequency: "monthly" },
   { path: "/resources/customs-duty", priority: 0.5, changeFrequency: "monthly" },
   { path: "/resources/prohibited-items", priority: 0.5, changeFrequency: "monthly" },
   { path: "/resources/volumetric-weight", priority: 0.5, changeFrequency: "monthly" },
   { path: "/security", priority: 0.2, changeFrequency: "yearly" },
   { path: "/services", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/shipping-rates", priority: 0.9, changeFrequency: "monthly" },
   { path: "/services/auto-transport", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/document-shipping", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/domestic-moving", priority: 0.7, changeFrequency: "monthly" },
@@ -47,7 +56,6 @@ const STATIC_ROUTES: {
   { path: "/services/parcel-shipping", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/retailer-shipping", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/volume-shipping", priority: 0.7, changeFrequency: "monthly" },
-  { path: "/sitemap", priority: 0.2, changeFrequency: "yearly" },
   { path: "/terms", priority: 0.2, changeFrequency: "yearly" },
   { path: "/tracking", priority: 0.7, changeFrequency: "monthly" },
 ];

@@ -1,14 +1,30 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { HeadsetIcon, WalletIcon, ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 
-export const metadata: Metadata = { title: "Contact Us — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Contact Us — TYS Global Logistics",
+  description: "Talk to a real person about your shipment. Call, email or request a quote — TYS Global Logistics, Atlanta, Georgia.",
+  path: "/contact-us",
+});
 
 export default function ContactUsPage() {
   return (
     <>
       <section className="bg-gray-50 px-4 py-16 md:px-8">
+        {/* This page had NO h1 at all — it opened straight at h2 ("Help &
+            Support"), leaving the single strongest on-page ranking signal
+            unset on the page people search "contact" for. Added 2026-08-21. */}
+        <div className="mx-auto mb-10 max-w-4xl text-center">
+          <h1 className="text-3xl font-extrabold text-ink md:text-4xl">
+            Contact TYS Global Logistics
+          </h1>
+          <p className="mt-3 text-ink-muted">
+            Talk to a real person about your shipment — support, payments, or a new quote.
+          </p>
+        </div>
         <div className="mx-auto grid grid-cols-1 max-w-4xl gap-6 md:grid-cols-2">
           <ContactCard
             icon={HeadsetIcon}

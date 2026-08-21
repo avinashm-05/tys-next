@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import {
   PhoneIcon,
   EnvelopeSimpleIcon,
@@ -7,7 +8,11 @@ import {
 import { ContactSupportForm } from "@/components/public/contact-support-form";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 
-export const metadata: Metadata = { title: "Contact Support — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Contact Support — TYS Global Logistics",
+  description: "Questions about a shipment in progress? Contact TYS support for tracking, delivery and customs help.",
+  path: "/contact-us/support",
+});
 
 export default function ContactSupportPage() {
   return (

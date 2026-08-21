@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceJsonLd } from "@/components/public/service-json-ld";
 import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
@@ -12,10 +13,11 @@ import {
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 import { HeadsetIcon, FileTextIcon, PackageIcon, MapPinLineIcon } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Freight Forwarding — TYS Global Logistics",
   description: "Origin and destination freight services for household, auto, and commercial cargo.",
-};
+  path: "/services/freight-forwarding",
+});
 
 export default function FreightForwardingPage() {
   return (
@@ -32,6 +34,7 @@ export default function FreightForwardingPage() {
         title="Freight Forwarding"
         subtitle="Ship containers, pallets, and commercial cargo with dependable origin and destination services — from pickup to final delivery."
       />
+      <ServiceCtaBanner />
 
       <ServiceIntro
         eyebrow="Origin & Destination Services"
@@ -136,7 +139,6 @@ export default function FreightForwardingPage() {
         ]}
       />
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

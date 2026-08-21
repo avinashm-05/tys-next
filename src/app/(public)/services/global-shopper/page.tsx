@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceJsonLd } from "@/components/public/service-json-ld";
 import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
@@ -13,10 +14,11 @@ import {
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 import { TruckIcon, EnvelopeIcon, HeadsetIcon, UserIcon } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Global Shopper — TYS Global Logistics",
   description: "Shop US stores with a free U.S. address and ship your purchases anywhere in the world.",
-};
+  path: "/services/global-shopper",
+});
 
 export default function GlobalShopperPage() {
   return (
@@ -33,6 +35,7 @@ export default function GlobalShopperPage() {
         title="Global Shopper"
         subtitle="Shop from your favorite US stores and let TYS Global Logistics ship it all to your door, anywhere in the world."
       />
+      <ServiceCtaBanner />
 
       <ServiceIntro
         eyebrow="Shop US Stores, Ship Worldwide"
@@ -144,7 +147,6 @@ export default function GlobalShopperPage() {
         ]}
       />
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

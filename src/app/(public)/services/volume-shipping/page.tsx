@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceJsonLd } from "@/components/public/service-json-ld";
 import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
@@ -12,10 +13,11 @@ import {
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 import { ScalesIcon, HeadsetIcon, TruckIcon, UsersIcon } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Volume Shipping — TYS Global Logistics",
   description: "Consistent rates and dedicated support for businesses shipping in volume.",
-};
+  path: "/services/volume-shipping",
+});
 
 export default function VolumeShippingPage() {
   return (
@@ -32,6 +34,7 @@ export default function VolumeShippingPage() {
         title="Volume Shipping"
         subtitle="Consistent rates and dedicated support for businesses shipping in volume, every week."
       />
+      <ServiceCtaBanner />
 
       <ServiceIntro
         eyebrow="For High-Volume Shippers"
@@ -113,7 +116,6 @@ export default function VolumeShippingPage() {
         ]}
       />
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

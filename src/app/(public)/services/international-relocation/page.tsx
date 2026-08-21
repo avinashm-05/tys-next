@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceJsonLd } from "@/components/public/service-json-ld";
 import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
@@ -21,10 +22,11 @@ import {
   BankIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "International Relocation — TYS Global Logistics",
   description: "Door-to-door international relocation for your household, family, and belongings.",
-};
+  path: "/services/international-relocation",
+});
 
 export default function InternationalRelocationPage() {
   return (
@@ -41,6 +43,7 @@ export default function InternationalRelocationPage() {
         title="International Relocation"
         subtitle="Moving your life to a new country? We handle the logistics so you can focus on the move itself."
       />
+      <ServiceCtaBanner />
 
       <ServiceIntro
         eyebrow="Door-to-Door Relocation"
@@ -172,7 +175,6 @@ export default function InternationalRelocationPage() {
         ]}
       />
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { blogCategoryIcon } from "@/lib/blog-categories";
@@ -34,7 +35,16 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const post = await getPost((await params).slug);
   if (!post) return {};
-  return { title: `${post.metaTitle ?? post.title} — TYS Blog`, description: post.description };
+  // No "— TYS Blog" suffix: Google truncates titles around 60 characters and
+  // every one of these ran 66–82, so the suffix was pushing the actual
+  // subject off the end of the result. Dropping it recovers 11 characters on
+  // every post (audited 2026-08-21). Canonical is self-referencing so a post
+  // reached with UTM parameters doesn't read as a separate page.
+  return {
+    title: post.metaTitle ?? post.title,
+    description: post.description,
+    alternates: { canonical: `${SITE_URL}/blog/${post.slug}` },
+  };
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<Params> }) {

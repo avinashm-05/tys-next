@@ -1,0 +1,44 @@
+import type { Metadata } from "next";
+
+// One place that knows the site's public origin, so canonical URLs can never
+// drift from what the sitemap and JSON-LD emit. Mirrors sitemap.ts exactly.
+export const SITE_URL = (
+  process.env.APP_URL ?? "https://www.tysgloballogistics.com"
+).replace(/\/+$/, "");
+
+/**
+ * Builds a page's `Metadata` with a self-referencing canonical attached.
+ *
+ * Every public page needed one and none had one (audited 2026-08-21). Without
+ * a canonical, each URL variation — a trailing slash, `?utm_source=...`, www
+ * vs bare — reads to a crawler as a separate page competing with the original.
+ * That matters most the day paid traffic starts, because every ad click
+ * arrives carrying UTM parameters, so the ad landing page would otherwise
+ * fragment into as many "pages" as there are campaigns.
+ *
+ * `path` is the route as it appears in the URL, leading slash included ("/"
+ * for the homepage). Next resolves `alternates.canonical` against
+ * metadataBase, so this stays correct if the domain ever changes.
+ */
+export function pageMetadata({
+  title,
+  description,
+  path,
+  noIndex = false,
+  ...rest
+}: {
+  title: string;
+  description?: string;
+  path: string;
+  noIndex?: boolean;
+} & Omit<Metadata, "title" | "description" | "alternates" | "robots">): Metadata {
+  return {
+    title,
+    ...(description ? { description } : {}),
+    alternates: { canonical: `${SITE_URL}${path === "/" ? "" : path}` },
+    // Thin, utility pages (a link index, a payment hand-off) are better kept
+    // out of the index than padded with filler to reach a word count.
+    ...(noIndex ? { robots: { index: false, follow: true } } : {}),
+    ...rest,
+  };
+}

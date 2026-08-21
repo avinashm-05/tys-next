@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { BrandName } from "@/components/public/continent-card";
 import { DestinationPillGrid, type DestinationCountry } from "@/components/public/destination-pill-grid";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 
-export const metadata: Metadata = { title: "Worldwide Moving — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Worldwide Moving — TYS Global Logistics",
+  description: "Moving overseas? TYS handles household goods, personal effects and full relocations from the US to 200+ countries.",
+  path: "/destinations/moving",
+});
 
 const MOVING_DESTINATIONS: DestinationCountry[] = [
   { code: "AU", label: "Australia" },

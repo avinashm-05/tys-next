@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { QuoteWizardForm } from "@/components/public/quote-wizard-form";
 import { normalizeCode } from "@/lib/countries";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Get a Free Quote — TYS Global Logistics",
   description: "Get a free domestic or international shipping quote in under a minute.",
-};
+  path: "/quotes",
+});
 
 // B2 redesign — the quote wizard's own route (previously inline-only on the
 // home page). from_country/to_country are read from the query string so the

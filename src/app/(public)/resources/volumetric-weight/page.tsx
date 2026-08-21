@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { LegalSection } from "@/components/public/legal-section";
 import { ServiceCtaBanner } from "@/components/public/service-page-sections";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Volumetric Weight Explained — TYS Global Logistics",
   description: "How dimensional (volumetric) weight is calculated, and why it affects your shipping rate.",
-};
+  path: "/resources/volumetric-weight",
+});
 
 export default function VolumetricWeightPage() {
   return (
@@ -16,6 +18,7 @@ export default function VolumetricWeightPage() {
         title="Volumetric Weight Explained"
         subtitle="How dimensional weight is calculated, and why it can determine your shipping rate."
       />
+      <ServiceCtaBanner />
 
       <section className="bg-gray-50 px-4 py-14 md:px-8">
         <div className="mx-auto max-w-3xl rounded-3xl border border-brand-light bg-white p-6 md:p-10">
@@ -81,7 +84,6 @@ export default function VolumetricWeightPage() {
         </div>
       </section>
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

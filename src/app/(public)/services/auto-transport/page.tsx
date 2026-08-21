@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { ServiceJsonLd } from "@/components/public/service-json-ld";
 import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
@@ -13,10 +14,11 @@ import {
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 import { CarSimpleIcon, SteeringWheelIcon, MotorcycleIcon, VanIcon } from "@phosphor-icons/react/dist/ssr";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Auto Transport — TYS Global Logistics",
-  description: "Nationwide auto transport for cars, motorcycles, and fleet vehicles.",
-};
+  description: "Vehicle transport across the US and overseas. Enclosed and open carriers, door to door collection, fully insured.",
+  path: "/services/auto-transport",
+});
 
 export default function AutoTransportPage() {
   return (
@@ -33,6 +35,7 @@ export default function AutoTransportPage() {
         title="Auto Transport"
         subtitle="Ship your car, motorcycle, or fleet vehicle anywhere in the country — safely, on schedule, and fully insured."
       />
+      <ServiceCtaBanner />
 
       <ServiceIntro
         eyebrow="Nationwide Auto Transport"
@@ -150,7 +153,6 @@ export default function AutoTransportPage() {
         ]}
       />
 
-      <ServiceCtaBanner />
 
       <TrustedReviewsSection />
     </>

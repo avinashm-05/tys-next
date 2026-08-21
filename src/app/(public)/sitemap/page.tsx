@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 
-export const metadata: Metadata = { title: "Sitemap — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Sitemap — TYS Global Logistics",
+  description: "Every page on the TYS Global Logistics website, in one place.",
+  path: "/sitemap",
+  noIndex: true,
+});
 
 // "Book Shipment" and the whole "My Account" group are temporarily hidden —
 // see the matching note in site-header.tsx.
