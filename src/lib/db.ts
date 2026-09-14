@@ -67,10 +67,14 @@ function makeAdapter() {
     // handing it out — cheap, and stops a server-side-closed connection
     // being given to a request that then fails for no visible reason.
     minDelayValidation: 5000,
-    // Fail fast rather than making the visitor wait the full 10s default:
-    // a page that errors in 4s can be retried, one that hangs looks broken.
-    acquireTimeout: 4000,
-    connectTimeout: 4000,
+    // NOT shortened. Cutting these to 4s to "fail fast" broke the production
+    // build on 2026-09-14: `next build` runs generateStaticParams() in
+    // blog/[slug], which queries the database from Hostinger's build
+    // container, and that container needs longer than 4s to establish a
+    // connection ("pool timeout ... after 4000ms" — build log). Failing fast
+    // also bought the visitor nothing: an error at 4s and an error at 10s are
+    // both an error, while the shorter limit turns a merely-slow connection
+    // into a failed one. The driver's defaults are deliberately left alone.
   });
 }
 
