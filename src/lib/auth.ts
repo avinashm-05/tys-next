@@ -54,7 +54,15 @@ export const auth = betterAuth({
       const url = ADMIN_ROLES.includes(role as (typeof ADMIN_ROLES)[number])
         ? `${process.env.BETTER_AUTH_URL}/reset-password?token=${token}`
         : `${appUrl()}/account/reset-password?token=${token}`;
-      await sendPasswordResetEmail(user.email, url);
+      // Fire-and-forget for the same reason as the verification email
+      // below — otherwise "check your inbox" waits on the email actually
+      // being handed to the SMTP server first.
+      void sendPasswordResetEmail(user.email, url).catch((err) => {
+        console.error(
+          "[auth] password reset email FAILED:",
+          err instanceof Error ? `${err.name}: ${err.message}` : err,
+        );
+      });
     },
     // 60 minutes, explicit — Laravel parity; don't trust the library default.
     resetPasswordTokenExpiresIn: 3600,
@@ -80,7 +88,19 @@ export const auth = betterAuth({
       const url = `${appUrl()}/api/auth/verify-email?token=${token}&callbackURL=${encodeURIComponent(
         "/account/login?verified=1",
       )}`;
-      await sendVerificationEmail(user.email, url);
+      // Fire-and-forget. Better Auth awaits this callback before answering
+      // the browser, and requireEmailVerification means it runs on every
+      // SIGN-IN ATTEMPT by an unverified account — so an awaited SMTP
+      // round-trip to Hostinger's relay made "taking ages to log in" the
+      // symptom of a 403 the server had already decided on (reported
+      // 2026-09-14). `.catch`, not a bare await, so a failed send can't
+      // become an unhandled rejection. Same reasoning as the quote route.
+      void sendVerificationEmail(user.email, url).catch((err) => {
+        console.error(
+          "[auth] verification email FAILED:",
+          err instanceof Error ? `${err.name}: ${err.message}` : err,
+        );
+      });
     },
     sendOnSignUp: true,
   },
