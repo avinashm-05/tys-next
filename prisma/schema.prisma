@@ -18,6 +18,15 @@
 
 generator client {
   provider      = "prisma-client-js"
+  // driverAdapters lets the client talk to MySQL through a pure-JS driver
+  // instead of Prisma's Rust query engine. Added 2026-09-14 after the engine
+  // began panicking in production with "PANIC: timer has gone away" on every
+  // query — a Rust panic can't be caught from JS, so it killed the whole Node
+  // process (6 restarts in 16 minutes). That panic comes from the engine's
+  // internal timer thread being starved on Hostinger's shared hosting, which
+  // is not something the application can avoid. With no Rust engine in the
+  // process, the failure mode is gone rather than mitigated. See src/lib/db.ts.
+  previewFeatures = ["driverAdapters"]
   // "native" keeps local dev (macOS) working; the rest cover the most likely
   // Linux server configurations for the Hostinger deploy, since the exact
   // distro/libc isn't known from here — harmless to over-include, each
