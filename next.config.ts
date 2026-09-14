@@ -84,6 +84,30 @@ const staticAssetCacheHeaders = [
 // too, which need CORS for the same reason in any cross-origin context.
 const crossOriginReadableHeaders = [{ key: "Access-Control-Allow-Origin", value: "*" }];
 
+// Never let a CDN or proxy store anything behind authentication.
+//
+// Hostinger's CDN (server: hcdn) applies `s-maxage=31536000` to PAGE
+// responses by default — confirmed live on /login, 2026-09-14 — and its
+// `Vary` is only `Accept-Encoding`, so it does NOT differentiate by cookie.
+// That combination broke admin sign-in outright: the CDN cached the
+// anonymous `/admin` → `/login` 307, then replayed that same redirect to a
+// signed-in admin, who bounced back to the login page forever while the
+// server was happily creating sessions (30 of them, in the reported case).
+//
+// The redirect being cached is the visible symptom; the real hazard is the
+// same mechanism caching an authenticated admin PAGE and serving its HTML —
+// quotes, customer contact details, shipment data — to whoever asks next.
+//
+// `private` bars shared caches outright, `no-store` bars storing the body at
+// all, and `Vary: Cookie` is belt-and-braces for any intermediary that
+// honours Vary but ignores the rest. Applied to the admin surfaces and to
+// every auth endpoint, never to the public marketing pages, which SHOULD
+// stay CDN-cached.
+const noStoreHeaders = [
+  { key: "Cache-Control", value: "private, no-store, no-cache, must-revalidate" },
+  { key: "Vary", value: "Cookie" },
+];
+
 const nextConfig: NextConfig = {
   // Standalone output: `next build` also emits .next/standalone, a
   // self-contained server (server.js + only the production node_modules it
@@ -104,6 +128,16 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
+      // Order matters: these come before the static-asset rules so nothing
+      // downstream can re-cache an admin surface.
+      { source: "/admin/:path*", headers: noStoreHeaders },
+      { source: "/admin", headers: noStoreHeaders },
+      { source: "/login", headers: noStoreHeaders },
+      { source: "/forgot-password", headers: noStoreHeaders },
+      { source: "/reset-password", headers: noStoreHeaders },
+      { source: "/api/auth/:path*", headers: noStoreHeaders },
+      { source: "/api/admin/:path*", headers: noStoreHeaders },
+      { source: "/account/:path*", headers: noStoreHeaders },
       { source: "/frontend/:path*", headers: staticAssetCacheHeaders },
       { source: "/_next/static/:path*", headers: crossOriginReadableHeaders },
       { source: "/frontend/:path*", headers: crossOriginReadableHeaders },
