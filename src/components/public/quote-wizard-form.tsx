@@ -61,14 +61,22 @@ const SUPPORT_PHONE_DISPLAY = "+1 (404) 793-8759";
 const SUPPORT_PHONE_TEL = "tel:+14047938759";
 const SUPPORT_EMAIL = "sales@tysgloballogistics.com";
 
-// 2026-08-16: down to 3 steps — "Package Details" (box/tv/auto dimensions)
-// was removed entirely. Every package type now behaves like envelope always
-// did: staff capture exact dimensions on the callback via the admin editor,
-// not on the public form. See the matching note in quote-wizard.ts.
+// Three steps: "Package Details" (box/tv/auto dimensions) was removed
+// entirely on 2026-08-16 — every package type now behaves like envelope
+// always did, with staff capturing exact dimensions on the callback via the
+// admin editor rather than on the public form (see quote-wizard.ts).
+//
+// Contact FIRST (reordered 2026-08-22). It used to be last, which meant
+// anyone who dropped out partway through was an anonymous bounce — the form
+// knew what they wanted to ship but had no way to reach them. Asking for it
+// up front turns every partial completion into a lead sales can actually
+// call. It does trade against first-step drop-off (a phone number before any
+// value is shown is a bigger ask), which is the deliberate call recorded in
+// 13_Media_Plan/FIX_THE_QUOTE_FORM.md.
 const STEPS = [
-  { n: 1, label: "Location", icon: MapPinIcon },
-  { n: 2, label: "Select Package", icon: PackageIcon },
-  { n: 3, label: "Contact Information", icon: HeadsetIcon },
+  { n: 1, label: "Contact Information", icon: HeadsetIcon },
+  { n: 2, label: "Location", icon: MapPinIcon },
+  { n: 3, label: "Select Package", icon: PackageIcon },
 ] as const;
 
 const PACKAGE_CARD_ICON: Record<string, typeof PackageIcon> = {
@@ -219,7 +227,7 @@ export function QuoteWizardForm({
       setValue("timezone", guess, { shouldValidate: false });
     }
   }, [watchedFromCountry, watchedTimezone, setValue]);
-  const { errors, isSubmitting, isSubmitted } = formState;
+  const { errors, isSubmitting } = formState;
 
   // Belt-and-suspenders alongside the pointer-events-none transition guard
   // above: if a phantom submit ever still slips through that race (or any
@@ -234,28 +242,20 @@ export function QuoteWizardForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
-  // Default the Contact step's phone country code from the shipment's
-  // "from" country (nicer starting point than always US) — only on first
-  // arrival at step 3 and only if the customer hasn't already picked their
-  // own phone country code (phoneCountryTouchedRef), so it never clobbers a
-  // manual choice when navigating back and forth.
-  useEffect(() => {
-    if (step !== 3 || phoneCountryTouchedRef.current) return;
-    const fromIso = getValues("from_country");
-    const dial = fromIso && DIAL_BY_ISO.get(fromIso);
-    if (dial) {
-      setCountryCodeIso(fromIso);
-      setValue("contact.country_code", dial);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+  // The phone country code used to be auto-filled from the shipment's "from"
+  // country when the customer reached the Contact step. That is impossible now
+  // that Contact is step 1 — from_country hasn't been chosen yet — so the
+  // field simply starts on its US/+1 default and the customer changes it if
+  // they need to. Removed rather than deferred to step 2, because silently
+  // rewriting a phone country code the customer already filled in would be
+  // worse than not guessing at all.
 
   const packageTypes = watch("package_types");
 
   async function next() {
     const fieldsByStep: Record<number, Path<QuoteWizardInput>[]> = {
-      1: ["from_country", "from_zip", "to_country", "to_zip", "is_residence"],
-      2: ["package_types"],
+      1: ["contact"],
+      2: ["from_country", "from_zip", "to_country", "to_zip", "is_residence"],
     };
     const valid = await trigger(fieldsByStep[step]);
     if (!valid) return;
@@ -375,16 +375,39 @@ export function QuoteWizardForm({
       <div aria-hidden className="fixed inset-0 z-0 bg-ink" />
       <QuoteHero
         title="Get a Free Quote"
-        subtitle="Tell us about your shipment and we'll get you a rate in minutes."
+        subtitle="Tell us about your shipment and we'll send you a custom quote within 24 hours."
       />
       <div className="relative z-10 mx-auto mt-4 max-w-5xl md:mt-8">
     <div>
+      {/* Progress bar. Abandonment climbs when a form gives no sense of
+          how much is left, and this one previously rendered a bare
+          "Step 1" with no total — it could have been step 1 of three or
+          of ten. role/aria-* mirror the visual state for screen readers,
+          which get nothing from a coloured bar. */}
+      <div className="mb-3">
+        <div
+          className="h-1.5 w-full overflow-hidden rounded-full bg-white/20"
+          role="progressbar"
+          aria-valuemin={1}
+          aria-valuemax={STEPS.length}
+          aria-valuenow={activeIndex + 1}
+          aria-label={`Step ${activeIndex + 1} of ${STEPS.length}: ${activeStep.label}`}
+        >
+          <div
+            className="h-full rounded-full bg-brand transition-[width] duration-300 ease-out"
+            style={{ width: `${((activeIndex + 1) / STEPS.length) * 100}%` }}
+          />
+        </div>
+        <p className="mt-1.5 text-xs font-medium text-white/70">
+          Step {activeIndex + 1} of {STEPS.length}
+        </p>
+      </div>
       {/* Mobile: only the current step's card, matching the reference —
           the full 3-up grid is reserved for md+ where it fits comfortably. */}
       <div className="flex items-center gap-3 rounded-2xl border-b-2 border-brand bg-white p-3 shadow-sm md:hidden">
         <activeStep.icon size={28} className="shrink-0 text-brand" />
         <div>
-          <div className="text-xs text-ink-muted">Step {activeIndex + 1}</div>
+          <div className="text-xs text-ink-muted">Step {activeIndex + 1} of {STEPS.length}</div>
           <div className="text-sm font-semibold text-brand">{activeStep.label}</div>
         </div>
       </div>
@@ -397,7 +420,7 @@ export function QuoteWizardForm({
           >
             <s.icon size={28} className={`shrink-0 ${step >= s.n ? "text-brand" : "text-ink-muted"}`} />
             <div>
-              <div className="text-xs text-ink-muted">Step {i + 1}</div>
+              <div className="text-xs text-ink-muted">Step {i + 1} of {STEPS.length}</div>
               <div className="text-sm font-semibold text-ink md:text-base">{s.label}</div>
             </div>
           </div>
@@ -405,7 +428,7 @@ export function QuoteWizardForm({
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-4 md:mt-8">
-        {step === 1 && (
+        {step === 3 && (
           <div className="grid gap-3 md:grid-cols-2 md:gap-6">
             <div>
               <label className={labelClass}>Sending From</label>
@@ -539,19 +562,19 @@ export function QuoteWizardForm({
           </div>
         )}
 
-        {step === 3 && (
+        {step === 1 && (
           <div className="grid gap-3 md:grid-cols-2 md:gap-6">
             <div>
               <label className={labelClass}>Name</label>
               <input className={`mt-1.5 ${inputClass}`} placeholder="Enter name" {...register("contact.name")} />
-              {isSubmitted && errors.contact?.name && (
+              {errors.contact?.name && (
                 <p className={errorClass}>{errors.contact.name.message}</p>
               )}
             </div>
             <div>
               <label className={labelClass}>Email Address</label>
               <input className={`mt-1.5 ${inputClass}`} placeholder="Enter Email" {...register("contact.email")} />
-              {isSubmitted && errors.contact?.email && (
+              {errors.contact?.email && (
                 <p className={errorClass}>{errors.contact.email.message}</p>
               )}
             </div>
@@ -571,19 +594,19 @@ export function QuoteWizardForm({
                         field.onChange(DIAL_BY_ISO.get(iso) ?? "");
                       }}
                       placeholder="Select Country Code"
-                      invalid={isSubmitted && !!errors.contact?.country_code}
+                      invalid={!!errors.contact?.country_code}
                     />
                   )}
                 />
               </div>
-              {isSubmitted && errors.contact?.country_code && (
+              {errors.contact?.country_code && (
                 <p className={errorClass}>{errors.contact.country_code.message}</p>
               )}
             </div>
             <div>
               <label className={labelClass}>Phone Number</label>
               <input className={`mt-1.5 ${inputClass}`} placeholder="Enter Phone Number" {...register("contact.phone")} />
-              {isSubmitted && errors.contact?.phone && (
+              {errors.contact?.phone && (
                 <p className={errorClass}>{errors.contact.phone.message}</p>
               )}
             </div>

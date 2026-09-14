@@ -102,8 +102,19 @@ export default async function ThankYouPage({
               </span>
             </div>
             <ul className="mt-3 space-y-1.5 text-sm text-ink-muted">
+              {/* Was: "the zip/postal codes for both your sending and
+                  receiving addresses". Removed 2026-08-22 — the quote form
+                  collects both zips in its Location step, so asking again
+                  told the customer their details hadn't reached whoever was
+                  calling. Replaced with the one thing the form genuinely
+                  never captures and every international shipment needs:
+                  what's inside and roughly what it's worth, which is what
+                  the customs declaration is built from. Weight and
+                  dimensions are already covered per package type by
+                  prepItems below. */}
               <li>
-                • The zip/postal codes for both your sending and receiving addresses
+                • A description of the contents and their approximate value — this is
+                what your customs declaration is based on
               </li>
               {prepItems.map((item) => (
                 <li key={item}>• {item}</li>
