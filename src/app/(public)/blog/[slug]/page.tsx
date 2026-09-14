@@ -16,8 +16,32 @@ type Params = { slug: string };
 // affects what ships as static HTML on the next full build, not whether an
 // edit goes live.
 export async function generateStaticParams(): Promise<Params[]> {
-  const posts = await db.post.findMany({ where: { status: "published" }, select: { slug: true } });
-  return posts.map((p) => ({ slug: p.slug }));
+  // Never let the build depend on the database being reachable.
+  //
+  // This runs during `next build`, and on 2026-09-14 it started failing the
+  // whole deploy outright:
+  //   Failed to collect page data for /blog/[slug]
+  //   prisma.post.findMany() -> pool timeout (active=0 idle=0 limit=5)
+  // The shared MySQL host now refuses connections in bursts, so with a hard
+  // dependency here every deploy became a coin flip — including the deploys
+  // that FIX production problems, which is exactly when you can least afford
+  // it.
+  //
+  // Returning [] is a safe degradation, not a loss of function: posts are
+  // rendered on demand instead of prebuilt, and the page is dynamic anyway
+  // (revalidatePath on publish/edit is what makes edits appear, per the note
+  // above). The only cost is the first hit on each post after a deploy
+  // rendering server-side rather than being served as ready-made HTML.
+  try {
+    const posts = await db.post.findMany({ where: { status: "published" }, select: { slug: true } });
+    return posts.map((p) => ({ slug: p.slug }));
+  } catch (err) {
+    console.warn(
+      "[build] Could not reach the database to prerender blog posts; they will render on demand instead:",
+      err instanceof Error ? `${err.name}: ${err.message}` : err,
+    );
+    return [];
+  }
 }
 
 async function getPost(slug: string) {
