@@ -40,6 +40,37 @@ function makeAdapter() {
     password: decodeURIComponent(u.password),
     database: u.pathname.replace(/^\//, ""),
     connectionLimit: Number(u.searchParams.get("connection_limit")) || 5,
+
+    // Keep connections WARM rather than opening them on demand.
+    //
+    // 2026-09-14, after the Rust-engine fix: queries started failing with
+    //   pool timeout: failed to retrieve a connection from pool after 10000ms
+    //   (pool connections: active=0 idle=0 limit=5)
+    // active=0 AND idle=0 is the tell — the pool was not exhausted by busy
+    // queries (that would read active=5), it simply could not OPEN one. The
+    // shared MySQL host intermittently refuses new connections, and because
+    // the pool only connected on demand, a request arriving inside one of
+    // those windows had nothing to fall back on and died after 10s.
+    //
+    // minimumIdle holds connections open through those windows: they get
+    // established while the database is healthy and survive the bad patches,
+    // so a request during one reuses an existing connection instead of
+    // racing to create a new one. Deliberately 2, not connectionLimit —
+    // shared MySQL caps concurrent connections per user, and squatting on
+    // the whole budget permanently would be antisocial and risks tripping
+    // that cap itself.
+    minimumIdle: 2,
+    // Recycle before MySQL's own wait_timeout (commonly 300s here) would
+    // drop them server-side and leave the pool holding dead handles.
+    idleTimeout: 180,
+    // Validate a connection that has been sitting more than 5s before
+    // handing it out — cheap, and stops a server-side-closed connection
+    // being given to a request that then fails for no visible reason.
+    minDelayValidation: 5000,
+    // Fail fast rather than making the visitor wait the full 10s default:
+    // a page that errors in 4s can be retried, one that hangs looks broken.
+    acquireTimeout: 4000,
+    connectTimeout: 4000,
   });
 }
 
