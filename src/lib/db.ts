@@ -67,6 +67,15 @@ function makeAdapter() {
     // handing it out — cheap, and stops a server-side-closed connection
     // being given to a request that then fails for no visible reason.
     minDelayValidation: 5000,
+    // MySQL 8+'s default `caching_sha2_password` auth needs the server's RSA
+    // public key when the connection isn't TLS. Prisma's Rust engine fetched
+    // it implicitly, so this never came up before the adapter switch; the JS
+    // driver refuses unless told ("RSA public key is not available client
+    // side", found 2026-09-16 — local dev against Homebrew MySQL failed on
+    // every query with the same active=0 idle=0 pool-timeout signature the
+    // production outage had, which is this error being retried into silence).
+    // Hostinger's MySQL authenticates without needing it and ignores it.
+    allowPublicKeyRetrieval: true,
     // NOT shortened. Cutting these to 4s to "fail fast" broke the production
     // build on 2026-09-14: `next build` runs generateStaticParams() in
     // blog/[slug], which queries the database from Hostinger's build

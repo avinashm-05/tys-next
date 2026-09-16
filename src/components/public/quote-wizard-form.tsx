@@ -428,7 +428,7 @@ export function QuoteWizardForm({
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-4 md:mt-8">
-        {step === 3 && (
+        {step === 2 && (
           <div className="grid gap-3 md:grid-cols-2 md:gap-6">
             <div>
               <label className={labelClass}>Sending From</label>
@@ -529,7 +529,7 @@ export function QuoteWizardForm({
           </div>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <div>
             {/* Mobile keeps 2 columns but much tighter padding/icon sizing —
                 at p-8 + h-16 icons this step alone ran ~300px past the fold
