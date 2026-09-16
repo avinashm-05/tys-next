@@ -78,10 +78,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: r.priority,
   }));
 
-  const posts = await db.post.findMany({
-    where: { status: "published" },
-    select: { slug: true, updatedAt: true },
-  });
+  // The sitemap is prerendered at build time, so this query runs from
+  // Hostinger's build container. The shared MySQL host intermittently
+  // refuses connections (see db.ts), and on 2026-09-16 that failed the
+  // whole deploy from here — the same way blog/[slug]'s
+  // generateStaticParams did on 2026-09-14. A sitemap missing the blog
+  // posts is a shortcoming; a build that can't ship a quote-form fix
+  // because of it is an outage.
+  let posts: { slug: string; updatedAt: Date | null }[] = [];
+  try {
+    posts = await db.post.findMany({
+      where: { status: "published" },
+      select: { slug: true, updatedAt: true },
+    });
+  } catch (err) {
+    console.warn(
+      "[build] Could not reach the database for sitemap blog entries; emitting static routes only:",
+      err instanceof Error ? `${err.name}: ${err.message}` : err,
+    );
+  }
   const blogEntries: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${siteUrl}/blog/${post.slug}`,
     lastModified: post.updatedAt ?? new Date(),

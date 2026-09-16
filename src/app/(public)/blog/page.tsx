@@ -14,24 +14,50 @@ export const metadata: Metadata = pageMetadata({
   path: "/blog",
 });
 
-// No caching directive needed beyond the default: the admin's publish/edit
-// actions call revalidatePath('/blog') themselves (see
+// The admin's publish/edit actions call revalidatePath('/blog') (see
 // src/app/api/admin/blog/posts/helpers.ts), which is what makes a change
-// show up here immediately instead of waiting for a rebuild.
+// show up here immediately instead of waiting for a rebuild. The time-based
+// revalidate below exists for a different reason: this page is prerendered
+// at build time, and the shared MySQL host intermittently refuses
+// connections (see db.ts) — on 2026-09-16 that killed a deploy from here,
+// the third page to do so after blog/[slug] and sitemap.xml. The query now
+// degrades to an empty list instead of failing the build, and revalidate
+// makes such a degraded build heal itself on the next visit after 5
+// minutes rather than serving an empty blog until someone republishes.
+export const revalidate = 300;
+
+type PostCard = {
+  slug: string;
+  title: string;
+  description: string | null;
+  category: string;
+  publishedAt: Date | null;
+  body: string;
+  heroImageKey: string | null;
+};
+
 export default async function BlogPage() {
-  const posts = await db.post.findMany({
-    where: { status: "published" },
-    orderBy: { publishedAt: "desc" },
-    select: {
-      slug: true,
-      title: true,
-      description: true,
-      category: true,
-      publishedAt: true,
-      body: true,
-      heroImageKey: true,
-    },
-  });
+  let posts: PostCard[] = [];
+  try {
+    posts = await db.post.findMany({
+      where: { status: "published" },
+      orderBy: { publishedAt: "desc" },
+      select: {
+        slug: true,
+        title: true,
+        description: true,
+        category: true,
+        publishedAt: true,
+        body: true,
+        heroImageKey: true,
+      },
+    });
+  } catch (err) {
+    console.warn(
+      "[build] Could not reach the database for the blog index; rendering it empty until revalidation:",
+      err instanceof Error ? `${err.name}: ${err.message}` : err,
+    );
+  }
 
   return (
     <>
