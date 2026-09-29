@@ -118,6 +118,15 @@ export function HeroGlobe({ className = "", theta = 0.28, mapSamples = 18000, in
     let t = 0;
     let frame = 0;
     let drawnWidth = width;
+    // No redraws mid-scroll ("jitters around the globe", 2026-09-30): a
+    // WebGL update per frame competes with the scroll itself, which Safari
+    // in particular can't hide. The rotation resumes ~0.2s after the page
+    // settles; nobody reads the globe while it's moving past.
+    let lastScroll = 0;
+    const onScroll = () => {
+      lastScroll = performance.now();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
     const tick = () => {
       // Phones ("it jitters around the globe", 2026-09-30): draw a handful
       // of frames so the globe fades in, then stop entirely. A continuously
@@ -125,6 +134,10 @@ export function HeroGlobe({ className = "", theta = 0.28, mapSamples = 18000, in
       // frozen, it costs nothing, and at this size and opacity the rotation
       // was barely perceptible anyway.
       if (phone && frame > 8) return;
+      if (performance.now() - lastScroll < 200 && frame > 8) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       // Big globes turn so slowly that 30fps looks identical to 60.
       if (visible && ((!big && !phone) || frame++ % 2 === 0)) {
         if (!pointer.current && !reduce) t += big || phone ? 0.0032 : 0.0016;
@@ -175,6 +188,7 @@ export function HeroGlobe({ className = "", theta = 0.28, mapSamples = 18000, in
       io.disconnect();
       window.clearTimeout(fade);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onScroll);
       canvas.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);

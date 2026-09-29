@@ -436,6 +436,15 @@ html.reveal-ready .reveal:not(.is-in) {
 }
 /* Safari (html.no-blur, set by RevealObserver): the same blur-free reveal
    as phones below. Safari can't composite an animated blur filter. */
+/* WebKit and phones also skip the offer cards' route-arc motion: the
+   drifting dash pattern and the SMIL signal dot both repaint the stroke on
+   the main thread every frame there, all the time. The static arc stays. */
+html.no-blur .arc-drift { animation: none; }
+html.no-blur .arc-signal { display: none; }
+@media (max-width: 767px) {
+  .arc-drift { animation: none; }
+  .arc-signal { display: none; }
+}
 html.no-blur.reveal-ready .reveal:not(.is-in) { filter: none; }
 html.no-blur .reveal.is-in {
   transition:
