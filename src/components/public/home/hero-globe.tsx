@@ -119,6 +119,12 @@ export function HeroGlobe({ className = "", theta = 0.28, mapSamples = 18000, in
     let frame = 0;
     let drawnWidth = width;
     const tick = () => {
+      // Phones ("it jitters around the globe", 2026-09-30): draw a handful
+      // of frames so the globe fades in, then stop entirely. A continuously
+      // updating WebGL canvas keeps the phone GPU busy under the scroll;
+      // frozen, it costs nothing, and at this size and opacity the rotation
+      // was barely perceptible anyway.
+      if (phone && frame > 8) return;
       // Big globes turn so slowly that 30fps looks identical to 60.
       if (visible && ((!big && !phone) || frame++ % 2 === 0)) {
         if (!pointer.current && !reduce) t += big || phone ? 0.0032 : 0.0016;

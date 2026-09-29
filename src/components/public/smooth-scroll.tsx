@@ -18,6 +18,10 @@ export function SmoothScroll() {
     // Touch devices scroll natively (Lenis leaves touch alone), so on a
     // phone the library was just a permanently-running frame loop. Skip it.
     if (window.matchMedia("(pointer: coarse)").matches) return;
+    // Safari too (2026-09-30 "jittery"): its lower-rate wheel events fight
+    // Lenis's frame loop, and native Mac scrolling is already smooth.
+    const ua = navigator.userAgent;
+    if (/^((?!chrome|android|crios|fxios|edg).)*safari/i.test(ua)) return;
     // In-page #links stay with HashScrollFix (it intercepts them first, in
     // the capture phase), so Lenis's own anchor handling is left off.
     // lerp 0.16 (was TARAL's 0.11): the page follows the wheel more closely,
