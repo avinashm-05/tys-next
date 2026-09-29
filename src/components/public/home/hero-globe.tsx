@@ -63,7 +63,13 @@ export function HeroGlobe({ className = "", theta = 0.28, mapSamples = 18000, in
     // masked, so they render well below device resolution; drawing them at
     // full resolution every frame is what made the page feel laggy.
     const big = width > 1600;
-    const dpr = big ? 0.75 : Math.min(window.devicePixelRatio || 1, width > 900 ? 1.5 : 2);
+    // Phones (2026-09-30, "the phone feels jittery"): the hero planet is a
+    // masked, 30%-opacity dot band there, yet it was rendering a ~1700px
+    // WebGL canvas at 60fps behind the page. A fraction of the resolution
+    // and half the frame rate look identical and free up the GPU for
+    // scrolling.
+    const phone = window.matchMedia("(max-width: 767px)").matches;
+    const dpr = phone ? 0.55 : big ? 0.75 : Math.min(window.devicePixelRatio || 1, width > 900 ? 1.5 : 2);
     // Start with the Atlantic facing us, so the US hubs and Europe are both in view.
     const phi = 5.05;
     let dragOffset = 0;
@@ -114,8 +120,8 @@ export function HeroGlobe({ className = "", theta = 0.28, mapSamples = 18000, in
     let drawnWidth = width;
     const tick = () => {
       // Big globes turn so slowly that 30fps looks identical to 60.
-      if (visible && (!big || frame++ % 2 === 0)) {
-        if (!pointer.current && !reduce) t += big ? 0.0032 : 0.0016;
+      if (visible && ((!big && !phone) || frame++ % 2 === 0)) {
+        if (!pointer.current && !reduce) t += big || phone ? 0.0032 : 0.0016;
         const sway = Math.sin(t) * 0.45;
         // Setting the size clears and reallocates the canvas, so only pass
         // it when it has actually changed.

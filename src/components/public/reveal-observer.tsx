@@ -20,6 +20,19 @@ export function RevealObserver() {
       return;
     }
 
+    // Safari animates filter: blur() on the CPU, re-rasterizing whole cards
+    // mid-scroll ("jittery" on Mac Safari and iPhones, 2026-09-30). Phones
+    // are handled by a media query; this class covers desktop Safari, whose
+    // reveals then fade and rise without the blur.
+    const ua = navigator.userAgent;
+    const webkitOnly =
+      /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(ua) ||
+      // Every iOS/iPadOS browser is WebKit underneath, whatever its name,
+      // and iPads report a Mac platform with touch.
+      /iPad|iPhone|iPod/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (webkitOnly) root.classList.add("no-blur");
+
     const watching = new WeakSet<Element>();
     const io = new IntersectionObserver(
       (entries) => {

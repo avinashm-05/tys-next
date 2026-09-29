@@ -434,11 +434,26 @@ html.reveal-ready .reveal:not(.is-in) {
   filter: blur(6px);
   transform: translateY(14px);
 }
-/* Phones: a lighter, quicker touch (the reveal also triggers much closer
-   to the bottom edge there, see RevealObserver). */
+/* Safari (html.no-blur, set by RevealObserver): the same blur-free reveal
+   as phones below. Safari can't composite an animated blur filter. */
+html.no-blur.reveal-ready .reveal:not(.is-in) { filter: none; }
+html.no-blur .reveal.is-in {
+  transition:
+    opacity 0.45s cubic-bezier(0.22, 0.8, 0.3, 1) var(--d, 0ms),
+    transform 0.45s cubic-bezier(0.22, 0.8, 0.3, 1) var(--d, 0ms);
+}
+/* Phones: no blur at all (2026-09-30, "the phone feels jittery"). Animating
+   a blur filter forces the mobile GPU to re-rasterize whole cards mid-scroll,
+   which stuttered; a plain fade-and-rise composites for free and reads the
+   same at phone size. The reveal also triggers much closer to the bottom
+   edge there, see RevealObserver. */
 @media (max-width: 767px) {
-  html.reveal-ready .reveal:not(.is-in) { filter: blur(4px); transform: translateY(10px); }
-  .reveal.is-in { transition-duration: 0.35s; }
+  html.reveal-ready .reveal:not(.is-in) { filter: none; transform: translateY(10px); }
+  .reveal.is-in {
+    transition:
+      opacity 0.35s cubic-bezier(0.22, 0.8, 0.3, 1) var(--d, 0ms),
+      transform 0.35s cubic-bezier(0.22, 0.8, 0.3, 1) var(--d, 0ms);
+  }
 }
 /* The hero is already on screen at load, so it gets a short timed fade-in
    instead, staggered by --d. */
@@ -641,6 +656,14 @@ html[data-promo="off"] [data-promo-bar] { display: none; }
    Text starts at 1% opacity, not 0, so Chrome still counts the h1 as
    painted for LCP. */
 .hero-words { perspective: 900px; }
+@keyframes hero-word-in-noblur {
+  from { opacity: 0.01; transform: translateY(0.5em) rotateX(-55deg); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes reveal-hero-in-noblur {
+  from { opacity: 0.01; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
 .hero-word {
   display: inline-block;
   transform-origin: 50% 100%;
@@ -650,6 +673,14 @@ html[data-promo="off"] [data-promo-bar] { display: none; }
   from { opacity: 0.01; transform: translateY(0.5em) rotateX(-55deg); filter: blur(4px); }
   60% { filter: none; }
   to { opacity: 1; transform: none; filter: none; }
+}
+/* Phones skip the blur in the entrance animations for the same reason as
+   the reveal above: filter animation stutters on mobile GPUs. This block
+   sits AFTER the .hero-word base rule, whose animation shorthand would
+   otherwise reset animation-name. */
+@media (max-width: 767px) {
+  .hero-word { animation-name: hero-word-in-noblur; }
+  .reveal-hero { animation-name: reveal-hero-in-noblur; }
 }
 .hero-fade { animation: hero-fade-in 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) var(--d, 0ms) both; }
 @keyframes hero-fade-in {

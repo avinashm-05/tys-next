@@ -49,8 +49,18 @@ export function pageMetadata({
       title,
       ...(description ? { description } : {}),
       url,
+      // Explicit, not the app/opengraph-image.png file convention: Next
+      // wasn't emitting any og:image tag from it (checked live and local,
+      // 2026-09-30), so shares showed no picture. Resolved against
+      // metadataBase.
+      images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "TYS Global Logistics" }],
     },
-    twitter: { card: "summary_large_image", title, ...(description ? { description } : {}) },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      ...(description ? { description } : {}),
+      images: ["/opengraph-image.png"],
+    },
     // Thin, utility pages (a link index, a payment hand-off) are better kept
     // out of the index than padded with filler to reach a word count.
     ...(noIndex ? { robots: { index: false, follow: true } } : {}),

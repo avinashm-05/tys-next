@@ -15,6 +15,9 @@ import "lenis/dist/lenis.css";
 export function SmoothScroll() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Touch devices scroll natively (Lenis leaves touch alone), so on a
+    // phone the library was just a permanently-running frame loop. Skip it.
+    if (window.matchMedia("(pointer: coarse)").matches) return;
     // In-page #links stay with HashScrollFix (it intercepts them first, in
     // the capture phase), so Lenis's own anchor handling is left off.
     // lerp 0.16 (was TARAL's 0.11): the page follows the wheel more closely,

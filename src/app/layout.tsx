@@ -59,6 +59,7 @@ export const metadata: Metadata = {
     description: "International shipping quotes and logistics services.",
     url: siteUrl,
     locale: "en_US",
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "TYS Global Logistics" }],
   },
   twitter: {
     // "summary_large_image" matches the 1200x630 opengraph-image.png (Next's
