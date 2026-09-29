@@ -4,7 +4,7 @@ import { requireCustomerPage } from "@/lib/auth";
 import { PortalCard } from "@/components/public/account/portal-card";
 import { ShipmentWizardForm } from "@/components/public/shipment-wizard-form";
 
-export const metadata: Metadata = { title: "Schedule Shipment — TYS Global Logistics" };
+export const metadata: Metadata = { title: "Schedule Shipment | TYS Global Logistics" };
 
 // Scheduling lives INSIDE the portal so the sidebar stays put while you move
 // between it and My Shipments — the reference hub keeps its nav on every

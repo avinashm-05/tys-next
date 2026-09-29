@@ -6,7 +6,7 @@ import { decimal2 } from "@/lib/serialize";
 import { formatPackageTypes } from "@/lib/package-type";
 import { QuoteStatusPill } from "@/components/public/account/account-nav";
 
-export const metadata: Metadata = { title: "My quotes — TYS Global Logistics" };
+export const metadata: Metadata = { title: "My quotes | TYS Global Logistics" };
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",

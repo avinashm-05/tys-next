@@ -147,7 +147,7 @@ export function ShipmentsTable({ rows }: { rows: PortalShipmentRow[] }) {
               <tr key={r.id} className="border-t border-brand-light">
                 <td className="px-3 py-3 whitespace-nowrap text-ink-muted">{r.date}</td>
                 <td className="px-3 py-3 font-medium whitespace-nowrap text-ink">
-                  {r.trackingNumber ?? "—"}
+                  {r.trackingNumber ?? "Not yet"}
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap text-ink">{r.senderName}</td>
                 <td className="px-3 py-3 whitespace-nowrap text-ink-muted">{r.senderCity}</td>

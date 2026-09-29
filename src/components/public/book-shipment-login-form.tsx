@@ -105,7 +105,7 @@ export function BookShipmentLoginForm() {
 
       {unverified && (
         <p className="mt-3 text-sm text-red-600">
-          Please verify your email before logging in — check your inbox for the link.
+          Please verify your email before logging in. Check your inbox for the link.
         </p>
       )}
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}

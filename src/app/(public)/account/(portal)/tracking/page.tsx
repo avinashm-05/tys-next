@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CrosshairIcon } from "@phosphor-icons/react/dist/ssr";
 import { requireCustomerPage } from "@/lib/auth";
 
-export const metadata: Metadata = { title: "Tracking — TYS Global Logistics" };
+export const metadata: Metadata = { title: "Tracking | TYS Global Logistics" };
 
 // Empty-state stub — populated by the fulfillment track (C3–C5). No fake rows.
 export default async function TrackingPage() {

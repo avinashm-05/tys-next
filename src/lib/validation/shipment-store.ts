@@ -70,7 +70,10 @@ export const shipmentStoreInput = z.object({
   sender: shipmentPartyBase,
   recipient: shipmentRecipientInput,
 
-  packages: z.array(shipmentPackageLineInput).min(1, "Please add at least one package."),
+  packages: z
+    .array(shipmentPackageLineInput)
+    .min(1, "Please add at least one package.")
+    .max(50, "Please split this into smaller shipments (50 packages at most)."),
 
   // Set when booked from the admin "Convert to Shipment" flow's customer
   // counterpart (a customer re-booking an already-quoted route) — server

@@ -1,4 +1,5 @@
 import type { Faq } from "@/lib/default-faqs";
+import { jsonLd } from "@/lib/json-ld";
 
 // FAQPage structured data (schema.org) — lets Google/Bing show rich Q&A
 // results and gives AI answer engines (Perplexity, AI Overviews, etc.) a
@@ -14,6 +15,6 @@ export function FaqJsonLd({ faqs }: { faqs: readonly Faq[] }) {
     })),
   };
   return (
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(data) }} />
   );
 }

@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { AccountShell } from "@/components/public/account/shell";
 import { RegisterForm } from "@/components/public/account/auth-forms";
 
-export const metadata: Metadata = { title: "Create account — TYS Global Logistics" };
+export const metadata: Metadata = { title: "Create account | TYS Global Logistics" };
 
 export default async function RegisterPage() {
   const session = await getSession();

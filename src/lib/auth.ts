@@ -46,6 +46,10 @@ export const auth = betterAuth({
     // C1: unverified users cannot sign in (Better Auth answers 403). Quote
     // visibility additionally re-checks emailVerified in the customer guards.
     requireEmailVerification: true,
+    // Security audit 2026-09-30: a password reset now signs out every other
+    // session for that account (Better Auth's default leaves them alive, so
+    // resetting a stolen password didn't lock the thief out).
+    revokeSessionsOnPasswordReset: true,
     // Forgot-password flow: customers get the PUBLIC reset page on the apex;
     // admins keep the admin-host page. Role comes from the DB record (never
     // client input), so a customer can't obtain an admin-host reset link.
@@ -200,9 +204,31 @@ export function isAdmin(session: AppSession | null): boolean {
  * THE security boundary (CVE-2025-29927): enforced inside every admin Route
  * Handler and server component. Middleware/proxy only redirects (R19).
  */
+// Admin sessions last at most ADMIN_SESSION_MAX_HOURS from sign-in, however
+// active (security audit 2026-09-30). Better Auth's own 7-day, daily-renewing
+// session is right for customers, but meant an admin who used the site daily
+// was never signed out. Expired admin sessions are deleted server-side, so
+// the next request lands on the login page with a clean state.
+const ADMIN_SESSION_MAX_HOURS = 12;
+
+function adminSessionExpired(session: AppSession): boolean {
+  const created = (session.session as { createdAt?: Date | string | null } | undefined)?.createdAt;
+  if (!created) return false;
+  return Date.now() - new Date(created).getTime() > ADMIN_SESSION_MAX_HOURS * 60 * 60 * 1000;
+}
+
+async function endSession(session: AppSession) {
+  const token = (session.session as { token?: string } | undefined)?.token;
+  if (token) await db.session.deleteMany({ where: { token } });
+}
+
 export function requireAdmin(session: AppSession | null): AppSession {
   if (!session?.user) throw new HttpError(401, "Unauthenticated.");
   if (!isAdmin(session)) throw new HttpError(403, "This action is unauthorized.");
+  if (adminSessionExpired(session)) {
+    void endSession(session).catch(() => {});
+    throw new HttpError(401, "Your session has expired. Please sign in again.");
+  }
   return session;
 }
 
@@ -237,6 +263,10 @@ export async function requireAdminPage(): Promise<AppSession> {
   const session = await getSession();
   if (!session?.user) redirect("/login");
   if (!isAdmin(session)) notFound();
+  if (adminSessionExpired(session)) {
+    await endSession(session);
+    redirect("/login");
+  }
   return session;
 }
 

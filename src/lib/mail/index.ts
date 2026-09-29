@@ -617,3 +617,29 @@ export async function sendAdminCallbackNotification(d: AdminCallbackNotification
 
   return sendMail({ to: recipients.join(", "), subject, text, html });
 }
+
+
+/**
+ * Security alert to staff (ADMIN_NOTIFICATION_EMAILS): an admin account was
+ * locked after repeated failed sign-ins (2026-09-30 hardening). Plain,
+ * internal, one-way; never includes the attempted password.
+ */
+export async function sendAdminSecurityAlert(d: { account: string; ip: string; failures: number; lockMinutes: number }) {
+  const recipients = (process.env.ADMIN_NOTIFICATION_EMAILS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (recipients.length === 0) {
+    console.warn("[mail] ADMIN_NOTIFICATION_EMAILS is empty — security alert skipped.");
+    return null;
+  }
+  const subject = `Security alert: admin sign-in locked (${d.account})`;
+  const text = [
+    `The admin account "${d.account}" had ${d.failures} failed sign-in attempts and is locked for ${d.lockMinutes} minutes.`,
+    `Last attempt from IP: ${d.ip}`,
+    "",
+    "If this wasn't you or a colleague, change that account's password once the lock ends.",
+  ].join("\n");
+  const html = `<p>The admin account <strong>${esc(d.account)}</strong> had ${d.failures} failed sign-in attempts and is locked for ${d.lockMinutes} minutes.</p><p>Last attempt from IP: ${esc(d.ip)}</p><p>If this wasn't you or a colleague, change that account's password once the lock ends.</p>`;
+  return sendMail({ to: recipients.join(","), subject, text, html });
+}

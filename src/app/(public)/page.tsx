@@ -1,14 +1,34 @@
 import type { Metadata } from "next";
+import type { Icon } from "@phosphor-icons/react";
 import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowRightIcon, GlobeIcon, HeadsetIcon } from "@phosphor-icons/react/dist/ssr";
+import {
+  AirplaneTiltIcon,
+  ArrowRightIcon,
+  ArrowUpRightIcon,
+  BoatIcon,
+  CarProfileIcon,
+  ChatsCircleIcon,
+  CheckIcon,
+  EnvelopeSimpleIcon,
+  HouseLineIcon,
+  PackageIcon,
+  ShippingContainerIcon,
+  StorefrontIcon,
+  MapPinAreaIcon,
+  PhoneIcon,
+  StackIcon,
+  StarIcon,
+  TrainIcon,
+  TruckIcon,
+} from "@phosphor-icons/react/dist/ssr";
 import { MiniQuoteForm } from "@/components/public/mini-quote-form";
 import { FaqAccordion } from "@/components/public/faq-accordion";
-import { TrustpilotFullLogo } from "@/components/public/trustpilot-logo";
-import { ScrollReveal } from "@/components/public/scroll-reveal";
-import { ReviewsCarousel } from "@/components/public/reviews-carousel";
-import { OfferCard } from "@/components/public/offer-card";
+import { GoogleRatingPill } from "@/components/public/google-reviews";
+import { GoogleReviewsStrip } from "@/components/public/google-reviews-strip";
+import { Reveal } from "@/components/public/home/reveal";
+import { HeroGlobe } from "@/components/public/home/hero-globe";
+import { BrandMark, CARRIERS, STORES } from "@/components/public/home/brand-logos";
 
 export const metadata: Metadata = pageMetadata({
   title: "International Shipping & Freight Forwarding | TYS Global Logistics",
@@ -17,861 +37,790 @@ export const metadata: Metadata = pageMetadata({
   path: "/",
 });
 
-// Home page — B1 redesign. Rebuilt section-by-section from the new Figma
-// design (see 03_Website/01_Home_and_form/Home_01.png). Copy is transcribed
-// from the mockup, except: FAQ answers reuse the site's existing real copy
-// (the mockup's own answer text was unrelated placeholder content), and the
-// testimonials are original placeholder copy (the mockup used generic stock
-// names/photos unrelated to TYS). Images are cropped directly from the
-// mockup — see public/frontend/images/redesign/.
+// Home page, 2026-09-29 redesign, settled through a pick-list with the user:
+// - Structure: the original home page, section for section.
+// - Hero: Google rating, clear headline and a heavy, focused quote card
+//   beside a globe of real US routes. Kept deliberately uncluttered.
+// - Service cards, stats and the logo wall: Attio's hairline grids.
+// - Quick cards: ticket stubs, finished the Attio way.
+// - The four service sections: SFL's simplicity (headline, one line, the
+//   two sub-service buttons, one photo), no badge rows.
+// Trust comes from real Google reviews only (lib/google-reviews.ts).
+// Copy contains no em dashes; keep it that way.
+
+const PAD = "px-5 sm:px-10 lg:px-14";
+// Hairline colour comes from --line (globals.css) so it can shift with the
+// page colour when the page goes to night, instead of glaring light grey.
+const LINE = "border-[var(--line)]";
+const H2 = "text-[2rem] leading-[1.05] tracking-[-0.035em] text-ink sm:text-[2.6rem]";
+const LEAD = "mt-4 max-w-xl text-pretty text-[17px] leading-relaxed text-ink-muted";
+
+// The hero headline, word by word, for the landing entrance.
+const HERO_WORDS = [
+  { text: "Your" },
+  { text: "trusted" },
+  { text: "global", accent: true },
+  { text: "shipping", accent: true },
+  { text: "partner." },
+];
+
 export default function HomePage() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-brand-light px-4 pb-10 pt-4 sm:pb-16 sm:pt-8 md:px-8">
-        {/* One wrapping container for the whole text+card block. The Figma
-            source (published Figma Sites link, DOM-inspected directly) has
-            only 2 decorative images in the hero — truck top-left, plane
-            top-right — starting at the very top (level with the badge, not
-            the headline). Container ship + container truck were added at
-            the bottom corners (client-supplied SVGs, same design family) so
-            all four vehicles frame the hero content and point inward toward
-            the center. They're absolutely positioned against this outer
-            wrapper so they overlay the badge/headline column's height
-            rather than needing their own spacing. */}
-        <div className="relative mx-auto max-w-6xl">
-          {/* These two are the actual Lighthouse-flagged Desktop LCP element
-              (img.pointer-events-none.absolute.right-0.top-0...w-44) —
-              "fetchpriority=high should be applied" + "LCP resources should
-              not use loading=lazy". But they're also `hidden` below the lg
-              breakpoint (1024px) — real phones never paint them. A plain
-              loading="lazy" img with display:none never even starts
-              fetching (no layout box to judge proximity-to-viewport by), so
-              removing lazy site-wide here would silently cost every mobile
-              visitor ~99 KiB (58+41 KiB) for two images they'll never see.
-              <picture> + a media query keeps that mobile-zero-cost property
-              while still letting desktop fetch eagerly at high priority:
-              browsers pick (and only fetch) one <source> before any
-              request goes out, so under 1024px the img falls through to a
-              ~60-byte inline placeholder instead. */}
-          <picture>
-            <source
-              media="(min-width: 1024px)"
-              srcSet="/frontend/images/redesign/hero-truck.webp"
-            />
-            <img
-              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7"
-              fetchPriority="high"
-              alt=""
-              aria-hidden
-              draggable={false}
-              className="pointer-events-none absolute left-0 top-0 hidden w-36 -scale-x-100 select-none lg:block xl:w-40"
-            />
-          </picture>
-          <picture>
-            <source
-              media="(min-width: 1024px)"
-              srcSet="/frontend/images/redesign/hero-plane.webp"
-            />
-            <img
-              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7"
-              fetchPriority="high"
-              alt=""
-              aria-hidden
-              draggable={false}
-              className="pointer-events-none absolute right-0 top-0 hidden w-40 select-none lg:block xl:w-44"
-            />
-          </picture>
-          <img
-            loading="lazy"
-            src="/frontend/images/redesign/hero-container-truck.svg"
-            alt=""
-            aria-hidden
-            draggable={false}
-            className="hero-float-a pointer-events-none absolute bottom-0 left-0 hidden w-32 select-none lg:block xl:w-36"
-          />
-          <img
-            loading="lazy"
-            src="/frontend/images/redesign/hero-container-ship.svg"
-            alt=""
-            aria-hidden
-            draggable={false}
-            className="hero-float-b pointer-events-none absolute bottom-0 right-0 hidden w-40 select-none opacity-60 lg:block xl:w-44"
-          />
-
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="mx-auto flex w-fit items-center gap-2.5 rounded-full bg-white px-4 py-2 text-sm font-medium text-ink shadow-sm">
-              <span className="font-semibold text-ink">Excellent</span>
-              <TrustpilotFullLogo />
-            </div>
-            <p className="mt-2 text-sm font-semibold uppercase tracking-wide text-brand-dark sm:mt-5">
-              Trusted Partner for Logistics &amp; Freight Forwarding
-            </p>
-            <h1 className="mt-1.5 text-[1.5rem] sm:mt-3 sm:text-[2.5rem] md:text-[2.75rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-              Your Trusted Global Shipping Partner
-            </h1>
-            {/* Same copy at every breakpoint (kept back on request) — just a
-                much smaller, tighter size on mobile (text-xs, leading-snug,
-                a narrower max-width so it wraps to fewer lines) so it still
-                fits alongside the no-scroll quote-button goal from the
-                previous pass. Unchanged on tablet/desktop. Hidden only below
-                375px (max-[374px]) — verified live: even at the smallest
-                text size this still doesn't leave room for both the tagline
-                and a no-scroll quote button on a 320px-wide/568px-tall
-                device (original iPhone SE/5 class, effectively legacy at
-                this point); every 375px+ phone (the smallest currently-sold
-                iPhone, and the vast majority of Android phones) keeps the
-                tagline and still fits. */}
-            <p className="mx-auto mt-2 max-w-xs text-xs leading-snug text-ink-muted max-[374px]:hidden sm:mt-4 sm:max-w-[885px] sm:text-base sm:leading-normal">
-              Ship documents, parcels, freight, vehicles, and household goods with
-              confidence. TYS Global Logistics delivers secure domestic and international
-              shipping backed by competitive rates and dedicated support.
-            </p>
+      {/* ---------- Hero ----------
+          Centered (picked 2026-09-29, like SFL and Jio): rating, headline,
+          one paragraph, then the wide From / To bar as the centerpiece.
+          - Starts white under the white nav bar so the two read as one
+            surface, and fades back to white at the bottom so the page
+            flows on with no hard edge.
+          - A planet rises under the quote bar (Attio's horizon, in TYS
+            blue): the dotted globe with its US routes, a glowing rim, and
+            the quick cards resting on its surface. It sits below the text,
+            so it never fights the headline for contrast.
+          - Kept quiet on purpose: the globe is a soft backdrop, not a
+            feature competing with the quote bar. */}
+      <section className="relative overflow-hidden bg-[linear-gradient(180deg,#FFFFFF_0%,#F7FAFF_35%,#EDF3FF_70%,#FFFFFF_100%)]">
+        <div className="relative z-10 mx-auto max-w-4xl px-4 pt-6 text-center sm:pt-12 md:px-8 lg:pt-16">
+          {/* Landing entrance (2026-09-30, "should be special"): one
+              choreographed sequence, about 1.5s. The planet rises and its rim
+              lights up, the headline's words flip up one by one, the line
+              and the quote bar follow, and the bar gives a single blue ping. About 1.1s
+              (sped up ~30% on 2026-09-30 at the owner's request). All CSS (.hero-* in globals.css), so it starts with the first
+              paint, not after scripts; off for reduced motion. */}
+          <div className="hero-fade flex justify-center" style={{ ["--d" as string]: "0ms" }}>
+            <GoogleRatingPill />
           </div>
-
-          {/* From/To teaser only. The full quote flow is the four-step wizard
-              at /quotes again (Location → Package → Details → Contact); this
-              hands its two selections over as a prefilled Step 1 rather than
-              asking everything on the home page. */}
-          <div className="relative mx-auto mt-3 w-full max-w-3xl sm:mt-10">
-            <MiniQuoteForm layout="columns" />
+          <h1
+            aria-label="Your trusted global shipping partner."
+            className="hero-words mx-auto mt-4 max-w-[820px] text-balance text-[2.15rem] font-bold leading-[1.02] tracking-[-0.035em] text-ink sm:mt-6 sm:text-[3.4rem] xl:text-[4rem]"
+          >
+            {HERO_WORDS.map((w, i) => (
+              <span key={w.text} aria-hidden>
+                <span
+                  className={`hero-word ${w.accent ? "text-brand" : ""}`}
+                  style={{ ["--d" as string]: `${100 + i * 55}ms` }}
+                >
+                  {w.text}
+                </span>
+                {i < HERO_WORDS.length - 1 ? " " : ""}
+              </span>
+            ))}
+          </h1>
+          <p
+            className="hero-fade mx-auto mt-3 max-w-[720px] text-balance text-[16.5px] font-medium leading-relaxed text-[#3D4656] sm:mt-5 sm:text-[19px]"
+            style={{ ["--d" as string]: "400ms" }}
+          >
+            {/* Phones get the second sentence only, so the whole quote bar
+                (button included) fits on one screen, even an iPhone SE. */}
+            <span className="hidden sm:inline">Your partner for logistics and freight forwarding. </span>Documents, parcels, freight,
+            vehicles and household goods, shipped from the US to 200+ countries.
+          </p>
+          <div className="hero-bar relative mx-auto mt-5 max-w-[880px] sm:mt-8 md:mt-20" style={{ ["--d" as string]: "500ms" }}>
+            <MiniQuoteForm layout="wide" />
           </div>
         </div>
 
-        {/* "Book Shipment" card temporarily hidden — see the matching note in
-            site-header.tsx. Grid drops to 2 columns while it's out. */}
-        <div className="relative mx-auto mt-14 grid grid-cols-1 max-w-4xl gap-4 sm:grid-cols-2">
-          {[
-            {
-              icon: "/frontend/icons/redesign/quick-track.svg",
-              title: "Track A Shipment",
-              body: "Monitor your shipment in real time from pickup to final delivery.",
-              href: "/tracking",
-            },
-            {
-              icon: "/frontend/icons/redesign/quick-smart.svg",
-              title: "Smart Shipments",
-              body: "Shipping in bulk? Get personalized pricing & exclusive discounts.",
-              href: "/services/retailer-shipping",
-            },
-          ].map((card) => (
-            <Link
-              key={card.title}
-              href={card.href}
-              className="group flex flex-col items-start gap-2 rounded-3xl bg-white p-5 text-left transition hover:-translate-y-0.5"
-            >
-              <div className="flex w-full items-center gap-3">
-                <img loading="lazy" src={card.icon} alt="" className="h-8 w-8 shrink-0" />
-                <span className="flex-1 text-xl font-medium leading-[30px] text-black">
-                  {card.title}
-                </span>
-                <ArrowRightIcon
-                  size={22}
-                  className="shrink-0 text-ink-muted transition group-hover:translate-x-1 group-hover:text-brand"
+        {/* Planet horizon with the quick cards on its surface. */}
+        <div className="relative mt-16">
+          <div
+            aria-hidden
+            className="hero-planet pointer-events-none absolute left-1/2 top-0 aspect-square w-[var(--W)] -translate-x-1/2 [--W:clamp(900px,165vw,2500px)]"
+          >
+            <div className="absolute inset-0 rounded-full shadow-[0_-20px_80px_-24px_rgba(3,100,255,0.22)]" />
+            <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_50%_0%,#FFFFFF_0%,#F1F6FF_18%,#E6EFFF_40%,#FFFFFF_62%)]" />
+            <div className="planet-dots absolute inset-0 overflow-hidden rounded-full opacity-30 [mask-image:linear-gradient(to_bottom,#000_0%,#000_6%,transparent_17%)]">
+              <div className="absolute inset-[-12.5%]">
+                <HeroGlobe theta={-0.6} mapSamples={42000} interactive={false} routes={false} />
+              </div>
+            </div>
+            <div className="planet-rim hero-rim absolute inset-0 rounded-full opacity-60" />
+            {/* Vehicles travelling over the planet: each rides a rotating
+                square the size of its orbit, so it follows the curve and
+                tilts with it. Each is a small route marker (Attio's
+                restraint, not an illustration) that stays upright as it
+                rides. Ocean and road share the surface half a lap apart;
+                air climbs in from the right, clear of the quote bar. */}
+            <div className="orbit hidden md:block" style={{ "--lift": "0.05", "--from": "36deg", "--to": "17deg", "--dur": "18s", "--delay": "-5s" } as React.CSSProperties}>
+              <RouteChip icon={AirplaneTiltIcon} mode="Air" route="ATL → LHR" />
+            </div>
+            <div className="orbit hidden md:block" style={{ "--lift": "0", "--from": "-26deg", "--to": "26deg", "--dur": "52s", "--delay": "-6s" } as React.CSSProperties}>
+              <RouteChip icon={BoatIcon} mode="Ocean" route="SAV → BOM" />
+            </div>
+            <div className="orbit hidden md:block" style={{ "--lift": "0", "--from": "-26deg", "--to": "26deg", "--dur": "52s", "--delay": "-32s" } as React.CSSProperties}>
+              <RouteChip icon={TruckIcon} mode="Road" route="Door pickup" />
+            </div>
+            <div className="planet-rim absolute inset-0 rounded-full opacity-40 blur-[12px]" />
+          </div>
+
+          {/* Quick actions: one frosted dock resting on the planet's crest
+              (not two cards adrift in space), each half with a small live
+              visual so it earns a look. Rises in as it scrolls into view. */}
+          <div className="relative z-10 mx-auto max-w-5xl px-4 pb-28 pt-[96px] md:px-8 lg:pb-32 lg:pt-[120px]">
+            <div className="reveal rounded-[30px] bg-white/85 p-2 shadow-[0_0_0_1px_rgba(3,100,255,0.12),0_40px_90px_-40px_rgba(3,60,170,0.55)]">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                <DockAction
+                  href="/tracking"
+                  icon={MapPinAreaIcon}
+                  title="Track a shipment"
+                  body="See where it is, from pickup to the front door."
+                  visual={<TrackLine />}
+                />
+                <DockAction
+                  href="/services/retailer-shipping"
+                  icon={StackIcon}
+                  title="Shipping in bulk?"
+                  body="Business accounts get their own discounted rates."
+                  visual={<RateBars />}
                 />
               </div>
-              <span className="text-base leading-7 text-ink-muted">{card.body}</span>
-            </Link>
-          ))}
+            </div>
+          </div>
+          {/* Fade the planet into the white page below. */}
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-white/0 to-white" />
         </div>
       </section>
 
-      {/* What We Offer */}
-      <section id="services" className="scroll-mt-28 px-4 py-20 md:px-8">
-        <ScrollReveal>
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-[2rem] sm:text-[2.5rem] md:text-[2.75rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-              What We <span className="text-brand">Offer</span>
-            </h2>
-            <p className="mt-3 text-ink-muted">
-              Expand your global reach with TYS Global Logistics&rsquo; reliable domestic
-              and international shipping solutions.
-            </p>
+      <div className="rails bg-white">
+        {/* ---------- What we offer ---------- */}
+        <section id="services" className={`scroll-mt-28 border-t ${LINE}`}>
+          <div className={`grid grid-cols-1 gap-8 py-16 lg:grid-cols-[1fr_auto] lg:items-end lg:py-20 ${PAD}`}>
+            <div>
+              <Reveal as="h2" className={H2}>What we offer</Reveal>
+              <Reveal as="p" delay={80} className={LEAD}>
+                One team for parcels, moves and freight, from the US to over 200 countries.
+              </Reveal>
+            </div>
+            <Reveal delay={140}>
+              <Link href="/services" className="btn btn-secondary btn-lg">
+                All services <ArrowRightIcon size={15} />
+              </Link>
+            </Reveal>
           </div>
-
-          <div className="mx-auto mt-10 grid grid-cols-1 max-w-6xl gap-6 md:grid-cols-3">
+          {/* Phones: a swipeable row (each card ~80% wide so the next one
+              peeks in), instead of three full-height cards stacked. */}
+          <div className={`flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto border-t ${LINE} px-5 py-5 [scrollbar-width:none] md:grid md:snap-none md:grid-cols-3 md:gap-0 md:overflow-visible md:p-0 [&::-webkit-scrollbar]:hidden`}>
             {[
               {
                 icon: "/frontend/icons/redesign/offer-worldwide-shipping.svg",
-                title: "Worldwide Shipping",
-                body: "Save more with competitive shipping rates from leading courier partners, including FedEx, DHL, UPS, and USPS. Choose flexible shipping solutions that fit your schedule and budget.",
+                motion: "group-hover:-rotate-[10deg] group-hover:scale-105",
+                title: "Worldwide Shipping.",
+                body: "Discounted FedEx, DHL, UPS and USPS rates for parcels and documents.",
                 href: "/services/parcel-shipping",
               },
               {
                 icon: "/frontend/icons/redesign/offer-worldwide-moving.svg",
-                title: "Worldwide Moving",
-                body: "Relocate your family, household belongings, and vehicles with confidence. Enjoy complete, reliable international moving solutions across 200+ destinations worldwide.",
+                motion: "group-hover:translate-x-3",
+                title: "Worldwide Moving.",
+                body: "Your household, furniture and vehicles, moved door to door.",
                 href: "/services/international-relocation",
               },
               {
                 icon: "/frontend/icons/redesign/offer-freight-forwarding.svg",
-                title: "Freight Forwarding",
-                body: "Ship containers, pallets, and commercial cargo with ease. Choose reliable freight services by air, ocean, rail, or road for shipments of every size, backed by trusted global partners.",
+                motion: "group-hover:-translate-y-1.5 group-hover:rotate-[4deg]",
+                title: "Freight Forwarding.",
+                body: "Containers, pallets and cargo by air, ocean, rail or road.",
                 href: "/services/freight-forwarding",
               },
-            ].map((card) => (
-              <OfferCard
-                key={card.title}
-                icon={card.icon}
-                title={card.title}
-                body={card.body}
-                href={card.href}
-              />
-            ))}
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* Relocation & Auto Transport */}
-      <section className="px-4 py-16 md:px-8">
-        <ScrollReveal>
-          <div className="mx-auto grid grid-cols-1 max-w-6xl items-center gap-10 md:grid-cols-2">
-            <div>
-              <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-                For All Movers
-              </p>
-              <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-                Relocation
-                <br />
-                &amp; Auto Transport
-              </h2>
-              <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
-                From household furniture and personal belongings to cars and motorcycles,
-                we handle every move with care, precision, and dependable global
-                logistics.
-              </p>
-              <div className="mt-6 flex gap-4 sm:gap-6">
-                {[
-                  {
-                    icon: "/frontend/icons/redesign/badge-door-to-door.svg",
-                    label: "Door-to-Door",
-                    sub: "Service",
-                  },
-                  {
-                    icon: "/frontend/icons/redesign/badge-customs.svg",
-                    label: "Customs",
-                    sub: "Assistance",
-                  },
-                  {
-                    icon: "/frontend/icons/redesign/badge-destinations.svg",
-                    label: "200+",
-                    sub: "Destinations",
-                  },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left"
-                  >
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-light">
-                      <img
-                        loading="lazy"
-                        src={s.icon}
-                        alt=""
-                        className="h-[27px] w-auto self-center"
-                      />
-                    </span>
-                    <span className="text-xs font-semibold">
-                      <span className="block font-semibold text-ink">{s.label}</span>
-                      <span className="text-ink-muted">{s.sub}</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <Image
-              loading="lazy"
-              src="/frontend/images/redesign/feature-relocation.webp"
-              alt="Relocation and auto transport"
-              width={1506}
-              height={1044}
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="w-full h-auto rounded-3xl"
-            />
-          </div>
-
-          <div className="mx-auto mt-10 grid grid-cols-1 max-w-6xl gap-6 md:grid-cols-2">
-            {[
-              {
-                icon: "/frontend/icons/redesign/card-international-relocation.svg",
-                title: "International Relocation",
-                body: "Seamless door-to-door relocation for your household, furniture, and personal belongings.",
-                href: "/services/international-relocation",
-              },
-              {
-                icon: "/frontend/icons/redesign/card-auto-transport.svg",
-                title: "Auto Transport",
-                body: "Dependable, insured shipping for cars, motorcycles, and other vehicles anywhere in the world.",
-                href: "/services/auto-transport",
-              },
-            ].map((c) => (
-              <div
+            ].map((c, i) => (
+              <Link
                 key={c.title}
-                className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left"
+                href={c.href}
+                className={`group relative flex w-[80%] shrink-0 snap-start flex-col rounded-3xl ring-1 ring-[var(--line)] md:w-auto md:rounded-none md:ring-0 ${i < 2 ? `md:border-r ${LINE}` : ""}`}
               >
-                <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-brand-light">
-                  <img
-                    loading="lazy"
-                    src={c.icon}
-                    alt=""
-                    className="h-8 w-auto self-center"
+                {/* Tinted top panel: TYS's own icon (recoloured to brand blue
+                    via CSS mask) over a dot grid and a dashed route arc. */}
+                <span className="relative m-3 flex h-44 items-center justify-center overflow-hidden rounded-2xl bg-[#F1F6FF] [background-image:radial-gradient(#C7D6F0_1px,transparent_1px)] [background-size:14px_14px] transition-colors duration-500 group-hover:bg-[#E7F0FF]">
+                  {/* The route is live: its dashes drift and a signal dot
+                      travels it (Attio's particles on lines), each card a
+                      beat after the one before. */}
+                  <svg aria-hidden viewBox="0 0 300 160" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
+                    <path className="arc-drift" d="M -10 130 Q 150 -20 310 110" fill="none" stroke="#0364FF" strokeOpacity="0.28" strokeWidth="1.5" strokeDasharray="5 6" />
+                    <g className="arc-signal">
+                      <circle r="9" fill="#0364FF" opacity="0.12" />
+                      <circle r="3.2" fill="#0364FF" />
+                      <animateMotion dur="9s" begin={`${i * -3}s`} repeatCount="indefinite" path="M -10 130 Q 150 -20 310 110" keyTimes="0;1" keySplines="0.45 0 0.55 1" calcMode="spline" />
+                    </g>
+                  </svg>
+                  <span
+                    aria-hidden
+                    className={`relative block h-[68px] w-[100px] bg-brand transition-transform duration-500 ease-out ${c.motion}`}
+                    style={{
+                      WebkitMask: `url(${c.icon}) center / contain no-repeat`,
+                      mask: `url(${c.icon}) center / contain no-repeat`,
+                    }}
                   />
                 </span>
-                <div className="flex flex-col items-center gap-1 sm:items-start">
-                  <h3 className="text-2xl font-semibold leading-[30px] text-ink">
-                    {c.title}
-                  </h3>
-                  <p className="text-base font-medium text-ink-muted">{c.body}</p>
-                  <Link
-                    href={c.href}
-                    className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
-                  >
-                    Learn More <span className="sr-only"> about {c.title}</span>{" "}
-                    <ArrowRightIcon size={16} />
-                  </Link>
-                </div>
-              </div>
+                <span className="flex flex-1 flex-col px-8 pb-8 pt-5 lg:px-10">
+                  <span className="text-[17px] leading-relaxed text-ink-muted">
+                    <span className="font-semibold text-ink">{c.title}</span> {c.body}
+                  </span>
+                  <span className="mt-auto inline-flex items-center gap-1.5 self-start pt-6 text-sm font-semibold text-ink transition-colors group-hover:text-brand">
+                    Learn more
+                    <ArrowRightIcon size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
+                  </span>
+                </span>
+              </Link>
             ))}
           </div>
-          <Link
-            href="/quotes"
-            className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
-          >
-            Get a Free Quote <ArrowRightIcon size={26} />
-          </Link>
-        </ScrollReveal>
-      </section>
+        </section>
 
-      {/* Document & Parcel Shipping */}
-      <section className="px-4 py-16 md:px-8">
-        <ScrollReveal>
-          <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
-            <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
-              <Image
-                loading="lazy"
-                src="/frontend/images/redesign/feature-docparcel.webp"
-                alt="Document and parcel shipping"
-                width={938}
-                height={750}
-                sizes="(min-width: 768px) 384px, 100vw"
-                className="w-full h-auto max-w-sm justify-self-center rounded-3xl md:order-1"
-              />
-              <div>
-                <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-                  For All Shippers
-                </p>
-                <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-                  Document and Parcel Shipping
-                </h2>
-                <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
-                  Save up to 70% on domestic and international shipping with discounted
-                  rates from trusted carriers like FedEx, DHL, UPS, and USPS.
-                </p>
-                <div className="mt-6 flex gap-4 sm:gap-6">
-                  {[
-                    {
-                      icon: "/frontend/icons/redesign/badge-best-rates.svg",
-                      label: "Best Rates",
-                      sub: "Up to 70% Discount",
-                    },
-                    {
-                      icon: "/frontend/icons/redesign/badge-trusted-carriers.svg",
-                      label: "Trusted Carriers",
-                      sub: "FedEx, DHL, UPS, USPS",
-                    },
-                  ].map((s) => (
-                    <div
-                      key={s.label}
-                      className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left"
-                    >
-                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
-                        <img
-                          loading="lazy"
-                          src={s.icon}
-                          alt=""
-                          className="h-[27px] w-auto self-center"
-                        />
-                      </span>
-                      <span className="text-xs font-semibold">
-                        <span className="block font-semibold text-ink">{s.label}</span>
-                        <span className="text-ink-muted">{s.sub}</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
+        {/* ---------- Four service sections (SFL-simple) ---------- */}
+        <ServiceRow
+          title="Relocation & Auto Transport"
+          facts={[{ n: "200+", l: "Countries" }, { n: "4.5★", l: "On Google" }, { n: "24/7", l: "Support" }]}
+          body="From your favorite furniture to the family car, we move it all door to door, with care and updates along the way."
+          illustration="/frontend/images/home/iso-home.svg"
+          imageAlt="A living room full of packed moving boxes and house plants"
+          sticker={{ kicker: "Relocation", title: "Door to door", sub: "200+ countries" }}
+          overlay={
+            // Quoted word for word from a real Google review (lib/google-reviews.ts).
+            <figure className="absolute bottom-4 left-4 max-w-[300px] rounded-2xl bg-white/95 p-4 shadow-[0_18px_40px_-18px_rgba(16,24,40,0.5)] transition-transform duration-500 group-hover:-translate-y-1">
+              <div className="flex gap-0.5 text-[#FBBC04]">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <StarIcon key={i} size={13} weight="fill" />
+                ))}
               </div>
-            </div>
-
-            <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
-              {[
-                {
-                  icon: "/frontend/icons/redesign/card-document-shipping.svg",
-                  title: "Document Shipping",
-                  body: "Secure worldwide delivery for important documents with real-time tracking.",
-                  href: "/services/document-shipping",
-                },
-                {
-                  icon: "/frontend/icons/redesign/card-parcel-shipping.svg",
-                  title: "Parcel Shipping",
-                  body: "Ship parcels of any size with fast, reliable, and cost-effective international delivery options.",
-                  href: "/services/parcel-shipping",
-                },
-              ].map((c) => (
-                <div
-                  key={c.title}
-                  className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left"
-                >
-                  <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-brand-light">
-                    <img
-                      loading="lazy"
-                      src={c.icon}
-                      alt=""
-                      className="h-8 w-auto self-center"
-                    />
-                  </span>
-                  <div className="flex flex-col items-center gap-1 sm:items-start">
-                    <h3 className="text-2xl font-semibold leading-[30px] text-ink">
-                      {c.title}
-                    </h3>
-                    <p className="text-base font-medium text-ink-muted">{c.body}</p>
-                    <Link
-                      href={c.href}
-                      className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
-                    >
-                      Learn More <span className="sr-only"> about {c.title}</span>{" "}
-                      <ArrowRightIcon size={16} />
-                    </Link>
-                  </div>
-                </div>
+              <blockquote className="mt-2 text-[14px] font-medium leading-snug text-ink">
+                &ldquo;The packing was done properly, and the team handled everything carefully.&rdquo;
+              </blockquote>
+              <figcaption className="mt-1.5 text-xs text-ink-muted">Dhvani Kanziya, on Google</figcaption>
+            </figure>
+          }
+          links={[
+            { label: "Relocation services", desc: "Your household, door to door", icon: HouseLineIcon, href: "/services/international-relocation" },
+            { label: "Auto transport", desc: "Cars and motorcycles, insured", icon: CarProfileIcon, href: "/services/auto-transport" },
+          ]}
+        />
+        <ServiceRow
+          reverse
+          title="Document & Parcel Shipping"
+          facts={[{ n: "70%", l: "Max savings" }, { n: "4", l: "Major carriers" }, { n: "100%", l: "Tracked" }]}
+          body="Save up to 70% on your next shipment with the carriers you already trust: FedEx, DHL, UPS and USPS."
+          illustration="/frontend/images/home/iso-parcels.svg"
+          imageAlt="Cardboard parcels stacked in the back of a delivery van"
+          sticker={{ kicker: "Parcels", title: "Up to 70% off", sub: "Retail rates" }}
+          overlay={
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-2xl bg-white/95 px-5 py-3.5 shadow-[0_18px_40px_-18px_rgba(16,24,40,0.5)]">
+              <span className="text-xs font-semibold text-ink-muted">Carriers</span>
+              {CARRIERS.map((c) => (
+                <BrandMark key={c.slug} icon={c} className="h-6 w-auto max-w-[70px] text-ink/80" />
               ))}
             </div>
-            <Link
-              href="/quotes"
-              className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
-            >
-              Get a Free Quote <ArrowRightIcon size={26} />
-            </Link>
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* Volume & Business Shipping */}
-      <section className="px-4 py-16 md:px-8">
-        <ScrollReveal>
-          <div className="mx-auto grid grid-cols-1 max-w-6xl items-center gap-10 md:grid-cols-2">
-            <div>
-              <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-                Business Only
-              </p>
-              <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-                Volume &amp; Business Shipping
-              </h2>
-              <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
-                Power your global supply chain with integrated freight, customs,
-                warehousing, and transportation solutions.
-              </p>
-              <div className="mt-6 flex gap-4 sm:gap-6">
-                {[
-                  {
-                    icon: "/frontend/icons/redesign/badge-priority-support.svg",
-                    label: "Priority Support",
-                    sub: "Dedicated support for businesses",
-                  },
-                  {
-                    icon: "/frontend/icons/redesign/badge-business-accounts.svg",
-                    label: "Business Accounts",
-                    sub: "Manage all your shipments in one place",
-                  },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left"
-                  >
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-light">
-                      <img
-                        loading="lazy"
-                        src={s.icon}
-                        alt=""
-                        className="h-[27px] w-auto self-center"
-                      />
+          }
+          links={[
+            { label: "Parcel shipping", desc: "Discounted FedEx, DHL, UPS rates", icon: PackageIcon, href: "/services/parcel-shipping" },
+            { label: "Document shipping", desc: "Important papers, tracked", icon: EnvelopeSimpleIcon, href: "/services/document-shipping" },
+          ]}
+        />
+        <ServiceRow
+          title="Volume & Business Shipping"
+          facts={[{ n: "500+", l: "Shipments delivered" }, { n: "1", l: "Account for all" }, { n: "24/7", l: "Priority support" }]}
+          body="Ship packages regularly? Get exclusive discounts and a business account that handles any volume."
+          illustration="/frontend/images/home/iso-pallet.svg"
+          imageAlt="A large, bright warehouse full of boxed orders"
+          sticker={{ kicker: "Business", title: "Your own rates", sub: "Any volume" }}
+          overlay={
+            <div className="absolute bottom-4 left-4 w-[240px] rounded-2xl bg-white/95 p-4 shadow-[0_18px_40px_-18px_rgba(16,24,40,0.5)] transition-transform duration-500 group-hover:-translate-y-1">
+              <p className="text-sm font-semibold text-ink">Business account</p>
+              <ul className="mt-2.5 space-y-1.5">
+                {["Discounted rates", "Priority support", "Every shipment in one place"].map((t) => (
+                  <li key={t} className="flex items-center gap-2 text-[13.5px] text-ink">
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#12B76A] text-white">
+                      <CheckIcon size={9} weight="bold" />
                     </span>
-                    <span className="text-xs font-semibold">
-                      <span className="block font-semibold text-ink">{s.label}</span>
-                      <span className="text-ink-muted">{s.sub}</span>
-                    </span>
-                  </div>
+                    {t}
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
-            <Image
-              loading="lazy"
-              src="/frontend/images/redesign/feature-volume-truck.webp"
-              alt="Volume and business shipping"
-              width={1252}
-              height={834}
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="w-full h-auto rounded-3xl"
-            />
-          </div>
-
-          <div className="mx-auto mt-10 grid grid-cols-1 max-w-6xl gap-6 md:grid-cols-2">
-            {[
-              {
-                icon: "/frontend/icons/redesign/card-volume-shipping.svg",
-                title: "Volume Shipping",
-                body: "Exclusive pricing and flexible shipping solutions for businesses with high-volume shipments.",
-                href: "/services/volume-shipping",
-              },
-              {
-                icon: "/frontend/icons/redesign/card-retailer-shipping.svg",
-                title: "Retailer Shipping",
-                body: "Customized logistics solutions designed for retailers and e-commerce businesses of every size.",
-                href: "/services/retailer-shipping",
-              },
-            ].map((c) => (
-              <div
-                key={c.title}
-                className="flex flex-col items-center gap-5 rounded-3xl bg-white p-6 text-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_rgba(16,24,40,0.16)] sm:flex-row sm:items-start sm:text-left"
-              >
-                <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-brand-light">
-                  <img
-                    loading="lazy"
-                    src={c.icon}
-                    alt=""
-                    className="h-8 w-auto self-center"
-                  />
+          }
+          links={[
+            { label: "Volume shipping", desc: "Better rates as you ship more", icon: StackIcon, href: "/services/volume-shipping" },
+            { label: "Retailer shipping", desc: "For online stores and sellers", icon: StorefrontIcon, href: "/services/retailer-shipping" },
+          ]}
+        />
+        <ServiceRow
+          reverse
+          title="Enterprise Logistics"
+          facts={[{ n: "4", l: "Air, ocean, rail, road" }, { n: "900+", l: "Carrier networks" }, { n: "1", l: "Dedicated manager" }]}
+          body="Imports, exports and commercial cargo, managed end to end, with one dedicated manager on your account."
+          illustration="/frontend/images/home/iso-containers.svg"
+          imageAlt="A busy container port from above, with cranes loading ships"
+          sticker={{ kicker: "Freight", title: "Customs handled", sub: "Import and export" }}
+          overlay={
+            <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
+              {[
+                { icon: AirplaneTiltIcon, label: "Air" },
+                { icon: BoatIcon, label: "Ocean" },
+                { icon: TrainIcon, label: "Rail" },
+                { icon: TruckIcon, label: "Road" },
+              ].map((m) => (
+                <span
+                  key={m.label}
+                  className="flex items-center gap-1.5 rounded-xl bg-white/95 px-3 py-2 text-[13.5px] font-semibold text-ink shadow-[0_12px_28px_-14px_rgba(16,24,40,0.5)]"
+                >
+                  <m.icon size={16} weight="duotone" className="text-brand" />
+                  {m.label}
                 </span>
-                <div className="flex flex-col items-center gap-1 sm:items-start">
-                  <h3 className="text-2xl font-semibold leading-[30px] text-ink">
-                    {c.title}
-                  </h3>
-                  <p className="text-base font-medium text-ink-muted">{c.body}</p>
-                  <Link
-                    href={c.href}
-                    className="mt-1 inline-flex w-fit items-center gap-1 text-sm text-brand"
-                  >
-                    Learn More <span className="sr-only"> about {c.title}</span>{" "}
-                    <ArrowRightIcon size={16} />
-                  </Link>
-                </div>
-              </div>
+              ))}
+            </div>
+          }
+          links={[
+            { label: "Freight forwarding", desc: "Air, ocean, rail and road", icon: ShippingContainerIcon, href: "/services/freight-forwarding" },
+            { label: "Talk to our team", desc: "One manager for your account", icon: ChatsCircleIcon, href: "/contact-us" },
+          ]}
+        />
+
+        {/* ---------- Global Shopper ---------- */}
+        <section className={`border-t ${LINE}`}>
+          <div className={`grid grid-cols-1 gap-8 py-16 lg:grid-cols-[1fr_auto] lg:items-end lg:py-20 ${PAD}`}>
+            <div>
+              <Reveal as="h2" className={H2}>Shop US stores, ship anywhere</Reveal>
+              <Reveal as="p" delay={80} className={LEAD}>
+                Get a free US address, shop the brands you love, and we&rsquo;ll combine your
+                orders and ship them to you.
+              </Reveal>
+            </div>
+            <Reveal delay={140} className="flex flex-wrap gap-3">
+              <Link href="/services/global-shopper" className="btn btn-primary btn-lg">
+                Get your free US address <ArrowRightIcon size={15} />
+              </Link>
+              <Link href="/services/global-shopper" className="btn btn-secondary btn-lg">
+                How it works
+              </Link>
+            </Reveal>
+          </div>
+          <div className={`grid grid-cols-2 border-t ${LINE} sm:grid-cols-5`}>
+            {STORES.map((s, i) => (
+              // Each tile opens Global Shopper (the US address you'd shop
+              // this store with), not the store itself, so visitors stay here.
+              <Link
+                key={s.name}
+                href="/services/global-shopper"
+                aria-label={`Shop ${s.name} from abroad with a free US address`}
+                className={`group relative flex h-28 items-center justify-center ${LINE} border-b transition-colors duration-300 hover:bg-[#F8FAFE] ${i % 2 === 0 ? "border-r" : ""} sm:border-r sm:[&:nth-child(5n)]:border-r-0 ${i >= 5 ? "sm:border-b-0" : ""}`}
+              >
+                <ArrowUpRightIcon
+                  aria-hidden
+                  size={13}
+                  className="absolute right-3 top-3 text-[#B7C0CD] opacity-0 transition-opacity group-hover:opacity-100"
+                />
+                {s.icon ? (
+                  <BrandMark
+                    icon={s.icon}
+                    title={s.name}
+                    className="h-8 w-auto max-w-[62%] text-ink/75 transition-colors duration-300 group-hover:text-[var(--brand)]"
+                  />
+                ) : (
+                  <img
+                    src={s.src}
+                    alt={s.name}
+                    loading="lazy"
+                    className="h-8 w-auto max-w-[60%] opacity-75 grayscale transition duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+                  />
+                )}
+              </Link>
             ))}
           </div>
-          <Link
-            href="/quotes"
-            className="mx-auto mt-8 flex max-w-6xl items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
-          >
-            Get a Free Quote <ArrowRightIcon size={26} />
-          </Link>
-        </ScrollReveal>
-      </section>
+        </section>
 
-      {/* Enterprise Logistics Solution */}
-      <section className="px-4 py-16 md:px-8">
-        <ScrollReveal>
-          <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
-            <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
-              <Image
-                loading="lazy"
-                src="/frontend/images/redesign/feature-enterprise-ship.webp"
-                alt="Enterprise logistics solution"
-                width={1204}
-                height={802}
-                sizes="(min-width: 768px) 384px, 100vw"
-                className="w-full h-auto max-w-sm justify-self-center rounded-3xl md:order-1"
-              />
-              <div>
-                <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-                  For All Freight
-                </p>
-                <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-                  Enterprise Logistics Solution
-                </h2>
-                <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
-                  End-to-end freight and supply chain solutions for imports, exports, and
-                  commercial cargo, backed by reliable global logistics expertise.
-                </p>
-                <div className="mt-6 flex gap-4 sm:gap-6">
-                  {[
-                    {
-                      icon: HeadsetIcon,
-                      label: "Dedicated Manager",
-                      sub: "One point of contact",
-                    },
-                    {
-                      icon: GlobeIcon,
-                      label: "Global Reach",
-                      sub: "Import & export coverage",
-                    },
-                  ].map((s) => (
-                    <div
-                      key={s.label}
-                      className="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:gap-3 sm:text-left"
-                    >
-                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
-                        <s.icon size={27} className="text-brand" />
-                      </span>
-                      <span className="text-xs font-semibold">
-                        <span className="block font-semibold text-ink">{s.label}</span>
-                        <span className="text-ink-muted">{s.sub}</span>
-                      </span>
-                    </div>
-                  ))}
+        {/* ---------- Trust Your Shipment (stats) ---------- */}
+        {/* ---------- Trust Your Shipment: the night band ----------
+            The page's one dark moment (Attio's planet horizon, our way).
+            The hero is day: a pale globe under the quote bar. Here it's
+            night: a dark dotted globe with a glowing blue rim rises as
+            the section scrolls in, like a sunrise, and the stats sit on
+            the horizon in a hairline grid.
+            - Full bleed without leaving the page rails: a 100vmax box
+              shadow paints the band, and clip-path trims it to the
+              section's height (no horizontal scroll).
+            - The rise and the ray fade are CSS scroll-driven animations;
+              browsers without them just show it risen. */}
+        <section
+          id="about"
+          data-nav-dark
+          className="night-band relative isolate my-20 scroll-mt-28 border-x border-white/10 bg-[#060A14] lg:my-28 text-white shadow-[0_0_0_100vmax_#060A14] [clip-path:inset(0_-100vmax)]"
+        >
+          {/* Light rays falling onto the horizon */}
+          <div aria-hidden className="night-rays pointer-events-none absolute inset-x-0 top-0 h-[560px] [background:repeating-linear-gradient(90deg,rgba(255,255,255,0.045)_0_1px,transparent_1px_9px)] [mask-image:radial-gradient(60%_90%_at_50%_100%,#000,transparent_75%)]" />
+
+          <div className={`relative pt-28 text-center lg:pt-36 ${PAD}`}>
+            <Reveal as="p" className="text-[15px] font-medium text-white/55">
+              That&rsquo;s what TYS stands for
+            </Reveal>
+            <Reveal
+              as="h2"
+              delay={60}
+              className="mx-auto mt-3 text-balance text-[2.8rem] leading-[0.98] tracking-[-0.04em] sm:text-[4.2rem] lg:text-[5.2rem]"
+            >
+              <span style={{ fontFamily: "var(--font-oldschool-grotesk)" }}>Trust Your Shipment</span>
+            </Reveal>
+            <Reveal as="p" delay={120} className="mx-auto mt-5 max-w-lg text-pretty text-[17px] leading-relaxed text-white/60">
+              The standard every parcel, pallet and household move is held to, from pickup to the
+              front door.
+            </Reveal>
+          </div>
+
+          {/* The horizon */}
+          {/* The box clips the planet; its top edge is feathered so the glow
+              above the rim fades out rather than stopping at a line. */}
+          <div aria-hidden className="relative mt-10 h-[260px] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0%,#000_38%)] sm:h-[320px] lg:h-[360px]">
+            <div className="planet-rise absolute left-1/2 top-[70px] aspect-square w-[clamp(1100px,135vw,2000px)] -translate-x-1/2 sm:top-[90px]">
+              <div className="absolute inset-0 rounded-full shadow-[0_-30px_120px_-10px_rgba(3,100,255,0.55),0_-6px_30px_-4px_rgba(111,166,255,0.5)]" />
+              <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_50%_0%,#0B1a3a_0%,#070D1C_22%,#060A14_45%)]" />
+              <div className="absolute inset-0 overflow-hidden rounded-full opacity-70 [mask-image:linear-gradient(to_bottom,#000_0%,#000_8%,transparent_22%)]">
+                <div className="absolute inset-[-12.5%]">
+                  <HeroGlobe tone="dark" theta={-0.6} mapSamples={42000} interactive={false} routes={false} />
                 </div>
               </div>
+              <div className="night-rim absolute inset-0 rounded-full" />
+              <div className="night-rim absolute inset-0 rounded-full opacity-80 blur-[16px]" />
             </div>
-            <Link
-              href="/quotes"
-              className="mt-8 flex w-full items-center justify-end gap-2 btn-shine rounded-3xl bg-gradient-to-r from-brand/50 to-brand px-10 py-8 text-2xl font-semibold text-white transition duration-300 hover:scale-[1.01] hover:opacity-95"
-            >
-              Get a Free Quote <ArrowRightIcon size={26} />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-[#060A14]" />
+          </div>
+
+          {/* Stats on the horizon */}
+          <dl className="relative grid grid-cols-2 border-t border-white/10 lg:grid-cols-3">
+            {[
+              { n: "200", s: "+", label: "Countries we deliver to" },
+              { n: "900", s: "+", label: "Trusted carrier networks" },
+              { n: "70", s: "%", label: "Shipping savings, up to" },
+              { n: "100", s: "%", label: "Shipment visibility" },
+              { n: "24", s: "/7", label: "Expert support" },
+              { n: "500", s: "+", label: "Shipments delivered" },
+            ].map((st, i) => (
+              <div
+                key={st.label}
+                className={`flex flex-col-reverse gap-2 border-b border-white/10 px-5 py-10 sm:px-10 lg:px-14 ${i % 2 === 0 ? "border-r" : ""} lg:border-r ${(i + 1) % 3 === 0 ? "lg:border-r-0" : ""} ${i >= 3 ? "lg:border-b" : ""}`}
+              >
+                <dt className="text-[15px] text-white/55">{st.label}</dt>
+                <dd
+                  className="text-[3rem] leading-none tracking-[-0.035em] sm:text-[3.6rem]"
+                  style={{ fontFamily: "var(--font-oldschool-grotesk)" }}
+                >
+                  {st.n}
+                  <span className="text-[#6FA6FF]">{st.s}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <div className={`relative flex justify-center pb-28 pt-12 ${PAD}`}>
+            <Link href="/about-us" className="btn btn-ghost-white btn-lg">
+              About TYS <ArrowRightIcon size={15} />
             </Link>
           </div>
-        </ScrollReveal>
-      </section>
+        </section>
 
-      {/* Global Shopper */}
-      <section className="px-4 py-16 md:px-8">
-        <ScrollReveal>
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-              Shop US Stores and Ship Worldwide
-            </p>
-            <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-              Global Shopper
-            </h2>
-            <p className="mt-3 text-ink-muted">
-              Receive a free U.S. address, shop from trusted brands, and let TYS Global
-              Logistics consolidate and deliver your purchases worldwide.
-            </p>
-          </div>
-          <div className="mx-auto mt-8 grid max-w-5xl grid-cols-3 gap-4 sm:grid-cols-5 sm:gap-5 md:grid-cols-9 md:gap-4">
-            {[
-              { slug: "amazon", label: "Amazon" },
-              { slug: "walmart", label: "Walmart" },
-              { slug: "apple", label: "Apple" },
-              { slug: "zappos", label: "Zappos" },
-              { slug: "disney", label: "Disney" },
-              { slug: "carters", label: "Carter's" },
-              { slug: "boots", label: "Boots" },
-              { slug: "oshkosh", label: "OshKosh" },
-              { slug: "mands", label: "M&S" },
-              { slug: "6pm", label: "6pm" },
-              { slug: "ebay", label: "eBay" },
-              { slug: "shein", label: "Shein" },
-              { slug: "ipsy", label: "Ipsy" },
-              { slug: "ae", label: "American Eagle" },
-              { slug: "asos", label: "ASOS" },
-              { slug: "forever21", label: "Forever 21" },
-              { slug: "johnlewis", label: "John Lewis" },
-              { slug: "gap", label: "Gap" },
-            ].map(({ slug, label }) => (
-              <div
-                key={slug}
-                className="flex aspect-square items-center justify-center rounded-2xl bg-white p-3 shadow-[0_2px_8px_rgba(16,24,40,0.06)]"
-              >
+        {/* ---------- Need a quote ---------- */}
+        <section className={`border-t ${LINE}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            <div className={`py-16 lg:py-20 ${PAD}`}>
+              <Reveal as="h2" className={H2}>
+                Need a quote? <span className="text-brand">It takes 30 seconds.</span>
+              </Reveal>
+              <Reveal as="p" delay={80} className={LEAD}>
+                Tell us where it&rsquo;s coming from and where it&rsquo;s going. We&rsquo;ll handle
+                the rest.
+              </Reveal>
+              <Reveal delay={140} className="mt-8">
+                <MiniQuoteForm layout="hero" />
+              </Reveal>
+            </div>
+            <div className={`border-t ${LINE} bg-[#F7F9FC] p-5 md:border-l md:border-t-0 lg:p-10`}>
+              <Reveal delay={100} className="h-full">
                 <img
                   loading="lazy"
-                  src={`/frontend/images/redesign/brand-logos/${slug}.png`}
-                  alt={label}
-                  className="h-full w-full object-contain"
+                  src="/frontend/images/redesign/need-quote-photo.webp"
+                  alt="Courier handing a package to a customer"
+                  className="h-full min-h-[320px] w-full rounded-2xl border border-[#E6EAF0] object-cover"
                 />
-              </div>
-            ))}
-          </div>
-          <div className="mt-8 flex justify-center">
-            <Link
-              href="/services/global-shopper"
-              className="inline-flex items-center gap-2 rounded-full bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-dark"
-            >
-              Sign Up &amp; Get Free US Address <ArrowRightIcon size={16} />
-            </Link>
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* About TYS stats + Need a Quote */}
-      <section id="about" className="scroll-mt-28 px-4 py-8 md:px-8">
-        <ScrollReveal>
-          <div className="mx-auto max-w-6xl rounded-[2.5rem] bg-brand-light p-8 md:p-14">
-            <div className="text-center">
-              <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-                Why Shippers Choose Us
-              </p>
-              <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-                About TYS Global Logistics
-              </h2>
-              <p className="mt-2 text-ink-muted">
-                Our name reflects our commitment: Trust Your Shipment, every step of the
-                way.
-              </p>
-            </div>
-
-            <div className="stats-grid mt-10 items-center gap-x-6 gap-y-8 sm:gap-x-12 md:gap-x-10 md:gap-y-0">
-              <Image
-                loading="lazy"
-                src="/frontend/images/redesign/about-stats-illustration.webp"
-                alt=""
-                aria-hidden
-                width={1110}
-                height={740}
-                sizes="(min-width: 1024px) 320px, (min-width: 768px) 256px, (min-width: 640px) 208px, 160px"
-                className="h-auto w-40 [grid-area:img] justify-self-center sm:w-52 md:w-64 lg:w-80"
-              />
-              <Stat
-                value="200+"
-                label="Countries Worldwide"
-                className="border-b border-[#dedede] pb-4 [grid-area:s1] sm:pb-6"
-              />
-              <Stat
-                value="900+"
-                label="Trusted Carrier Networks"
-                className="border-b border-[#dedede] pb-4 [grid-area:s2] sm:pb-6"
-              />
-              <Stat
-                value="70%"
-                label="Shipping Savings"
-                className="border-b border-[#dedede] py-4 [grid-area:s3] sm:py-6"
-              />
-              <Stat
-                value="100%"
-                label="Shipment Visibility"
-                className="border-b border-[#dedede] py-4 [grid-area:s4] sm:py-6"
-              />
-              <Stat
-                value="24/7"
-                label="Expert Support"
-                className="pt-4 [grid-area:s5] sm:pt-6"
-              />
-              <Stat
-                value="500+"
-                label="Shipments Delivered"
-                className="pt-4 [grid-area:s6] sm:pt-6"
-              />
+              </Reveal>
             </div>
           </div>
-        </ScrollReveal>
-      </section>
+        </section>
 
-      <section className="px-4 py-16 md:px-8">
-        <ScrollReveal>
-          <div className="mx-auto grid grid-cols-1 max-w-6xl items-center gap-10 md:grid-cols-2">
-            <div>
-              <p className="text-base font-medium uppercase tracking-[1.6px] text-brand">
-                500+ Shipments Delivered
-              </p>
-              <h2 className="mt-2 text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-                Need A Quote? Takes 30 Seconds.
-              </h2>
-              <p className="mt-4 text-base font-medium leading-7 text-ink-muted">
-                As your trusted logistics service provider, we can help you and your
-                customer with all shipping and moving services within the USA and
-                worldwide.
-              </p>
-              <div className="mt-6 max-w-sm rounded-2xl border border-brand-light p-5">
-                <MiniQuoteForm />
+        {/* ---------- Reviews ---------- */}
+        <section className={`border-t ${LINE} py-16 lg:py-20`}>
+          <div className={PAD}>
+            <Reveal as="h2" className={H2}>What our customers say</Reveal>
+            <Reveal as="p" delay={80} className={LEAD}>
+              Real reviews from Google, shown word for word.
+            </Reveal>
+            <div className="mt-8">
+              <GoogleReviewsStrip />
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- FAQ ----------
+            Same DEFAULT_FAQS content as /faqs (a homepage teaser of the full
+            FAQ page), but the FAQPage JSON-LD is only emitted on /faqs itself:
+            two pages emitting identical FAQPage structured data is duplicate
+            content for rich-result purposes. */}
+        <section id="faq" className={`scroll-mt-28 border-t ${LINE}`}>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.35fr]">
+            <div className={`border-b ${LINE} py-16 lg:border-b-0 lg:border-r lg:py-20 ${PAD}`}>
+              <div className="lg:sticky lg:top-32">
+                <Reveal as="h2" className={H2}>Frequently asked questions</Reveal>
+                <Reveal as="p" delay={80} className={LEAD}>
+                  Can&rsquo;t find yours? Call us and talk to a person.
+                </Reveal>
+                <Reveal delay={140} className="mt-8 flex flex-wrap gap-3">
+                  <a href="tel:+14047938759" className="btn btn-secondary btn-lg">
+                    <PhoneIcon size={15} /> +1 (404) 793-8759
+                  </a>
+                  <Link href="/faqs" className="btn btn-lg text-ink hover:bg-[#F3F5F9]">
+                    All questions <ArrowRightIcon size={14} />
+                  </Link>
+                </Reveal>
               </div>
             </div>
-            <img
-              loading="lazy"
-              src="/frontend/images/redesign/need-quote-photo.webp"
-              alt="Courier handing a package to a customer"
-              className="w-full rounded-3xl"
-            />
+            <div className={`py-10 lg:py-16 ${PAD}`}>
+              <FaqAccordion />
+            </div>
           </div>
-        </ScrollReveal>
-      </section>
-
-      {/* Reviews */}
-      <section className="px-4 py-16 md:px-8">
-        <ScrollReveal>
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-              See Our <span className="text-brand">Trusted</span> Reviews
-            </h2>
-            <p className="mt-3 text-ink-muted">
-              Every shipment tells a story. Read what our customers have to say about
-              their experience with TYS Global Logistics.
-            </p>
-          </div>
-          <div className="mt-10">
-            <ReviewsCarousel
-              reviews={[
-                {
-                  name: "M. Alvarez",
-                  role: "Small Business Owner",
-                  quote:
-                    "Our freight arrived faster than the original estimate and the team kept us updated the whole way. Booking again for our next shipment.",
-                },
-                {
-                  name: "J. Whitfield",
-                  role: "Relocating Customer",
-                  quote:
-                    "Moving overseas felt overwhelming until TYS took over. Door-to-door pickup, clear pricing, and everything arrived intact.",
-                },
-                {
-                  name: "R. Okafor",
-                  role: "E-commerce Retailer",
-                  quote:
-                    "Volume shipping rates saved us real money this quarter, and their support team answers fast whenever we have a question.",
-                },
-                {
-                  name: "D. Martins",
-                  role: "Auto Import Dealer",
-                  quote:
-                    "Shipped three vehicles across two continents without a single delay. Clear communication at every step of the process.",
-                },
-                {
-                  name: "S. Park",
-                  role: "Online Store Owner",
-                  quote:
-                    "Parcel shipping used to eat into our margins. TYS cut our rates and our customers still get tracking updates in real time.",
-                },
-              ]}
-            />
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* FAQ — same DEFAULT_FAQS content as /faqs (a homepage teaser of the
-          full FAQ page), but the FAQPage JSON-LD is only emitted on /faqs
-          itself. Two pages emitting identical FAQPage structured data is
-          duplicate content for rich-result purposes; /faqs is the canonical
-          page for that eligibility. */}
-      <section id="faq" className="scroll-mt-28 px-4 pb-20 md:px-8">
-        <ScrollReveal>
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-[2.25rem] sm:text-[2.75rem] md:text-[3rem] font-bold leading-[1.15] sm:leading-[1.2] tracking-[-0.5px] sm:tracking-[-1.2px] md:tracking-[-1.8px] text-black">
-              Frequently Asked Questions
-            </h2>
-            <p className="mt-3 text-ink-muted">
-              As your trusted logistics service provider, we can help you and your
-              customer with all shipping and moving services.
-            </p>
-          </div>
-          <div className="mx-auto mt-10 max-w-3xl">
-            <FaqAccordion />
-          </div>
-        </ScrollReveal>
-      </section>
+        </section>
+      </div>
     </>
   );
 }
 
-function Stat({
-  value,
-  label,
-  className = "",
+// Blue gradient tile with a white duotone icon, used on the quick cards.
+function IconTile({ icon: IconCmp }: { icon: Icon }) {
+  return (
+    <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-[radial-gradient(120%_120%_at_30%_0%,#5B9BFF_0%,#0364FF_55%,#0247BD_100%)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_8px_18px_-8px_rgba(3,100,255,0.7)]">
+      <IconCmp size={24} weight="duotone" />
+    </span>
+  );
+}
+
+function DockAction({
+  href,
+  icon,
+  title,
+  body,
+  visual,
 }: {
-  value: string;
-  label: string;
-  className?: string;
+  href: string;
+  icon: Icon;
+  title: string;
+  body: string;
+  visual: React.ReactNode;
 }) {
   return (
-    <div className={className}>
-      <div className="text-[28px] font-medium leading-[36px] text-ink sm:text-[34px] sm:leading-[44px] md:text-[40px] md:leading-[64px]">
-        {value}
+    <Link
+      href={href}
+      className="group flex flex-col gap-5 rounded-[22px] bg-white p-5 ring-1 ring-[#E6EDF8] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_40px_-24px_rgba(3,100,255,0.45)] hover:ring-[#BCD2F5] sm:p-6"
+    >
+      <span className="flex items-start gap-4">
+        <span className="transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105">
+          <IconTile icon={icon} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[18px] font-semibold tracking-[-0.015em] text-ink">{title}</span>
+          <span className="mt-0.5 block text-[14.5px] leading-snug text-ink-muted">{body}</span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E1E7F0] text-ink transition duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
+          <ArrowRightIcon size={15} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+        </span>
+      </span>
+      {visual}
+    </Link>
+  );
+}
+
+// The journey a tracked shipment reports, as a route line with a signal
+// dot travelling it. Illustrative only: no tracking number, no live data.
+function TrackLine() {
+  const steps = ["Picked up", "In transit", "Customs", "Delivered"];
+  return (
+    <span className="block rounded-2xl bg-[#F5F8FE] px-4 pb-3 pt-4 ring-1 ring-inset ring-[#E6EDF8]">
+      <span className="track-path relative block h-2.5">
+        <span className="absolute inset-x-1 top-1/2 h-px -translate-y-1/2 border-t border-dashed border-[#B9CCEB]" />
+        <span className="absolute left-1 top-1/2 h-[2px] w-[66%] -translate-y-1/2 rounded-full bg-brand" />
+        {steps.map((s, i) => (
+          <span
+            key={s}
+            className={`absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-[#F5F8FE] ${i < 3 ? "bg-brand" : "bg-[#C9D8F0]"}`}
+            style={{ left: `calc(${(i / 3) * 100}% * 0.98 + 1%)` }}
+          />
+        ))}
+        <span className="track-signal absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_0_3px_rgba(3,100,255,0.35)]" />
+      </span>
+      <span className="mt-2.5 grid grid-cols-4 text-[11.5px] font-medium text-ink-muted">
+        {steps.map((s, i) => (
+          <span key={s} className={i === 0 ? "text-left" : i === 3 ? "text-right" : "text-center"}>
+            {s}
+          </span>
+        ))}
+      </span>
+    </span>
+  );
+}
+
+// Retail rate vs. a business account rate: the stats band's "up to 70%"
+// shipping savings, shown as two bars.
+function RateBars() {
+  return (
+    <span className="block space-y-2 rounded-2xl bg-[#F5F8FE] px-4 py-3.5 ring-1 ring-inset ring-[#E6EDF8]">
+      <span className="flex items-center gap-3 text-[12px] font-medium">
+        <span className="w-[92px] shrink-0 text-ink-muted">Retail rate</span>
+        <span className="h-2 flex-1 rounded-full bg-[#D5DFEE]" />
+      </span>
+      <span className="flex items-center gap-3 text-[12px] font-medium">
+        <span className="w-[92px] shrink-0 text-ink">Business rate</span>
+        <span className="flex flex-1 items-center gap-2">
+          <span className="rate-bar h-2 w-[30%] rounded-full bg-brand" />
+          <span className="whitespace-nowrap rounded-full bg-[#E6F0FF] px-2 py-0.5 text-[11px] font-semibold text-brand">
+            up to 70% off
+          </span>
+        </span>
+      </span>
+    </span>
+  );
+}
+
+function ServiceRow({
+  title,
+  body,
+  imageAlt,
+  links,
+  sticker,
+  overlay,
+  facts,
+  illustration,
+  reverse = false,
+}: {
+  title: string;
+  body: string;
+  facts: { n: string; l: string }[];
+  imageAlt: string;
+  links: { label: string; desc: string; icon: Icon; href: string }[];
+  sticker: { kicker: string; title: string; sub: string };
+  overlay?: React.ReactNode;
+  // An isometric illustration (a local SVG, drawn by
+  // 03_Website/design_review/iso/gen_scenes.py) on the soft blue dotted
+  // panel the offer cards use. The old photos are backed up in
+  // 03_Website/backups/2026-09-29_before-home-redesign/service-photos.
+  illustration: string;
+  reverse?: boolean;
+}) {
+  return (
+    <section className={`border-t ${LINE}`}>
+      <div className="grid grid-cols-1 md:grid-cols-2">
+        <div
+          className={`flex flex-col justify-center bg-[radial-gradient(120%_90%_at_0%_0%,#EDF3FF_0%,#FFFFFF_65%)] py-14 lg:py-20 ${PAD} ${reverse ? "md:order-2" : ""}`}
+        >
+          <Reveal as="h2" className={H2}>{title}</Reveal>
+          <Reveal as="p" delay={80} className={LEAD}>{body}</Reveal>
+          {/* Three proof points as a mini Attio-style stat row. */}
+          <Reveal delay={110} className="mt-8 grid max-w-lg grid-cols-3 divide-x divide-[#E6EAF0] rounded-2xl border border-[#E6EAF0] bg-white/80">
+            {facts.map((f) => (
+              <div key={f.l} className="px-4 py-3.5">
+                <div className="text-[1.6rem] leading-none tracking-[-0.03em] text-ink" style={{ fontFamily: "var(--font-oldschool-grotesk)" }}>
+                  {f.n}
+                </div>
+                <div className="mt-1.5 text-[12.5px] leading-snug text-ink-muted">{f.l}</div>
+              </div>
+            ))}
+          </Reveal>
+          {/* The two sub-services as an Attio-style choice panel: one
+              hairline frame split in two, a small line icon, the name, one
+              quiet line, and an arrow that wakes up on hover. (Plain
+              buttons read as "another button" and got scrolled past.) */}
+          <Reveal
+            delay={160}
+            className="mt-8 grid max-w-lg grid-cols-1 divide-y divide-[var(--line)] overflow-hidden rounded-2xl border border-[var(--line)] bg-white sm:grid-cols-2 sm:divide-x sm:divide-y-0"
+          >
+            {links.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="group relative flex flex-col gap-3 p-4 transition-colors duration-200 hover:bg-[#F7F9FD] sm:p-5"
+              >
+                <span className="flex items-center justify-between">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--line)] bg-white text-ink/70 transition-colors duration-200 group-hover:border-[#C9D6EE] group-hover:text-brand">
+                    <l.icon size={16} />
+                  </span>
+                  <ArrowUpRightIcon
+                    size={14}
+                    className="text-[#B7C0CD] transition duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-brand"
+                  />
+                </span>
+                <span>
+                  <span className="block text-[15px] font-medium tracking-[-0.01em] text-ink">{l.label}</span>
+                  <span className="mt-0.5 block text-[13px] leading-snug text-ink-muted">{l.desc}</span>
+                </span>
+              </Link>
+            ))}
+          </Reveal>
+        </div>
+        <div
+          className={`border-t ${LINE} bg-white p-5 md:border-t-0 lg:p-10 ${reverse ? "md:order-1 md:border-r" : "md:border-l"}`}
+        >
+          <Reveal delay={100}>
+            <div className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-[#E6EAF0] bg-[#E8EEF8]">
+              <div className="absolute inset-0 bg-[radial-gradient(90%_80%_at_50%_45%,#F6F9FF_0%,#E6EEFC_70%,#DCE7FA_100%)]">
+                <div aria-hidden className="absolute inset-0 [background-image:radial-gradient(#C7D6F0_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(70%_70%_at_50%_50%,#000,transparent)]" />
+                {/* Soft floor shadow under the stack */}
+                <div aria-hidden className="absolute left-1/2 top-[64%] h-[18%] w-[62%] -translate-x-1/2 rounded-[50%] bg-[#0B3A8C]/15 blur-2xl" />
+                <img
+                  src={illustration}
+                  alt={imageAlt}
+                  className="absolute left-1/2 top-[44%] max-h-[62%] w-[58%] -translate-x-1/2 -translate-y-1/2 select-none object-contain transition-transform duration-700 ease-out group-hover:-translate-y-[53%]"
+                  draggable={false}
+                />
+              </div>
+              <LabelSticker {...sticker} />
+              {overlay}
+            </div>
+          </Reveal>
+        </div>
       </div>
-      <div className="text-sm font-medium text-ink-muted sm:text-base">{label}</div>
+    </section>
+  );
+}
+
+// A shipping-label sticker on each service photo (straight at rest: a
+// permanent tilt made the barcode and small text render jagged): dashed edge,
+// label type, a barcode, and a slight tilt that deepens on hover. It's the
+// one playful, TYS-specific detail per section.
+function LabelSticker({ kicker, title, sub }: { kicker: string; title: string; sub: string }) {
+  return (
+    <div className="absolute right-4 top-4 rounded-xl border-[1.5px] border-dashed border-[#101828]/25 bg-white px-4 pb-3 pt-2.5 shadow-[0_16px_34px_-16px_rgba(16,24,40,0.55)] transition-transform duration-500 group-hover:-translate-y-1 group-hover:rotate-[2deg]">
+      <div
+        className="flex items-center justify-between gap-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted"
+        style={{ fontFamily: "var(--font-geist-mono), ui-monospace, monospace" }}
+      >
+        <span>TYS &middot; {kicker}</span>
+        <span className="h-2 w-2 rounded-full bg-brand" />
+      </div>
+      <div className="mt-1 text-[17px] font-bold leading-tight tracking-[-0.01em] text-ink">{title}</div>
+      <div className="text-[12.5px] text-ink-muted">{sub}</div>
+      <div
+        aria-hidden
+        className="mt-2 h-4 w-28 opacity-70"
+        style={{
+          background:
+            "repeating-linear-gradient(90deg,#101828 0 2px,transparent 2px 4px,#101828 4px 5px,transparent 5px 8px,#101828 8px 11px,transparent 11px 13px)",
+        }}
+      />
     </div>
+  );
+}
+
+// A route marker riding the hero planet: a white chip with a line icon, the
+// mode, and a short route in mono. Counter-rotates so it stays level.
+function RouteChip({ icon: Icon, mode, route }: { icon: Icon; mode: string; route: string }) {
+  return (
+    <span className="orbit-chip">
+      <span className="flex items-center gap-2 whitespace-nowrap rounded-full border border-[#DCE5F5] bg-white/95 py-1 pl-1 pr-3 text-[12.5px] shadow-[0_8px_20px_-8px_rgba(3,60,170,0.25)]">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#EEF4FF] text-brand">
+          <Icon size={14} weight="bold" />
+        </span>
+        <span className="font-medium text-ink">{mode}</span>
+        <span className="font-mono text-[11px] tracking-tight text-ink-muted">{route}</span>
+      </span>
+    </span>
   );
 }

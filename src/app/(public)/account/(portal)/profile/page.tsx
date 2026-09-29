@@ -3,7 +3,7 @@ import { requireCustomerPage } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ProfileForm, ChangePasswordForm } from "@/components/public/account/profile-forms";
 
-export const metadata: Metadata = { title: "Profile — TYS Global Logistics" };
+export const metadata: Metadata = { title: "Profile | TYS Global Logistics" };
 
 // C1.3 — edit name/phone (dedicated session-scoped endpoint) + change password
 // (Better Auth, current-password check). Email is read-only in v1: changing it

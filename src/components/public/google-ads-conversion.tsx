@@ -1,6 +1,7 @@
 "use client";
 
 import Script from "next/script";
+import { NOT_LOCAL_HOST } from "@/lib/tracking-guard";
 
 // Fires a Google Ads "lead submitted" conversion once the thank-you page
 // mounts, so Ads can attribute a submitted quote back to the campaign/keyword
@@ -19,9 +20,11 @@ export function GoogleAdsConversion({ transactionId }: { transactionId?: string 
 
   return (
     <Script id="google-ads-conversion" strategy="afterInteractive">
-      {`window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('event', 'conversion', ${JSON.stringify(eventParams)});`}
+      {`if (${NOT_LOCAL_HOST}) {
+window.dataLayer = window.dataLayer || [];
+var gtag = window.gtag || function(){dataLayer.push(arguments);};
+gtag('event', 'conversion', ${JSON.stringify(eventParams)});
+}`}
     </Script>
   );
 }

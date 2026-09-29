@@ -20,6 +20,9 @@ export const PACKAGE_TYPES = [
   { value: "television", label: "Television" },
   { value: "furniture", label: "Furniture" },
   { value: "auto", label: "Auto" },
+  // Added to the wizard 2026-09-30 (the server, admin editor and thank-you
+  // page already knew this type from the old single-page callback form).
+  { value: "packers_movers", label: "Packers & movers" },
 ] as const;
 
 export const quoteWizardSchema = z.object({

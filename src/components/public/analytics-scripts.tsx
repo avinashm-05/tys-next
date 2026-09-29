@@ -1,6 +1,7 @@
 "use client";
 
 import Script from "next/script";
+import { NOT_LOCAL_HOST } from "@/lib/tracking-guard";
 
 // Site-wide analytics — GA4, Google Tag Manager, and Microsoft Clarity.
 // Each is independently env-gated and no-ops (renders nothing) when its ID
@@ -21,20 +22,21 @@ export function AnalyticsScripts() {
           ~100KB library again for no benefit and is what makes Tag Assistant
           report the same tag installed more than once. Verified live
           2026-08-21: three gtag.js requests were going out per page load. */}
+      {/* Never on a local host (see lib/tracking-guard.ts): the gtag.js
+          library itself is injected from inside the guard too. */}
       {(gaId || adsId) && (
-        <>
-          <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${gaId || adsId}`}
-            strategy="afterInteractive"
-          />
-          <Script id="gtag-init" strategy="afterInteractive">
-            {`window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`if (${NOT_LOCAL_HOST}) {
+window.dataLayer = window.dataLayer || [];
+window.gtag = function(){dataLayer.push(arguments);};
 gtag('js', new Date());
 ${gaId ? `gtag('config', ${JSON.stringify(gaId)});` : ""}
-${adsId ? `gtag('config', ${JSON.stringify(adsId)});` : ""}`}
-          </Script>
-        </>
+${adsId ? `gtag('config', ${JSON.stringify(adsId)});` : ""}
+var s = document.createElement('script'); s.async = true;
+s.src = ${JSON.stringify(`https://www.googletagmanager.com/gtag/js?id=${gaId || adsId}`)};
+document.head.appendChild(s);
+}`}
+        </Script>
       )}
       {/* The Google Ads base tag is configured by the single gtag block
           above, not by a second gtag.js load of its own. It still needs to be
@@ -57,7 +59,7 @@ ${adsId ? `gtag('config', ${JSON.stringify(adsId)});` : ""}`}
           Loading it in both places would install the container twice. */}
       {clarityId && (
         <Script id="clarity-init" strategy="afterInteractive">
-          {`(function(c,l,a,r,i,t,y){
+          {`if (${NOT_LOCAL_HOST}) (function(c,l,a,r,i,t,y){
 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
 t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
 y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
@@ -80,8 +82,10 @@ export function GtmConversionEvent({ transactionId }: { transactionId?: string }
   if (!gtmId) return null;
   return (
     <Script id="gtm-conversion-event" strategy="afterInteractive">
-      {`window.dataLayer = window.dataLayer || [];
-window.dataLayer.push({ event: 'generate_lead', transaction_id: ${JSON.stringify(transactionId ?? "")} });`}
+      {`if (${NOT_LOCAL_HOST}) {
+window.dataLayer = window.dataLayer || [];
+window.dataLayer.push({ event: 'generate_lead', transaction_id: ${JSON.stringify(transactionId ?? "")} });
+}`}
     </Script>
   );
 }

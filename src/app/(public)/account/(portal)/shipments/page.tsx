@@ -9,7 +9,7 @@ import {
   type PortalShipmentRow,
 } from "@/components/public/account/shipments-table";
 
-export const metadata: Metadata = { title: "My Shipments — TYS Global Logistics" };
+export const metadata: Metadata = { title: "My Shipments | TYS Global Logistics" };
 
 const dateFmt = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
 
@@ -31,7 +31,7 @@ export default async function ShipmentsPage() {
 
   const rows: PortalShipmentRow[] = shipments.map((s) => ({
     id: Number(s.id),
-    date: s.createdAt ? dateFmt.format(s.createdAt) : "—",
+    date: s.createdAt ? dateFmt.format(s.createdAt) : "N/A",
     trackingNumber: s.trackingNumber,
     senderName: s.senderContactName,
     senderCity: s.senderCity,

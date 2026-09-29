@@ -1,82 +1,91 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
-import Link from "next/link";
-import { HeadsetIcon, WalletIcon, ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
+import { PageHeroBand } from "@/components/public/page-hero-band";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
+import { CardGrid, PAD, PageBody, Section, SectionHead } from "@/components/public/page-kit";
+import { ContactDetails, ContactQuickActions } from "./contact-details";
+import {
+  CalculatorIcon,
+  QuestionIcon,
+  MapPinAreaIcon,
+  WalletIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Contact Us — TYS Global Logistics",
-  description: "Talk to a real person about your shipment. Call, email or request a quote — TYS Global Logistics, Atlanta, Georgia.",
+  title: "Contact Us: Talk to a Real Person | TYS Global Logistics",
+  description:
+    "Contact TYS Global Logistics in Atlanta, Georgia. Call or email for help with a shipment, a payment or a free shipping quote.",
   path: "/contact-us",
 });
 
+// Contact page, 2026-09-29 renovation (page kit). The h1 now comes from
+// PageHeroBand (this page had none before 2026-08-21, which left the main
+// ranking signal unset on the page people search "contact" for).
+// The message form was removed 2026-09-29 at the owner's request (call and
+// email are the channels); /contact-us/support now redirects here. No opening
+// hours are shown because none have been confirmed. No CtaBand at the end:
+// the whole page is already a way to reach us, and the hero has call/email.
 export default function ContactUsPage() {
   return (
     <>
-      <section className="bg-gray-50 px-4 py-16 md:px-8">
-        {/* This page had NO h1 at all — it opened straight at h2 ("Help &
-            Support"), leaving the single strongest on-page ranking signal
-            unset on the page people search "contact" for. Added 2026-08-21. */}
-        <div className="mx-auto mb-10 max-w-4xl text-center">
-          <h1 className="text-3xl font-extrabold text-ink md:text-4xl">
-            Contact TYS Global Logistics
-          </h1>
-          <p className="mt-3 text-ink-muted">
-            Talk to a real person about your shipment — support, payments, or a new quote.
-          </p>
-        </div>
-        <div className="mx-auto grid grid-cols-1 max-w-4xl gap-6 md:grid-cols-2">
-          <ContactCard
-            icon={HeadsetIcon}
-            title="Help & Support"
-            body="Need an update on your shipment or have a question about an existing booking? Contact our team or request a callback from one of our logistics experts."
-            href="/contact-us/support"
-            cta="Contact Support"
-          />
-          <ContactCard
-            icon={WalletIcon}
-            title="Pay"
-            body="Need to make a payment? Complete your transaction securely in just a few clicks. We accept all major credit cards, Zelle, and ACH payments."
-            href="/contact-us/pay"
-            cta="Pay Online"
-          />
-        </div>
-      </section>
-
-      <TrustedReviewsSection />
-    </>
-  );
-}
-
-function ContactCard({
-  icon: Icon,
-  title,
-  body,
-  href,
-  cta,
-}: {
-  icon: typeof HeadsetIcon;
-  title: string;
-  body: string;
-  href: string;
-  cta: string;
-}) {
-  return (
-    <div className="rounded-3xl border border-brand-light bg-white p-8 shadow-[0_2px_16px_rgba(16,24,40,0.04)]">
-      <div className="flex items-center gap-3">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-pale">
-          <Icon size={22} className="text-brand" />
-        </span>
-        <h2 className="text-lg font-bold text-ink">{title}</h2>
-      </div>
-      <hr className="mt-5 border-brand-light" />
-      <p className="mt-5 text-ink-muted">{body}</p>
-      <Link
-        href={href}
-        className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-brand hover:text-brand-dark"
+      {/* Call / email in the hero, where other pages have the quote bar. */}
+      <PageHeroBand
+        title="Contact"
+        accent="TYS Global Logistics"
+        subtitle="Talk to a real person about your shipment, a payment or a new quote. Call or email us."
       >
-        {cta} <ArrowRightIcon size={14} weight="bold" />
-      </Link>
-    </div>
+        <ContactQuickActions />
+      </PageHeroBand>
+
+      <PageBody>
+        <Section flush>
+          <div className={`py-16 lg:py-20 ${PAD}`}>
+            <SectionHead kicker="Get in touch" title="Talk to us" accent="directly." lead="Pick whatever's easiest. A real person answers." />
+          </div>
+          <div className="-mb-px">
+            <ContactDetails />
+          </div>
+        </Section>
+
+        <Section flush>
+          <div className={`py-16 lg:py-20 ${PAD}`}>
+            <SectionHead kicker="Quick links" title="What do you need help with?" />
+          </div>
+          <div className="-mb-px">
+            <CardGrid
+              columns={4}
+              cards={[
+                {
+                  icon: <QuestionIcon size={22} />,
+                  title: "Common questions",
+                  body: "Transit times, customs, packing and payments, answered in plain words.",
+                  href: "/faqs",
+                },
+                {
+                  icon: <WalletIcon size={22} />,
+                  title: "Make a payment",
+                  body: "Pay securely in a few clicks. We accept all major credit cards, Zelle and ACH.",
+                  href: "/contact-us/pay",
+                },
+                {
+                  icon: <MapPinAreaIcon size={22} />,
+                  title: "Track a shipment",
+                  body: "Where to find your tracking number, and what each update means.",
+                  href: "/tracking",
+                },
+                {
+                  icon: <CalculatorIcon size={22} />,
+                  title: "Get a free quote",
+                  body: "Tell us what you're sending and where. It takes about 30 seconds.",
+                  href: "/quotes",
+                },
+              ]}
+            />
+          </div>
+        </Section>
+
+        <TrustedReviewsSection />
+      </PageBody>
+    </>
   );
 }

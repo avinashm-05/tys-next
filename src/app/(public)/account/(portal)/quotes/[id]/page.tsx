@@ -9,7 +9,7 @@ import { decimal2 } from "@/lib/serialize";
 import { formatPackageTypes } from "@/lib/package-type";
 import { QuoteStatusPill } from "@/components/public/account/account-nav";
 
-export const metadata: Metadata = { title: "Quote details — TYS Global Logistics" };
+export const metadata: Metadata = { title: "Quote details | TYS Global Logistics" };
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
@@ -83,7 +83,7 @@ export default async function MyQuoteDetailPage({
                 {decimal2(quote.estimatedCost)} {quote.currency ?? "USD"}
               </strong>
             ) : (
-              "Awaiting price — our team will contact you"
+              "Awaiting price. Our team will contact you."
             )
           }
         />
@@ -98,7 +98,7 @@ export default async function MyQuoteDetailPage({
           </h2>
           {boxes.map((p, i) => (
             <p key={String(p.id)} className="m-0 mb-2 text-sm text-ink">
-              <strong>Box #{i + 1}</strong> — qty {p.quantity}, {decimal2(p.weight) ?? "N/A"}{" "}
+              <strong>Box #{i + 1}</strong>: qty {p.quantity}, {decimal2(p.weight) ?? "N/A"}{" "}
               {(p.weightUnit ?? "lb").toUpperCase()}, {decimal2(p.length) ?? "–"} ×{" "}
               {decimal2(p.width) ?? "–"} × {decimal2(p.height) ?? "–"}
               {p.chargeableWeight != null && (
@@ -117,7 +117,7 @@ export default async function MyQuoteDetailPage({
           </h2>
           {tvs.map((p, i) => (
             <p key={String(p.id)} className="m-0 mb-2 text-sm text-ink">
-              <strong>Television #{i + 1}</strong> — {p.brandName ?? "N/A"} {p.tvModel ?? ""},{" "}
+              <strong>Television #{i + 1}</strong>: {p.brandName ?? "N/A"} {p.tvModel ?? ""},{" "}
               {decimal2(p.weight) ?? "N/A"} {(p.weightUnit ?? "lb").toUpperCase()},{" "}
               {decimal2(p.length) ?? "–"} × {decimal2(p.width) ?? "–"} × {decimal2(p.height) ?? "–"}
             </p>
@@ -133,7 +133,7 @@ export default async function MyQuoteDetailPage({
           </h2>
           {autos.map((p, i) => (
             <p key={String(p.id)} className="m-0 mb-2 text-sm text-ink">
-              <strong>Vehicle #{i + 1}</strong> — {p.brandName ?? "N/A"} {p.carModel ?? ""}
+              <strong>Vehicle #{i + 1}</strong>: {p.brandName ?? "N/A"} {p.carModel ?? ""}
               {p.carYear ? ` (${p.carYear})` : ""}
             </p>
           ))}

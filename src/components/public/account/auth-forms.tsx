@@ -187,7 +187,7 @@ export function LoginForm({ verified }: { verified: boolean }) {
       {verified && (
         <p className="m-0 flex items-center gap-2 font-semibold text-green-600">
           <CheckCircleIcon size={18} />
-          Email verified — you can log in now.
+          Email verified. You can log in now.
         </p>
       )}
       <div>
@@ -215,7 +215,7 @@ export function LoginForm({ verified }: { verified: boolean }) {
             <span>
               Your email isn&apos;t verified yet.{" "}
               {resent ? (
-                <strong>Verification email sent — check your inbox.</strong>
+                <strong>Verification email sent. Check your inbox.</strong>
               ) : looksLikeEmail ? (
                 <button
                   type="button"

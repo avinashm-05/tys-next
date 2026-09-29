@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AccountShell } from "@/components/public/account/shell";
 import { ForgotPasswordForm } from "@/components/public/account/auth-forms";
 
-export const metadata: Metadata = { title: "Forgot password — TYS Global Logistics" };
+export const metadata: Metadata = { title: "Forgot password | TYS Global Logistics" };
 
 export default function AccountForgotPasswordPage() {
   return (

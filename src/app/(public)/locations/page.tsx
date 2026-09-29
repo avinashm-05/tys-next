@@ -1,107 +1,161 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
-import { ServiceCtaBanner } from "@/components/public/service-page-sections";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
-import { PhoneIcon, EnvelopeSimpleIcon, MapPinIcon } from "@phosphor-icons/react/dist/ssr";
+import { ContactDetails } from "@/app/(public)/contact-us/contact-details";
+import {
+  CardGrid,
+  CtaBand,
+  PAD,
+  PageBody,
+  Prose,
+  Section,
+  SectionHead,
+  SplitSection,
+  StatRow,
+  Steps,
+} from "@/components/public/page-kit";
+import { BriefcaseIcon, CubeIcon, GlobeHemisphereWestIcon, HouseLineIcon, MapPinIcon, TruckIcon } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Locations — TYS Global Logistics",
-  description: "TYS Global Logistics is based in Atlanta, Georgia, with nationwide US collection. Find your nearest pickup option.",
+  title: "Our Offices: Atlanta and Ahmedabad | TYS Global Logistics",
+  description:
+    "Offices in Atlanta, Georgia and Ahmedabad, India. We collect from homes and businesses in all 50 US states and ship door to door to 200+ countries.",
   path: "/locations",
 });
 
+// Locations page, 2026-09-29 renovation (page kit).
+// Expanded from 262 words in the 2026-08-21 audit: local search is the one
+// area a national freight-forwarding competitor can't structurally out-rank
+// us, so the Atlanta base and the nationwide collection model both need to
+// be stated in indexable body copy, not only in an address block. Every
+// claim here is already true elsewhere on the site. The old line saying
+// Hartsfield-Jackson "handles more international cargo than almost any other
+// US airport" was softened: it couldn't be verified.
 export default function LocationsPage() {
   return (
     <>
-      <PageHeroBand title="Our Locations" subtitle="Where to find us" />
-      <ServiceCtaBanner />
+      <PageHeroBand quote={false}
+        title="Atlanta, Ahmedabad,"
+        accent="and your front door."
+        subtitle="Our US head office is in Atlanta, Georgia, and our India office is in Ahmedabad. We collect from homes and businesses in all 50 states, so most customers never need to visit."
+      />
 
-      <section className="bg-gray-50 px-4 py-14 md:px-8">
-        <div className="mx-auto max-w-xl rounded-3xl border border-brand-light bg-white p-8 text-center shadow-[0_2px_16px_rgba(16,24,40,0.04)]">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-pale">
-            <MapPinIcon size={26} className="text-brand" />
-          </span>
-          <h2 className="mt-4 text-xl font-semibold text-ink">TYS Global Logistics HQ</h2>
-          <p className="mt-2 text-ink-muted">6111 Morgan Pl Ct NE, Atlanta, GA 30324, USA</p>
+      <PageBody>
+        <SplitSection
+          kicker="Our offices"
+          title="Atlanta and Ahmedabad,"
+          accent="collecting nationwide."
+          lead="Our US head office is in Atlanta, Georgia, and our India office is in Bodakdev, Ahmedabad. Call, write, or visit once you've called ahead."
+        >
+          <ContactDetails layout="stack" />
+          <Prose className="mt-8">
+            <p>
+              Atlanta is one of the best-connected freight hubs in the United States.
+              Hartsfield-Jackson is one of the busiest airports in the world, and the interstates
+              that run through the city reach most of the Southeast within a day&rsquo;s drive.
+              That&rsquo;s a big part of why we&rsquo;re here.
+            </p>
+            <p>
+              Local to Atlanta and prefer to hand your shipment over in person? Or want to talk
+              through a complex move face to face? Call ahead on{" "}
+              <a href="tel:+14047938759">+1 (404) 793-8759</a> and we&rsquo;ll set a time.
+            </p>
+          </Prose>
+        </SplitSection>
 
-          <div className="mt-6 flex flex-col items-center gap-3 text-sm">
-            <a href="tel:+14047938759" className="flex items-center gap-2 font-semibold text-brand">
-              <PhoneIcon size={16} /> +1 (404) 793-8759
-            </a>
-            <a
-              href="mailto:sales@tysgloballogistics.com"
-              className="flex items-center gap-2 font-semibold text-brand"
-            >
-              <EnvelopeSimpleIcon size={16} /> sales@tysgloballogistics.com
-            </a>
+        <Section flush>
+          <div className={`py-16 lg:py-20 ${PAD}`}>
+            <SectionHead
+              kicker="Nationwide pickup"
+              title="You don't need to be"
+              accent="in Georgia."
+              lead="We arrange collection from homes and businesses in all 50 states through our carrier partners. There's nothing to drop off and no need to visit us."
+            />
           </div>
-        </div>
-      </section>
-
-      {/* Expanded from 262 words (audit, 2026-08-21). Local search is the one
-          area a national freight-forwarding competitor cannot structurally
-          out-rank us, so the Atlanta base and the nationwide collection model
-          both need to be stated in indexable body copy rather than implied by
-          an address block alone. Every claim here is already true elsewhere
-          on the site — nothing new is asserted. */}
-      <section className="px-4 py-14 md:px-8">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-2xl font-bold text-ink md:text-3xl">
-            Based in Atlanta, collecting nationwide
-          </h2>
-          <div className="mt-4 space-y-4 text-ink-muted">
-            <p>
-              Our operation is headquartered in Atlanta, Georgia. Atlanta is one of the
-              best-connected freight hubs in the United States — Hartsfield-Jackson handles more
-              international cargo than almost any other US airport, and the interstate network
-              running through the city reaches most of the South East within a day&rsquo;s drive.
-              That is a large part of why we are based here.
-            </p>
-            <p>
-              You do not need to be in Georgia to ship with us. We arrange collection from
-              residential and commercial addresses across all fifty states through our carrier
-              partners, so for most customers the whole process happens at their own door — we
-              book the collection, the driver arrives, and the shipment joins the network. There
-              is no requirement to drop anything off, and no need to visit us in person.
-            </p>
-            <p>
-              If you are local to Atlanta and would rather hand your shipment over directly, or
-              you want to talk through a complex move face to face, call ahead on{" "}
-              <a href="tel:+14047938759" className="text-brand hover:underline">
-                +1 (404) 793-8759
-              </a>{" "}
-              and we will arrange a time.
-            </p>
+          <div className="-mb-px">
+            <Steps
+              steps={[
+                { title: "Get a quote", body: "Tell us where it's coming from and where it's going. It takes about 30 seconds." },
+                { title: "We book the pickup", body: "We book the collection with the carrier, so you don't have to." },
+                { title: "The driver comes to you", body: "Your shipment is collected from your home or business address." },
+                { title: "Tracked all the way", body: "It joins the carrier's network and you can follow it to delivery." },
+              ]}
+            />
           </div>
+        </Section>
 
-          <h2 className="mt-10 text-2xl font-bold text-ink md:text-3xl">Where we ship</h2>
-          <div className="mt-4 space-y-4 text-ink-muted">
-            <p>
-              From that single US base we ship to more than 200 destinations worldwide —
-              parcels, documents, household goods, vehicles and commercial freight. Transit
-              times and customs requirements vary by destination, so the{" "}
-              <a href="/destinations" className="text-brand hover:underline">
-                destinations guide
-              </a>{" "}
-              covers what to expect country by country.
-            </p>
-            <p>
-              For domestic moves within the United States we handle both{" "}
-              <a href="/services/domestic-shipping" className="text-brand hover:underline">
-                domestic shipping
-              </a>{" "}
-              and{" "}
-              <a href="/services/domestic-moving" className="text-brand hover:underline">
-                domestic moving
-              </a>
-              , collected and delivered door to door.
-            </p>
+        <Section flush>
+          <div className={`py-16 lg:py-20 ${PAD}`}>
+            <SectionHead kicker="Coverage" title="Two offices," accent="a worldwide reach." />
           </div>
-        </div>
-      </section>
+          <div className="-mb-px">
+            <StatRow
+              stats={[
+                { n: "50", label: "US states we collect from" },
+                { n: "200", s: "+", label: "Countries we ship to" },
+                { n: "24", s: "/7", label: "Expert support" },
+              ]}
+            />
+          </div>
+        </Section>
 
-      <TrustedReviewsSection />
+        <Section flush>
+          <div className={`py-16 lg:py-20 ${PAD}`}>
+            <SectionHead
+              kicker="Where we ship"
+              title="Where your shipment can go"
+              lead="Parcels, documents, household goods, vehicles and commercial freight, collected and delivered door to door."
+            />
+          </div>
+          <div className="-mb-px">
+            <CardGrid
+              columns={3}
+              cards={[
+                {
+                  icon: <GlobeHemisphereWestIcon size={22} />,
+                  title: "Worldwide destinations",
+                  body: "Transit times and customs rules vary by country. Our destinations guide covers what to expect.",
+                  href: "/destinations",
+                },
+                {
+                  icon: <TruckIcon size={22} />,
+                  title: "Domestic shipping",
+                  body: "Parcels and freight anywhere in the United States, picked up and delivered.",
+                  href: "/services/domestic-shipping",
+                },
+                {
+                  icon: <HouseLineIcon size={22} />,
+                  title: "Domestic moving",
+                  body: "Moving within the US? We move your household door to door.",
+                  href: "/services/domestic-moving",
+                },
+                {
+                  icon: <MapPinIcon size={22} />,
+                  title: "Shipping from Atlanta",
+                  body: "International shipping for homes and businesses across Georgia.",
+                  href: "/locations/atlanta",
+                },
+                {
+                  icon: <BriefcaseIcon size={22} />,
+                  title: "Small business shipping",
+                  body: "Discounted carrier rates for Atlanta sellers and small businesses.",
+                  href: "/services/small-business-shipping",
+                },
+                {
+                  icon: <CubeIcon size={22} />,
+                  title: "Ship boxes internationally",
+                  body: "Send one box or many overseas, with packing and customs help.",
+                  href: "/services/ship-boxes-internationally",
+                },
+              ]}
+            />
+          </div>
+        </Section>
+
+        <TrustedReviewsSection />
+        <CtaBand />
+      </PageBody>
     </>
   );
 }

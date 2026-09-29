@@ -23,6 +23,7 @@ export function PostalCodeInput({
   name,
   invalid,
   onBlur,
+  bare,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -31,6 +32,9 @@ export function PostalCodeInput({
   name?: string;
   invalid?: boolean;
   onBlur?: () => void;
+  /** No border, background or pin of its own, for sitting inside a field
+   * well (the quote wizard) that draws the frame. */
+  bare?: boolean;
 }) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -93,10 +97,12 @@ export function PostalCodeInput({
 
   return (
     <div ref={rootRef} className="relative">
-      <MapPinIcon
-        size={18}
-        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted"
-      />
+      {!bare && (
+        <MapPinIcon
+          size={18}
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted"
+        />
+      )}
       <input
         name={name}
         value={value}
@@ -105,12 +111,16 @@ export function PostalCodeInput({
         onBlur={onBlur}
         placeholder={placeholder}
         autoComplete="off"
-        className={`w-full rounded-full border bg-white py-4 pl-11 pr-10 text-base text-ink outline-none focus:border-brand ${invalid ? "border-red-400" : "border-brand-light"}`}
+        className={
+          bare
+            ? "w-full min-w-0 bg-transparent py-0.5 pr-8 text-[17px] font-medium text-ink outline-none placeholder:font-normal placeholder:text-[#6B778A]"
+            : `w-full rounded-full border bg-white py-4 pl-11 pr-10 text-base text-ink outline-none focus:border-brand ${invalid ? "border-red-400" : "border-brand-light"}`
+        }
       />
       {loading && (
         <SpinnerGapIcon
           size={16}
-          className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-ink-muted"
+          className={`absolute top-1/2 -translate-y-1/2 animate-spin text-ink-muted ${bare ? "right-0" : "right-4"}`}
         />
       )}
       {showDropdown && (

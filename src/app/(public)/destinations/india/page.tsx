@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
 import { DestinationPage } from "@/components/public/destination-page";
+import { CurrencyDollarIcon, EnvelopeSimpleIcon, HouseLineIcon, LaptopIcon } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Shipping to India from the USA — TYS Global Logistics",
+  title: "Shipping to India from the USA | TYS Global Logistics",
   description:
-    "Ship parcels, documents and personal effects from the US to India. Door-to-door collection, full tracking and customs guidance. Free quote in minutes.",
+    "Shipping to India from the USA: parcels, gifts, documents and personal effects collected from your door, tracked to any PIN code, with help on customs.",
   path: "/destinations/india",
 });
 
@@ -13,17 +15,23 @@ export default function ShippingToIndiaPage() {
   return (
     <DestinationPage
       country="India"
+      guides={[
+        { icon: <CurrencyDollarIcon size={22} />, title: "Shipping cost to India", body: "What sets the price, with a worked example, and how to pay less.", href: "/destinations/india/shipping-cost" },
+        { icon: <EnvelopeSimpleIcon size={22} />, title: "Documents to India", body: "Passports, OCI and visa papers, property papers and certificates.", href: "/destinations/india/documents" },
+        { icon: <LaptopIcon size={22} />, title: "Electronics to India", body: "Laptops, phones and TVs: batteries, BIS rules and customs duty.", href: "/destinations/india/electronics" },
+        { icon: <HouseLineIcon size={22} />, title: "Moving to India", body: "Household goods, unaccompanied baggage and Transfer of Residence.", href: "/destinations/moving/india" },
+      ]}
       intro={
         <>
           <p>
-            We ship from anywhere in the United States to addresses across India — from the
-            major metros through to smaller cities and towns. Collection is arranged from your
-            US address and the shipment is tracked the whole way.
+            We handle shipping to India from the USA for families, students and businesses, to the
+            big metros and to smaller cities and towns. We collect from your US address
+            and you can track the shipment all the way to the door.
           </p>
           <p>
-            India has stricter import documentation requirements than many destinations, so the
-            paperwork matters more here than on most routes. We will tell you exactly what is
-            needed for your shipment before it leaves.
+            Indian customs are stricter about paperwork than many countries, so the declaration
+            matters more on this route than on most. Before your shipment leaves, we tell you
+            exactly what is needed for it.
           </p>
         </>
       }
@@ -33,43 +41,40 @@ export default function ShippingToIndiaPage() {
           body: (
             <>
               <p>
-                Indian customs require a clear, itemised description of the contents with a
-                value against each item. Vague declarations such as &ldquo;gift&rdquo; or
-                &ldquo;personal items&rdquo; are a common cause of shipments being held, so it
-                is worth taking the time to list things properly.
+                Indian customs want a clear, itemized list of what is inside, with a value against
+                each item. Vague descriptions like &ldquo;gift&rdquo; or &ldquo;personal
+                items&rdquo; are one of the most common reasons shipments get held, so it is worth
+                taking a few minutes to list things properly.
               </p>
               <p>
-                Duty and GST are assessed by Indian customs on arrival, based on the declared
-                value and the category of goods. These are government charges, separate from
-                what you pay us to ship. The recipient will usually need to be contactable to
-                complete clearance, and for some shipment types their KYC identification may be
-                requested.
+                Duty and GST are assessed by Indian customs on arrival, based on the declared value
+                and the type of goods. These are government charges, separate from what you pay us
+                for shipping. The recipient usually needs to be reachable to complete clearance, and
+                for some shipments they may be asked for KYC identification.
               </p>
               <p>
-                Deliveries to remote or rural PIN codes can take longer than to the main metros,
-                and a small number of areas are outside carrier delivery networks entirely. We
-                will flag that when we quote if it affects your destination.
+                Remote and rural PIN codes can take longer than the metros, and a few areas sit
+                outside carrier delivery networks altogether. If that affects your address, we will
+                tell you when we quote.
               </p>
             </>
           ),
         },
         {
-          heading: "Sending personal effects and gifts",
+          heading: "Sending gifts and personal effects",
           body: (
             <>
               <p>
-                A large share of this route is people sending things to family — clothing,
-                medicines, documents, festival gifts — or moving belongings home. Those are all
-                routine, but each has its own declaration requirements, and medicines in
-                particular are restricted and need to be declared accurately.
+                Much of what goes to India is for family: clothes, medicines, documents, festival
+                gifts, or belongings for someone moving home. All of that is routine, but each has
+                its own declaration rules. Medicines in particular are restricted and must be
+                declared accurately.
               </p>
               <p>
-                Some categories cannot be shipped at all. Check{" "}
-                <a href="/resources/prohibited-items" className="text-brand hover:underline">
-                  prohibited items
-                </a>{" "}
-                before packing, and ask us if you are unsure — it is far easier to resolve
-                before collection than after a shipment is held at customs.
+                Some things can&rsquo;t be shipped at all. Check our{" "}
+                <Link href="/resources/prohibited-items">prohibited items guide</Link> before you
+                pack, and ask us if you are unsure. It is far easier to sort out before pickup than
+                after a shipment is held at customs.
               </p>
             </>
           ),
@@ -79,18 +84,19 @@ export default function ShippingToIndiaPage() {
           body: (
             <>
               <p>
-                Express services are the fastest and give the most detailed tracking, which is
-                usually worth it for documents and anything time-sensitive. Economy air costs
-                considerably less and suits heavier, non-urgent shipments such as household
-                goods.
+                Express is the fastest option and has the most detailed tracking, which is usually
+                worth it for documents and anything time sensitive. Economy air costs a lot less and
+                suits heavier shipments that aren&rsquo;t urgent, like household goods.
               </p>
               <p>
-                For a full relocation rather than a parcel,{" "}
-                <a href="/services/international-relocation" className="text-brand hover:underline">
-                  international relocation
-                </a>{" "}
-                covers how larger moves are handled, including furniture and bulk personal
-                effects.
+                Price comes down to chargeable weight, so a well packed box can save real money. Our{" "}
+                <Link href="/resources/volumetric-weight">volumetric weight guide</Link> shows how
+                that is worked out.
+              </p>
+              <p>
+                Moving a whole household rather than sending a parcel? Our{" "}
+                <Link href="/services/international-relocation">international relocation</Link>{" "}
+                service covers furniture and larger moves.
               </p>
             </>
           ),

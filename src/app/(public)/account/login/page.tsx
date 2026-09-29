@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { AccountShell } from "@/components/public/account/shell";
 import { LoginForm } from "@/components/public/account/auth-forms";
 
-export const metadata: Metadata = { title: "Log in — TYS Global Logistics" };
+export const metadata: Metadata = { title: "Log in | TYS Global Logistics" };
 
 export default async function AccountLoginPage({
   searchParams,

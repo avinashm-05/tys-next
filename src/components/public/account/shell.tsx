@@ -5,6 +5,7 @@ import { PageHeroBand } from "@/components/public/page-hero-band";
 // /reset-*, /verify-email) — matches the legal-page pattern (PageHeroBand +
 // a centered white card) so the portal looks native to the rest of the
 // Tailwind-rebuilt public site instead of the old Bootstrap-era styling.
+// No quote bar here (2026-09-29): people come to these pages to sign in.
 export function AccountShell({
   title,
   subtitle,
@@ -18,10 +19,10 @@ export function AccountShell({
 }) {
   return (
     <>
-      <PageHeroBand title={title} subtitle={subtitle} />
-      <section className="bg-gray-50 px-4 py-14 md:px-8">
+      <PageHeroBand title={title} subtitle={subtitle} kicker="Your account" quote={false} />
+      <section className="bg-white px-4 py-14 md:px-8 md:py-20">
         <div
-          className={`mx-auto rounded-3xl border border-brand-light bg-white p-6 md:p-10 ${
+          className={`mx-auto rounded-[28px] bg-white p-6 shadow-[0_0_0_1px_rgba(3,100,255,0.12),0_30px_70px_-40px_rgba(3,100,255,0.45)] md:p-10 ${
             wide ? "max-w-3xl" : "max-w-md"
           }`}
         >

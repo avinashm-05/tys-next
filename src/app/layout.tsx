@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { NOT_LOCAL_HOST } from "@/lib/tracking-guard";
+import { SITE_URL } from "@/lib/seo";
 
 // Root layout is intentionally minimal — it owns only <html>/<body> + fonts.
 // Tailwind (globals.css) and the theme/toaster providers live in
@@ -18,7 +20,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(/\/+$/, "");
+const siteUrl = SITE_URL;
 
 // Google Tag Manager lives HERE, in the root layout, rather than with the
 // rest of the analytics in (public)/layout.tsx — because Google's install
@@ -36,7 +38,7 @@ const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").re
 // location.pathname at execution time. Same effect, no rendering cost.
 const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
 const GTM_SNIPPET = gtmId
-  ? `if(!location.pathname.startsWith('/admin')){(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  ? `if(!/^\\/(admin|login|forgot-password|reset-password|account)(\\/|$)/.test(location.pathname) && ${NOT_LOCAL_HOST}){(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);

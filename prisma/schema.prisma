@@ -403,6 +403,33 @@ model CallbackRequest {
   @@map("callback_requests")
 }
 
+// Partial quote leads (2026-09-29): saved the moment a visitor finishes the
+// wizard's first step (name, email, phone), so the team can reach people who
+// start a quote but never submit it. Updated with the route when they finish
+// step 2, and marked converted (quoteId + convertedAt) when they submit.
+// No FK to quotes on purpose: a lead is a lightweight log row, and the quote
+// it turns into may be edited or deleted independently. `token` is a random
+// per-lead secret the browser holds, so only the same visitor can update or
+// convert their own row.
+model QuoteLead {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  token       String    @unique(map: "quote_leads_token_unique") @db.VarChar(64)
+  name        String    @db.VarChar(255)
+  email       String    @db.VarChar(255)
+  countryCode String    @map("country_code") @db.VarChar(10)
+  phone       String    @db.VarChar(30)
+  fromCountry String?   @map("from_country") @db.VarChar(50)
+  toCountry   String?   @map("to_country") @db.VarChar(50)
+  quoteId     BigInt?   @map("quote_id") @db.UnsignedBigInt
+  convertedAt DateTime? @map("converted_at") @db.Timestamp(0)
+  createdAt   DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime? @map("updated_at") @db.Timestamp(0)
+
+  @@index([createdAt], map: "quote_leads_created_at_index")
+  @@index([email], map: "quote_leads_email_index")
+  @@map("quote_leads")
+}
+
 model QuoteContact {
   id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
   quoteId     BigInt    @map("quote_id") @db.UnsignedBigInt

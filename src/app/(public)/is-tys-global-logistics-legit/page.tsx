@@ -1,138 +1,229 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
-import { ServiceCtaBanner } from "@/components/public/service-page-sections";
 import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
+import { TopicScroller } from "@/components/public/topic-scroller";
+import { Reveal } from "@/components/public/home/reveal";
+import { GoogleMark, Stars } from "@/components/public/google-reviews";
+import { GOOGLE_PROFILE_URL, GOOGLE_RATING } from "@/lib/google-reviews";
+import { CONTACT } from "@/app/(public)/contact-us/contact-details";
+import { CtaBand, LINE, PageBody, Prose, SplitSection } from "@/components/public/page-kit";
+import { PhoneIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Is TYS Global Logistics Legit? — TYS Global Logistics",
+  title: "Is TYS Legit? How to Verify Us | TYS Global Logistics",
   description:
-    "Yes. TYS Global Logistics is a registered US logistics company based in Atlanta, Georgia. Here is our address, contact details and how to verify us before you book.",
+    "Yes. TYS Global Logistics is a registered US company in Atlanta, Georgia. Here's our address, phone and Google rating, and how to check us before you book.",
   path: "/is-tys-global-logistics-legit",
 });
 
-// Brand-defence page (audit, 2026-08-21). People search "is <company> legit"
-// before paying a company they have not used before. If we do not answer that
-// query, whatever a forum or a competitor comparison site says ranks instead.
+// Brand-defence page (audit, 2026-08-21; page kit renovation 2026-09-29).
+// People search "is <company> legit" before paying a company they have not
+// used before. If we don't answer that query, whatever a forum or a
+// competitor comparison site says ranks instead.
 //
 // Every fact here is verifiable and already published elsewhere on the site
-// (address and phone in the footer and schema, socials in the footer). No
-// certifications, awards, ratings or membership claims are made, because none
-// have been verified for this page.
+// (address and phone in the footer and schema, LinkedIn in the footer, the
+// Google rating from lib/google-reviews.ts). No certifications, awards or
+// membership claims are made, because none have been verified. The old
+// "LinkedIn page with real people attached" and "plenty of customers call
+// first" lines were dropped for the same reason.
+const LINKEDIN_URL = "https://www.linkedin.com/company/tys-global-logistics/";
+
+const RED_FLAGS = [
+  "Asks to be paid by wire transfer, gift card or cryptocurrency",
+  "Quotes a price far below everyone else",
+  "Has no address you can check, or a phone number nobody answers",
+  "Pressures you to pay right away",
+];
+
 export default function IsTysLegitPage() {
   return (
     <>
-      <PageHeroBand
-        title="Is TYS Global Logistics legit?"
-        subtitle="A fair question. Here is everything you need to check us out."
+      <PageHeroBand quote={false}
+        title="Is TYS Global Logistics"
+        accent="legit?"
+        subtitle="A fair question to ask before you pay any shipping company. Here's everything you need to check us out for yourself."
       />
-      <ServiceCtaBanner />
 
-      <section className="px-4 pb-14 md:px-8">
-        <div className="mx-auto max-w-3xl space-y-4 text-ink-muted">
-          <p>
-            Yes — TYS Global Logistics is a real, registered logistics company operating out of
-            Atlanta, Georgia. We think you should check before handing your belongings or your
-            money to any shipping company you have not used before, so rather than just assert
-            it, here is the information you would need to verify it yourself.
-          </p>
-        </div>
-      </section>
-
-      <section className="bg-gray-50 px-4 py-14 md:px-8">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-2xl font-bold text-ink md:text-3xl">Who we are</h2>
-          <div className="mt-4 space-y-3 text-ink-muted">
-            <p>
-              <strong className="text-ink">TYS Global Logistics LLC</strong>
-              <br />
-              6111 Morgan Pl Ct NE, Atlanta, GA 30324, United States
-            </p>
-            <p>
-              Phone:{" "}
-              <a href="tel:+14047938759" className="text-brand hover:underline">
-                +1 (404) 793-8759
+      <PageBody>
+        <SplitSection
+          kicker="The short answer"
+          title="Yes. We're a real company"
+          accent="in Atlanta."
+          lead="TYS Global Logistics is a registered logistics company in Atlanta, Georgia. Rather than just say so, here are the details you'd need to check it."
+        >
+          <Reveal as="dl" className={`divide-y divide-[var(--line)] overflow-hidden rounded-2xl border ${LINE} bg-white`}>
+            <Row label="Company">TYS Global Logistics LLC</Row>
+            <Row label="Address">
+              <a href={CONTACT.maps} target="_blank" rel="noopener noreferrer">
+                {CONTACT.street}, {CONTACT.city}
               </a>
-              <br />
-              Email:{" "}
-              <a href="mailto:sales@tysgloballogistics.com" className="text-brand hover:underline">
-                sales@tysgloballogistics.com
+            </Row>
+            <Row label="Phone">
+              <a href={CONTACT.tel}>{CONTACT.phone}</a>
+            </Row>
+            <Row label="Email">
+              <a href={CONTACT.mailto}>{CONTACT.email}</a>
+            </Row>
+            <Row label="Google">
+              <a href={GOOGLE_PROFILE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
+                <GoogleMark size={14} />
+                <span>{GOOGLE_RATING} out of 5</span>
+                <Stars value={GOOGLE_RATING} size={13} />
               </a>
+            </Row>
+          </Reveal>
+          <Prose className="mt-8">
+            <p>
+              That&rsquo;s a real street address, and a real phone line that a person answers
+              during business hours. If you&rsquo;d like to talk to someone before you book, call
+              us. We&rsquo;re happy to answer questions.
             </p>
             <p>
-              That is a real street address and a real phone number that a person answers during
-              business hours. Call it before you book if you want to speak to someone first —
-              plenty of customers do.
+              We ship parcels, documents, household moves, vehicles and freight. You can browse{" "}
+              <Link href="/services">our services</Link>, see our{" "}
+              <Link href="/shipping-rates">shipping rates</Link>, or read about{" "}
+              <Link href="/services/parcel-shipping">parcel shipping</Link> and{" "}
+              <Link href="/services/international-relocation">international relocation</Link>.
             </p>
-          </div>
-        </div>
-      </section>
+          </Prose>
+        </SplitSection>
 
-      <section className="px-4 py-14 md:px-8">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-2xl font-bold text-ink md:text-3xl">How to check us out</h2>
-          <ul className="mt-4 space-y-3 text-ink-muted">
-            <li>
-              <strong className="text-ink">Call us.</strong> The quickest test. A company you
-              cannot reach by phone is a company you should not be paying.
-            </li>
-            <li>
-              <strong className="text-ink">Look us up on LinkedIn.</strong> Our company page is
-              linked in the footer of every page on this site, with real people attached to it.
-            </li>
-            <li>
-              <strong className="text-ink">Check the carriers.</strong> We book through the
-              major global carrier networks — see{" "}
-              <Link href="/carriers" className="text-brand hover:underline">
-                major carriers
-              </Link>
-              . Your shipment moves on their network and their tracking, not on an unverifiable
-              in-house system.
-            </li>
-            <li>
-              <strong className="text-ink">Read the terms.</strong> Our{" "}
-              <Link href="/terms" className="text-brand hover:underline">
-                terms
-              </Link>{" "}
-              and{" "}
-              <Link href="/privacy-policy" className="text-brand hover:underline">
-                privacy policy
-              </Link>{" "}
-              are published in full, not hidden behind a booking.
-            </li>
-          </ul>
-        </div>
-      </section>
+        <TopicScroller
+          topics={[
+            {
+              id: "call-us",
+              title: "Call us",
+              lead: "The quickest test there is.",
+              content: (
+                <>
+                  <Prose>
+                    <p>
+                      A company you can&rsquo;t reach by phone is a company you shouldn&rsquo;t
+                      pay. Ring us before you book and ask anything you like about your shipment.
+                    </p>
+                  </Prose>
+                  <Reveal delay={80} className="mt-6">
+                    <a href={CONTACT.tel} className="btn btn-secondary btn-lg">
+                      <PhoneIcon size={15} /> {CONTACT.phone}
+                    </a>
+                  </Reveal>
+                </>
+              ),
+            },
+            {
+              id: "read-our-reviews",
+              title: "Read our Google reviews",
+              lead: `We're rated ${GOOGLE_RATING} out of 5 on Google.`,
+              content: (
+                <Prose>
+                  <p>
+                    Our reviews are public on our Google Business Profile, and we show them word for
+                    word further down this page. Read them on Google too, where we can&rsquo;t pick
+                    and choose.
+                  </p>
+                  <p>
+                    <a href={GOOGLE_PROFILE_URL} target="_blank" rel="noopener noreferrer">
+                      See our reviews on Google
+                    </a>
+                  </p>
+                </Prose>
+              ),
+            },
+            {
+              id: "find-us-on-linkedin",
+              title: "Find us on LinkedIn",
+              lead: "Our company page is linked in the footer of every page on this site.",
+              content: (
+                <Prose>
+                  <p>
+                    <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
+                      TYS Global Logistics on LinkedIn
+                    </a>
+                  </p>
+                </Prose>
+              ),
+            },
+            {
+              id: "check-the-carriers",
+              title: "Check who carries it",
+              lead: "Your shipment moves on a major carrier's network.",
+              content: (
+                <Prose>
+                  <p>
+                    We book through FedEx, DHL, UPS and USPS. Your shipment travels on their network
+                    with their tracking, not on an in-house system you can&rsquo;t check.
+                  </p>
+                  <p>
+                    <Link href="/carriers">See the major carriers we use</Link>
+                  </p>
+                </Prose>
+              ),
+            },
+            {
+              id: "read-the-terms",
+              title: "Read the small print",
+              lead: "Nothing is hidden behind a booking.",
+              content: (
+                <Prose>
+                  <p>
+                    Our <Link href="/terms">terms</Link> and{" "}
+                    <Link href="/privacy-policy">privacy policy</Link> are published in full, so you
+                    can read them before you pay anything.
+                  </p>
+                </Prose>
+              ),
+            },
+          ]}
+        />
 
-      <section className="bg-gray-50 px-4 py-14 md:px-8">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-2xl font-bold text-ink md:text-3xl">
-            How to spot a shipping scam anywhere
-          </h2>
-          <div className="mt-4 space-y-4 text-ink-muted">
+        <SplitSection
+          kicker="Worth knowing"
+          title="How to spot a"
+          accent="shipping scam."
+          lead="Useful whoever you ship with. Be wary of any company that does any of these."
+        >
+          <Reveal as="ul" className={`divide-y divide-[var(--line)] rounded-2xl border ${LINE} bg-white`}>
+            {RED_FLAGS.map((f) => (
+              <li key={f} className="flex items-start gap-3.5 px-5 py-4 text-[15.5px] leading-relaxed text-ink sm:px-6">
+                <WarningCircleIcon size={20} weight="fill" className="mt-0.5 shrink-0 text-[#F04438]" />
+                <span>{f}</span>
+              </li>
+            ))}
+          </Reveal>
+          <Prose className="mt-8">
+            <h3>The fake customs fee</h3>
             <p>
-              Worth knowing regardless of who you ship with. Be wary of any company that asks to
-              be paid by wire transfer, gift card or cryptocurrency; that quotes a price far
-              below everyone else; that has no verifiable address or a phone number nobody
-              answers; or that pressures you to pay immediately.
-            </p>
-            <p>
-              A common one: an unexpected message claiming a parcel is held and demanding a
+              A common one: a message out of the blue says a parcel is being held and asks for a
               small &ldquo;customs fee&rdquo; by card. Real duty and tax is charged by the
-              destination country&rsquo;s customs authority, and we will tell you in advance if
-              a shipment is likely to attract it — see{" "}
-              <Link href="/resources/customs-duty" className="text-brand hover:underline">
-                customs duty explained
-              </Link>
-              . If you get a message like that about a TYS shipment, call us on the number above
-              before paying anything.
+              destination country&rsquo;s customs authority, and we&rsquo;ll tell you in advance if
+              a shipment is likely to attract it. Our guide to{" "}
+              <Link href="/resources/customs-duty">customs duty</Link> explains how it works.
             </p>
-          </div>
-        </div>
-      </section>
+            <p>
+              Got a message like that about a TYS shipment? Call us on{" "}
+              <a href={CONTACT.tel}>{CONTACT.phone}</a> before you pay anything.
+            </p>
+          </Prose>
+        </SplitSection>
 
-      <TrustedReviewsSection />
+        <TrustedReviewsSection />
+        <CtaBand title="Checked us out?" accent="Get a free quote." />
+      </PageBody>
     </>
+  );
+}
+
+function Row({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="grid grid-cols-[88px_1fr] items-baseline gap-4 px-5 py-4 sm:grid-cols-[110px_1fr] sm:px-6">
+      <dt className="text-[13.5px] text-ink-muted">{label}</dt>
+      <dd className="min-w-0 break-words text-[15.5px] font-medium text-ink [&_a]:text-ink [&_a]:underline-offset-4 hover:[&_a]:text-brand hover:[&_a]:underline">
+        {children}
+      </dd>
+    </div>
   );
 }

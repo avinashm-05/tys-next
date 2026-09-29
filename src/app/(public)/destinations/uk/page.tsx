@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
 import { DestinationPage } from "@/components/public/destination-page";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Shipping to the UK from the USA — TYS Global Logistics",
+  title: "Shipping to the UK from the USA | TYS Global Logistics",
   description:
-    "Ship parcels, documents and personal effects from the US to the United Kingdom. Door-to-door collection, full tracking and customs guidance. Free quote in minutes.",
+    "Shipping to the UK from the USA: documents, gifts and moving boxes to England, Scotland, Wales and Northern Ireland, with express or economy options.",
   path: "/destinations/uk",
 });
 
@@ -16,13 +17,13 @@ export default function ShippingToUkPage() {
       intro={
         <>
           <p>
-            The US to UK route is one of the busiest we handle. It is well served by every major
-            carrier, which means plenty of capacity, frequent departures and a choice between
-            express and economy depending on how quickly you need the shipment there.
+            Shipping to the UK from the USA is one of the busiest routes we handle. Every major
+            carrier flies it, so there is plenty of capacity, frequent departures and a real choice
+            between express and economy depending on how soon it needs to arrive.
           </p>
           <p>
-            We collect from any US address and deliver to any UK address — England, Scotland,
-            Wales and Northern Ireland — with tracking from door to door.
+            We collect from any US address and deliver anywhere in England, Scotland, Wales and
+            Northern Ireland, with tracking from door to door.
           </p>
         </>
       }
@@ -32,24 +33,21 @@ export default function ShippingToUkPage() {
           body: (
             <>
               <p>
-                The UK is outside the EU customs union, so every shipment arriving from the US
-                is treated as an import and clears UK customs on arrival. In practice that means
-                a customs declaration describing what is in the shipment and what it is worth.
+                The UK is outside the EU customs union, so everything arriving from the US is an
+                import and clears UK customs on arrival. In practice that means a customs
+                declaration saying what is in the shipment and what it is worth.
               </p>
               <p>
-                Import VAT, and duty where it applies, are charged by HMRC based on that
-                declared value and the type of goods. Those charges are set by the UK
-                government, not by us or the carrier. Our{" "}
-                <a href="/resources/customs-duty" className="text-brand hover:underline">
-                  customs duty guide
-                </a>{" "}
-                explains how the calculation generally works.
+                HMRC charges import VAT, and duty where it applies, based on that declared value
+                and the type of goods. Those charges are set by the UK government, not by us or the
+                carrier. Our <Link href="/resources/customs-duty">customs duty guide</Link> explains
+                how the calculation generally works.
               </p>
               <p>
-                Personal effects and used household goods are treated differently from new
-                retail goods, and people relocating to the UK may be eligible for relief on
-                belongings they have owned and used. Tell us it is a relocation when you book
-                and we will make sure the paperwork reflects that.
+                Personal effects and used household goods are treated differently from new retail
+                goods, and people moving to the UK may qualify for relief on belongings they have
+                owned and used. Tell us it is a relocation when you book and we will make sure the
+                paperwork says so.
               </p>
             </>
           ),
@@ -59,25 +57,20 @@ export default function ShippingToUkPage() {
           body: (
             <>
               <p>
-                Documents and small parcels are the most common — contracts, certificates,
-                replacement items, gifts. These move on express services and are the simplest to
-                clear.
+                Mostly documents and small parcels: contracts, certificates, replacement parts,
+                gifts. These go by express and are the simplest to clear.
               </p>
               <p>
-                Larger consignments are typically people moving: boxes of personal effects,
-                books, clothing and furniture. If you are relocating rather than sending a one
-                off parcel,{" "}
-                <a href="/services/international-relocation" className="text-brand hover:underline">
-                  international relocation
-                </a>{" "}
-                covers how we handle full moves.
+                Bigger shipments are usually people moving: boxes of clothes and books, personal
+                effects, sometimes furniture. If you are relocating rather than sending a one off
+                parcel, see our{" "}
+                <Link href="/services/international-relocation">international relocation</Link>{" "}
+                service.
               </p>
               <p>
-                Be aware that some things cannot be sent regardless of carrier — see{" "}
-                <a href="/resources/prohibited-items" className="text-brand hover:underline">
-                  prohibited items
-                </a>{" "}
-                before you pack.
+                Some things can&rsquo;t be sent with any carrier. Check the{" "}
+                <Link href="/resources/prohibited-items">prohibited items guide</Link> before you
+                pack.
               </p>
             </>
           ),
@@ -87,19 +80,17 @@ export default function ShippingToUkPage() {
           body: (
             <>
               <p>
-                Shipments are priced on chargeable weight — the greater of actual weight and
-                volumetric weight worked out from the box dimensions. A big, light box is billed
-                on the space it takes up, so repacking into a smaller carton often costs less
-                than the packing materials. Our{" "}
-                <a href="/resources/volumetric-weight" className="text-brand hover:underline">
-                  volumetric weight guide
-                </a>{" "}
-                shows how that is calculated.
+                You pay for chargeable weight: whichever is greater, the actual weight or the
+                volumetric weight worked out from the box size. A big, light box is billed for the
+                space it takes up, so repacking into a smaller carton often saves more than the new
+                box costs. Our <Link href="/resources/volumetric-weight">volumetric weight guide</Link>{" "}
+                has a calculator.
               </p>
               <p>
-                Consolidating several small parcels into one shipment is almost always cheaper
-                than sending them separately, and economy services cost substantially less than
-                express if the timing is flexible.
+                Sending several small parcels together as one shipment is almost always cheaper than
+                sending them separately. And if the timing is flexible, economy costs a lot less than
+                express. See <Link href="/shipping-rates">how our shipping rates work</Link> for the
+                rest.
               </p>
             </>
           ),

@@ -1,92 +1,180 @@
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
-import { PageHeroBand } from "@/components/public/page-hero-band";
-import { ServiceCtaBanner } from "@/components/public/service-page-sections";
-import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
 import {
-  ScalesIcon,
+  CalculatorIcon,
+  CurrencyDollarIcon,
+  GlobeHemisphereWestIcon,
+  HouseLineIcon,
+  LaptopIcon,
   ProhibitIcon,
-  ReceiptIcon,
-  HouseIcon,
-  FileTextIcon,
   QuestionIcon,
+  ReceiptIcon,
+  ScalesIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { pageMetadata } from "@/lib/seo";
+import { PageHeroBand } from "@/components/public/page-hero-band";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
+import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
+import { CardGrid, Checklist, CtaBand, PAD, PageBody, Rail, SectionHead, SplitSection } from "@/components/public/page-kit";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Resources — TYS Global Logistics",
-  description: "Practical guides to international shipping — volumetric weight, customs duty, prohibited items and what paperwork you actually need.",
+  title: "Shipping Guides and Resources | TYS Global Logistics",
+  description:
+    "Plain-English international shipping guides: volumetric weight, customs duty, prohibited items and shipping rates, so you know what to expect before you book.",
   path: "/resources",
 });
-
-const GUIDES = [
-  {
-    href: "/resources/volumetric-weight",
-    icon: ScalesIcon,
-    title: "Volumetric Weight",
-    body: "How dimensional weight is calculated, and why it affects your rate.",
-  },
-  {
-    href: "/resources/prohibited-items",
-    icon: ProhibitIcon,
-    title: "Prohibited Shipping Items",
-    body: "What you can't ship due to carrier and customs regulations.",
-  },
-  {
-    href: "/resources/customs-duty",
-    icon: ReceiptIcon,
-    title: "Guide to Customs Duty",
-    body: "How customs duty works, and what affects the amount you owe.",
-  },
-  {
-    href: "/services/international-relocation",
-    icon: HouseIcon,
-    title: "Relocation Process",
-    body: "What to expect, step by step, when you move internationally with us.",
-  },
-  {
-    href: "/services/parcel-shipping",
-    icon: FileTextIcon,
-    title: "Shipping Documentation",
-    body: "The documents you'll need for a smooth international shipment.",
-  },
-  {
-    href: "/faqs",
-    icon: QuestionIcon,
-    title: "FAQs",
-    body: "Quick answers to the questions we hear most often.",
-  },
-] as const;
 
 export default function ResourcesPage() {
   return (
     <>
-      <PageHeroBand
-        title="Resources"
-        subtitle="Guides to help you ship and move with confidence."
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Resources", path: "/resources" },
+        ]}
       />
-      <ServiceCtaBanner />
+      <PageHeroBand
+        title="International shipping guides"
+        accent="in plain English"
+        subtitle="Short, practical guides to the things that change what you pay and how smoothly your shipment clears customs."
+      />
 
-      <section className="px-4 py-14 md:px-8">
-        <div className="mx-auto grid grid-cols-1 max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {GUIDES.map((g) => (
-            <Link
-              key={g.href}
-              href={g.href}
-              className="rounded-3xl border border-brand-light bg-white p-6 shadow-[0_2px_16px_rgba(16,24,40,0.04)] transition hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(16,24,40,0.1)]"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-pale text-brand">
-                <g.icon size={22} />
-              </span>
-              <h2 className="mt-4 text-lg font-semibold text-ink">{g.title}</h2>
-              <p className="mt-1.5 text-sm text-ink-muted">{g.body}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <PageBody>
+        <section>
+          <Rail>
+            <div className={`py-14 lg:py-16 ${PAD}`}>
+              <SectionHead
+                kicker="Guides"
+                title="Start with"
+                accent="the basics"
+                lead="Most surprises in international shipping come from three things: how the box is weighed, what customs charges, and what isn't allowed in. Each guide takes a few minutes to read."
+              />
+            </div>
+            <CardGrid
+              columns={3}
+              cards={[
+                {
+                  icon: <ScalesIcon size={22} />,
+                  title: "Volumetric weight",
+                  body: "How dimensional weight is calculated, why a big light box can cost more than a small heavy one, and a calculator to check yours.",
+                  href: "/resources/volumetric-weight",
+                },
+                {
+                  icon: <ReceiptIcon size={22} />,
+                  title: "Customs duty",
+                  body: "What customs duty is, who pays it, what decides the amount, and how to avoid delays at the border.",
+                  href: "/resources/customs-duty",
+                },
+                {
+                  icon: <ProhibitIcon size={22} />,
+                  title: "Prohibited items",
+                  body: "What carriers and customs won't accept, what needs extra paperwork, and what to do if you're not sure.",
+                  href: "/resources/prohibited-items",
+                },
+                {
+                  icon: <CalculatorIcon size={22} />,
+                  title: "Shipping calculator",
+                  body: "Add your boxes and see the chargeable weight carriers bill on.",
+                  href: "/shipping-calculator",
+                },
+                {
+                  icon: <CurrencyDollarIcon size={22} />,
+                  title: "USA to India shipping cost",
+                  body: "What sets the price of a shipment to India, and how to pay less.",
+                  href: "/destinations/india/shipping-cost",
+                },
+                {
+                  icon: <LaptopIcon size={22} />,
+                  title: "Electronics to India",
+                  body: "Laptops, phones and TVs: battery rules, BIS and customs duty.",
+                  href: "/destinations/india/electronics",
+                },
+              ]}
+            />
+          </Rail>
+        </section>
 
+        <SplitSection
+          title="Before you book,"
+          accent="check these"
+          lead="A quick list that saves most people a delay, a surcharge or a phone call from customs."
+        >
+          <Checklist
+            items={[
+              <>
+                Measure the box as well as weighing it. You pay for the greater of the two, see{" "}
+                <Link href="/resources/volumetric-weight" className="font-medium text-brand hover:underline">
+                  volumetric weight
+                </Link>
+                .
+              </>,
+              <>
+                List every item with a real value. Vague descriptions like &ldquo;gift&rdquo; are a
+                common cause of customs holds.
+              </>,
+              <>
+                Make sure nothing in the box is restricted, see{" "}
+                <Link href="/resources/prohibited-items" className="font-medium text-brand hover:underline">
+                  prohibited items
+                </Link>
+                .
+              </>,
+              <>
+                Agree with the recipient who pays any duty and import tax, see{" "}
+                <Link href="/resources/customs-duty" className="font-medium text-brand hover:underline">
+                  customs duty
+                </Link>
+                .
+              </>,
+              <>Give a phone number for the recipient, so customs or the carrier can reach them.</>,
+            ]}
+          />
+        </SplitSection>
 
-      <TrustedReviewsSection />
+        <section>
+          <Rail>
+            <div className={`py-14 lg:py-16 ${PAD}`}>
+              <SectionHead kicker="More help" title="Rates, routes and" accent="moving abroad" />
+            </div>
+            <CardGrid
+              columns={4}
+              cards={[
+                {
+                  icon: <CurrencyDollarIcon size={22} />,
+                  title: "Shipping rates",
+                  body: "How we price a shipment and what you can do to pay less.",
+                  href: "/shipping-rates",
+                },
+                {
+                  icon: <GlobeHemisphereWestIcon size={22} />,
+                  title: "Destinations",
+                  body: "Country guides for Canada, India and the UK, plus 200+ countries to quote.",
+                  href: "/destinations",
+                },
+                {
+                  icon: <HouseLineIcon size={22} />,
+                  title: "Relocation process",
+                  body: "What to expect, step by step, when you move abroad with us.",
+                  href: "/services/international-relocation",
+                },
+                {
+                  icon: <QuestionIcon size={22} />,
+                  title: "FAQs",
+                  body: "Quick answers to the questions we hear most often.",
+                  href: "/faqs",
+                },
+              ]}
+            />
+          </Rail>
+        </section>
+
+        <TrustedReviewsSection />
+        <CtaBand
+          title="Still have a question?"
+          accent="Ask a real person."
+          lead="Call us or start a quote and tell us what you are sending. We reply, usually within 24 hours."
+        />
+      </PageBody>
     </>
   );
 }

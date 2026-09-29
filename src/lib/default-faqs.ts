@@ -9,22 +9,22 @@ export type Faq = { q: string; a: string };
 export const DEFAULT_FAQS: readonly Faq[] = [
   {
     q: "How do I get a quote?",
-    a: "Simply fill out our quote request form or contact our team with your shipment details. We'll provide a customized quote based on your requirements.",
+    a: "Fill in the quote form with where it's going and what you're sending, or give us a call. We'll come back with a price built around your shipment.",
   },
   {
     q: "Do you ship cars?",
-    a: "Yes. We arrange safe and dependable transport for cars, SUVs, motorcycles, and other vehicles across the United States.",
+    a: "Yes. We ship cars, SUVs, motorcycles and other vehicles anywhere in the United States, and we take care of them the whole way.",
   },
   {
     q: "Can I send documents only?",
-    a: "Absolutely. We offer secure and cost-effective document and parcel shipping services, including discounted express options for time-sensitive deliveries.",
+    a: "Yes. We send documents and small parcels too, at discounted rates, with express options when it's urgent.",
   },
   {
     q: "What if I need packing help?",
-    a: "Yes. TYS Global Logistics provides residential moving, commercial relocation, professional packing, and secure warehousing and storage solutions.",
+    a: "Yes. We can pack a home or an office for you, and store things safely if there's a gap between moving out and moving in.",
   },
   {
     q: "Can I track my shipment?",
-    a: "Yes — once your shipment is booked, you'll receive a tracking number so you can follow its progress from pickup to delivery.",
+    a: "Yes. Once it's booked you get a tracking number, so you can follow it from pickup to delivery.",
   },
 ] as const;

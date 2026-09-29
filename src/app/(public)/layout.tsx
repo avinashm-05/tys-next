@@ -1,14 +1,17 @@
+import { NavProgress } from "@/components/public/nav-progress";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "../globals.css";
 import { SiteHeader } from "@/components/public/site-header";
+import { PROMO_KEY } from "@/lib/promo";
 import { ConditionalFooter } from "@/components/public/conditional-footer";
 import { OrganizationJsonLd } from "@/components/public/organization-json-ld";
 import { WebsiteJsonLd } from "@/components/public/website-json-ld";
 import { AnalyticsScripts } from "@/components/public/analytics-scripts";
-import { PageLoader } from "@/components/public/page-loader";
 import { HashScrollFix } from "@/components/public/hash-scroll-fix";
+import { SmoothScroll } from "@/components/public/smooth-scroll";
+import { RevealObserver } from "@/components/public/reveal-observer";
 
 // Public brand fonts (B1 redesign) — Inter for body/UI, Oldschool Grotesk for
 // display headings. Scoped to this layout only (via the .variable className
@@ -51,13 +54,28 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       // so on any page shorter than the viewport this wrapper stopped at its
       // own content height and left the browser's bare background showing
       // beneath it. `screen` is 100vh and needs no ancestor cooperation.
-      className={`flex min-h-screen flex-col bg-white font-body text-ink ${inter.variable} ${oldschoolGrotesk.variable}`}
+      className={`tone-bg flex min-h-screen flex-col overflow-x-clip font-body text-ink ${inter.variable} ${oldschoolGrotesk.variable}`}
     >
-      <PageLoader />
+      {/* PageLoader removed 2026-09-29: it hid every page until the browser's
+          load event (images, globe, analytics), up to 6s, hurting LCP and
+          Ads landing-page experience. The stylesheet is render-blocking in
+          <head>, so there's no unstyled flash for it to cover. */}
       <HashScrollFix />
+      <NavProgress />
+      <SmoothScroll />
+      <RevealObserver />
       <AnalyticsScripts />
       <OrganizationJsonLd />
       <WebsiteJsonLd />
+      {/* Hides the promo bar before first paint if this browser closed it
+          before. Without this the server-rendered bar showed, then vanished
+          when scripts loaded, and the whole page jumped up 40px on every
+          refresh (2026-09-30). Runs inline, ahead of the header markup. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `try{if(localStorage.getItem(${JSON.stringify(PROMO_KEY)}))document.documentElement.setAttribute("data-promo","off")}catch(e){}`,
+        }}
+      />
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <ConditionalFooter />

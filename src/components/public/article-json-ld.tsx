@@ -1,4 +1,6 @@
 // BlogPosting structured data for a blog post — gives search/AI answer
+import { SITE_URL } from "@/lib/seo";
+import { jsonLd } from "@/lib/json-ld";
 // engines the headline, author, and publish date directly instead of having
 // to infer them from the page, and is what makes a post eligible for
 // Google's article rich results.
@@ -8,14 +10,19 @@ export function ArticleJsonLd({
   datePublished,
   slug,
   authorName = "Avinash",
+  dateModified,
+  image,
 }: {
   headline: string;
   description: string;
   datePublished: string;
   slug: string;
   authorName?: string;
+  dateModified?: string;
+  /** Absolute URL of the post's hero image. */
+  image?: string;
 }) {
-  const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(/\/+$/, "");
+  const siteUrl = SITE_URL;
   const url = `${siteUrl}/blog/${slug}`;
 
   const data = {
@@ -26,6 +33,8 @@ export function ArticleJsonLd({
     url,
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     datePublished: new Date(datePublished).toISOString(),
+    ...(dateModified ? { dateModified: new Date(dateModified).toISOString() } : {}),
+    ...(image ? { image } : {}),
     author: { "@type": "Person", name: authorName },
     publisher: {
       "@type": "Organization",
@@ -38,6 +47,6 @@ export function ArticleJsonLd({
   };
 
   return (
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(data) }} />
   );
 }

@@ -1,72 +1,71 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { pageMetadata } from "@/lib/seo";
 import { getSession } from "@/lib/auth";
+import { ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
 import { BookShipmentLoginForm } from "@/components/public/book-shipment-login-form";
+import { PageHeroBand } from "@/components/public/page-hero-band";
+import { PageBody, Section } from "@/components/public/page-kit";
 
-export const metadata: Metadata = { title: "Book Shipment — TYS Global Logistics" };
+export const metadata: Metadata = pageMetadata({
+  title: "Book a Shipment | TYS Global Logistics",
+  path: "/book-shipment",
+  noIndex: true,
+});
 
 function LoginGate() {
   return (
-    <section className="relative overflow-hidden bg-gray-50 px-4 py-20 md:px-8">
-      <svg
-        aria-hidden
-        viewBox="0 0 1440 500"
-        className="pointer-events-none absolute inset-0 h-full w-full text-brand-light"
-      >
-        <path
-          d="M0,120 Q360,20 720,140 T1440,90"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeDasharray="8 10"
-        />
-        <path
-          d="M0,420 Q400,470 760,360 T1440,410"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeDasharray="8 10"
-        />
-      </svg>
-
-      <div className="relative mx-auto max-w-md overflow-hidden rounded-3xl border-t-4 border-brand bg-white p-8 shadow-[0_20px_60px_rgba(16,24,40,0.1)] md:p-10">
-        <img
-          loading="lazy"
-          src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png"
-          alt="TYS Global Logistics"
-          width={480}
-          height={177}
-          draggable={false}
-          className="mx-auto h-12 w-auto select-none"
-        />
-        <p className="mt-4 text-center text-sm text-ink-muted">
-          Log in to book and manage your shipments.
-        </p>
-        <div className="mt-6">
-          <BookShipmentLoginForm />
-        </div>
-      </div>
-    </section>
+    <>
+      <PageHeroBand
+        quote={false}
+        kicker="Book a shipment"
+        title="Log in to"
+        accent="book a shipment."
+        subtitle="Book and manage your shipments from your TYS Global Logistics account."
+      />
+      <PageBody>
+        <Section>
+          <div className="mx-auto max-w-md">
+            <div className="rounded-3xl border border-[var(--line)] bg-white p-6 shadow-[0_20px_60px_rgba(16,24,40,0.06)] sm:p-8">
+              <BookShipmentLoginForm />
+            </div>
+            <p className="mt-6 text-center text-[15px] text-ink-muted">
+              Only need a price?{" "}
+              <Link href="/quotes" className="font-medium text-brand hover:underline">
+                Get a free quote
+              </Link>
+            </p>
+          </div>
+        </Section>
+      </PageBody>
+    </>
   );
 }
 
 function VerifyEmailNotice() {
   return (
-    <section className="bg-gray-50 px-4 py-20 md:px-8">
-      <div className="mx-auto max-w-md rounded-3xl border-t-4 border-brand bg-white p-8 text-center shadow-[0_20px_60px_rgba(16,24,40,0.1)] md:p-10">
-        <h1 className="text-xl font-bold text-ink">Verify your email</h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          Check your inbox for the verification link before booking a shipment.
-        </p>
-        <Link
-          href="/account/verify-email"
-          className="mt-6 inline-block font-semibold text-brand hover:underline"
-        >
-          Resend the verification email
-        </Link>
-      </div>
-    </section>
+    <>
+      <PageHeroBand
+        quote={false}
+        kicker="One more step"
+        title="Verify your"
+        accent="email."
+        subtitle="Check your inbox for the verification link before booking a shipment."
+      />
+      <PageBody>
+        <Section>
+          <div className="flex flex-col items-center gap-3 text-center">
+            <p className="text-[15.5px] text-ink-muted">
+              Can&rsquo;t find the email? Check your spam folder, or send a new one.
+            </p>
+            <Link href="/account/verify-email" className="btn btn-primary btn-lg">
+              Resend the verification email <ArrowRightIcon size={15} />
+            </Link>
+          </div>
+        </Section>
+      </PageBody>
+    </>
   );
 }
 

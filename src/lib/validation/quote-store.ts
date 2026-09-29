@@ -210,10 +210,13 @@ export const quoteStoreInput = z
     // Still accepted (and still validated below when present) so the admin
     // editor's own writes and any legacy caller keep working — the public
     // form itself never sends these three anymore.
-    packages: z.array(legacyPackage).nullish(),
-    box_details: z.array(boxDetail).nullish(),
-    television_details: z.array(televisionDetail).nullish(),
-    auto_details: z.array(autoDetail).nullish(),
+    // .max(20) (security audit 2026-09-30): each row is its own insert in
+    // one transaction, so an unbounded list let a single request tie up a
+    // DB connection and a process on a host already at its process cap.
+    packages: z.array(legacyPackage).max(20, "Too many packages in one request.").nullish(),
+    box_details: z.array(boxDetail).max(20, "Too many packages in one request.").nullish(),
+    television_details: z.array(televisionDetail).max(20, "Too many packages in one request.").nullish(),
+    auto_details: z.array(autoDetail).max(20, "Too many packages in one request.").nullish(),
 
     contact: quoteContact,
   })

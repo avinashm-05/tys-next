@@ -1,99 +1,203 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
+import { PageHeroBand } from "@/components/public/page-hero-band";
 import { TrackingLookupForm } from "@/components/public/tracking-lookup-form";
+import { TrustedReviewsSection } from "@/components/public/trusted-reviews-section";
+import { TopicScroller } from "@/components/public/topic-scroller";
+import { Reveal } from "@/components/public/home/reveal";
+import { ContactDetails } from "@/app/(public)/contact-us/contact-details";
+import {
+  Checklist,
+  CtaBand,
+  PAD,
+  PageBody,
+  Prose,
+  Section,
+  SectionHead,
+  SplitSection,
+  Steps,
+} from "@/components/public/page-kit";
+import { ArrowRightIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Track a Shipment — TYS Global Logistics",
-  description: "Track your TYS Global Logistics shipment. Enter your reference number for real-time delivery status.",
+  title: "Shipment Tracking: Track Your Package | TYS Global Logistics",
+  description:
+    "Track your TYS Global Logistics shipment with the number from your confirmation email. See what each scan means, and who to call if tracking stalls.",
   path: "/tracking",
 });
 
+// Tracking page, 2026-09-29 renovation (page kit).
+// The lookup form isn't wired to live tracking yet (no fulfilment/tracking
+// backend; see (public)/account/tracking's stub note). It shows an honest
+// "coming soon" message on submit, and the copy here says the same up
+// front rather than promising real-time results. Expanded from 137 words in
+// the 2026-08-21 audit: "track my shipment" is a high-intent query, and the
+// copy only describes how tracking already behaves.
 export default function TrackingPage() {
   return (
-    <section className="bg-gray-50 px-4 py-12 md:px-8">
-      <div className="mx-auto max-w-5xl">
-        <div className="rounded-3xl bg-white p-6 shadow-[0_2px_16px_rgba(16,24,40,0.04)] md:p-8">
-          <h1 className="text-2xl font-extrabold uppercase tracking-wide text-brand md:text-3xl">
-            Track Your Shipment
-          </h1>
-          <TrackingLookupForm />
-        </div>
+    <>
+      {/* The lookup sits in the hero, where other pages have the quote bar:
+          people land here to track, not to get a quote. */}
+      <PageHeroBand
+        title="Track your"
+        accent="shipment"
+        subtitle="Use the tracking number from your confirmation email. If something looks stuck, call us and we'll chase it with the carrier."
+      >
+              <div className="rounded-[28px] bg-white p-6 shadow-[0_0_0_1px_rgba(3,100,255,0.14),0_40px_80px_-36px_rgba(3,100,255,0.55)] sm:p-8">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF4FF] text-brand">
+                    <MagnifyingGlassIcon size={20} />
+                  </span>
+                  <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-ink">Enter your tracking number</h2>
+                </div>
+                <TrackingLookupForm />
+                <p className="mt-5 border-t border-[var(--line)] pt-5 text-[14.5px] leading-relaxed text-ink-muted">
+                  Live lookup on this page is coming soon. Until then, the latest status is in your
+                  confirmation email, and our team can check any shipment for you on{" "}
+                  <a href="tel:+14047938759" className="font-medium text-brand underline-offset-4 hover:underline">
+                    +1 (404) 793-8759
+                  </a>
+                  .
+                </p>
+              </div>
+      </PageHeroBand>
 
-        <h2 className="mt-10 text-2xl font-bold text-ink md:text-3xl">How To Track Your Shipment</h2>
-        <p className="mt-3 text-ink-muted">
-          Track your shipment with confidence using the tracking number provided at the time of
-          booking. Get real-time updates and complete visibility from dispatch to delivery.
-        </p>
+      <PageBody>
+        <Section id="lookup">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.25fr_0.75fr] lg:gap-14">
 
-        <div className="mt-6 rounded-3xl bg-gray-100 p-6 md:p-8">
-          <h3 className="text-xl font-bold text-brand">Ways you can track your shipment</h3>
-          <ol className="mt-4 list-decimal space-y-3 pl-5 text-ink-muted marker:font-semibold marker:text-ink">
-            <li>
-              <span className="font-semibold text-ink">Confirmation Email</span> - The reference
-              number or tracking number is printed on your confirmation email and shipping labels
-              for easy lookup.
-            </li>
-            <li>
-              Sign in to your <span className="font-semibold text-ink">TYS Global Logistics</span>{" "}
-              account to track all your shipments, access booking details, and receive real-time
-              delivery updates from one convenient dashboard.
-            </li>
-          </ol>
-        </div>
+            <div>
+              <Reveal as="h3" className="text-[19px] font-semibold tracking-[-0.015em] text-ink">
+                Where to find your number
+              </Reveal>
+              <Reveal as="p" delay={60} className="mt-2 text-[15px] leading-relaxed text-ink-muted">
+                You get a tracking number as soon as your shipment is booked.
+              </Reveal>
+              <div className="mt-6">
+                <Checklist
+                  items={[
+                    "In your booking confirmation email",
+                    "On the shipping label",
+                    <>
+                      Can&rsquo;t find it?{" "}
+                      <Link href="/contact-us" className="font-medium text-brand underline-offset-4 hover:underline">
+                        Ask us
+                      </Link>{" "}
+                      and we&rsquo;ll look it up for you
+                    </>,
+                  ]}
+                />
+              </div>
+            </div>
+          </div>
+        </Section>
 
-        <p className="mt-6 text-ink-muted">
-          Share your tracking number with the recipient so they can monitor the shipment in real
-          time until it arrives at their doorstep.
-        </p>
-        <p className="mt-3 text-ink-muted">
-          Need assistance with your shipment? Our dedicated support team is here to help with
-          tracking, delivery updates, and any shipping-related questions. Contact us through our{" "}
-          <a href="/contact-us" className="font-semibold text-ink hover:text-brand">
-            Contact Us
-          </a>{" "}
-          page or call <span className="font-semibold text-ink">+1 (404) 793-8759</span> for
-          prompt assistance.
-        </p>
-      </div>
+        <Section flush>
+          <div className={`py-16 lg:py-20 ${PAD}`}>
+            <SectionHead
+              kicker="Step by step"
+              title="How to track your shipment"
+              lead="Four simple steps, from booking to the front door."
+            />
+          </div>
+          <div className="-mb-px">
+            <Steps
+              steps={[
+                { title: "Find your number", body: "It's in your confirmation email and printed on your shipping label." },
+                {
+                  title: "Check the status",
+                  body: "Updates come from the carrier handling your shipment. Signed-in customers can see every shipment in their account.",
+                },
+                { title: "Share it", body: "Send the number to the person receiving it, so they can follow it to their door." },
+                { title: "Call us if it stalls", body: "If nothing has moved for longer than you'd expect, we'll chase it with the carrier." },
+              ]}
+            />
+          </div>
+        </Section>
 
-      {/* Expanded from 137 words (audit, 2026-08-21) — under ~300 words
-          rarely gets indexed, and "track my shipment" is a high-intent query
-          we should be able to rank for. Describes only how the existing
-          tracking flow already behaves; no new promises. */}
-      <div className="mx-auto mt-12 max-w-3xl">
-        <h2 className="text-2xl font-bold text-ink md:text-3xl">How tracking works</h2>
-        <div className="mt-4 space-y-4 text-ink-muted">
-          <p>
-            When your shipment is booked we send a tracking reference by email. Enter it above
-            at any time to see where the shipment currently is and what has happened to it so
-            far. The status comes from the carrier handling the shipment, so it reflects the
-            same information their own system holds.
-          </p>
-          <p>
-            Scans update as the shipment passes through the network — collection, departure
-            from the origin facility, arrival in the destination country, customs clearance,
-            and final delivery. International shipments typically show fewer scans than domestic
-            ones, and it is normal for there to be a quiet period while a shipment is in transit
-            between countries or waiting on customs. A gap of a day or two mid-route does not
-            mean anything has gone wrong.
-          </p>
-          <p>
-            Customs clearance is the stage that most often adds unexpected time. It is handled
-            by the destination country&rsquo;s authorities rather than by the carrier, and it can
-            require paperwork or duty payment before the shipment is released — see{" "}
-            <a href="/resources/customs-duty" className="text-brand hover:underline">
-              customs duty explained
-            </a>{" "}
-            for what is usually involved.
-          </p>
-          <p>
-            If your reference is not recognised, it is usually because the first carrier scan
-            has not happened yet; that can take up to 24 hours after collection. If it still
-            shows nothing after that, or a shipment has been static for longer than you would
-            expect, contact us and we will chase it with the carrier directly.
-          </p>
-        </div>
-      </div>
-    </section>
+        <TopicScroller
+          topics={[
+            {
+              id: "what-the-scans-mean",
+              title: "What the scans mean",
+              lead: "Your tracking updates each time the carrier scans your shipment. It reflects the same information the carrier's own system holds.",
+              content: (
+                <Checklist
+                  items={[
+                    <><strong className="font-semibold">Collected.</strong> The driver has picked it up.</>,
+                    <><strong className="font-semibold">Departed.</strong> It has left the origin facility.</>,
+                    <><strong className="font-semibold">Arrived.</strong> It has reached the destination country.</>,
+                    <><strong className="font-semibold">Customs.</strong> It is being cleared by the local authorities.</>,
+                    <><strong className="font-semibold">Delivered.</strong> It has reached the door.</>,
+                  ]}
+                />
+              ),
+            },
+            {
+              id: "quiet-spells-are-normal",
+              title: "Quiet spells are normal",
+              lead: "A gap of a day or two mid-route doesn't mean anything has gone wrong.",
+              content: (
+                <Prose>
+                  <p>
+                    International shipments usually show fewer scans than domestic ones. It&rsquo;s
+                    normal for tracking to go quiet while a shipment is between countries or waiting
+                    on customs. It will update again at the next scan.
+                  </p>
+                </Prose>
+              ),
+            },
+            {
+              id: "customs-clearance",
+              title: "Customs clearance",
+              lead: "The stage that most often adds unexpected time.",
+              content: (
+                <Prose>
+                  <p>
+                    Customs is handled by the destination country&rsquo;s authorities, not by the
+                    carrier. They may need paperwork or a duty payment before they release the
+                    shipment. Our guide to <Link href="/resources/customs-duty">customs duty</Link>{" "}
+                    explains what&rsquo;s usually involved.
+                  </p>
+                </Prose>
+              ),
+            },
+            {
+              id: "number-not-recognized",
+              title: "When your number shows nothing",
+              lead: "Usually the first carrier scan just hasn't happened yet.",
+              content: (
+                <Prose>
+                  <p>
+                    The first scan can take up to 24 hours after collection. If there&rsquo;s still
+                    nothing after that, or your shipment has been still for longer than you&rsquo;d
+                    expect, <Link href="/contact-us">contact us</Link> and we&rsquo;ll
+                    chase it with the carrier directly.
+                  </p>
+                </Prose>
+              ),
+            },
+          ]}
+        />
+
+        <SplitSection
+          kicker="Support"
+          title="Need help with"
+          accent="a shipment?"
+          lead="Our team can help with tracking, delivery updates and any shipping question. Call or email us, and a real person picks it up."
+        >
+          <ContactDetails layout="stack" />
+          <Reveal delay={80} className="mt-6">
+            <Link href="/contact-us" className="btn btn-primary btn-lg">
+              Contact support <ArrowRightIcon size={15} />
+            </Link>
+          </Reveal>
+        </SplitSection>
+
+        <TrustedReviewsSection />
+        <CtaBand title="Shipping something new?" />
+      </PageBody>
+    </>
   );
 }

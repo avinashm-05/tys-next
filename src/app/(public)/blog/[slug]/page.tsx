@@ -4,9 +4,18 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { blogCategoryIcon } from "@/lib/blog-categories";
 import { estimateReadTime, formatBlogDate } from "@/lib/blog-read-time";
-import { BlogPostHero } from "@/components/public/blog-post-hero";
+import Link from "next/link";
+import {
+  ArrowLeftIcon,
+  CalendarIcon,
+  ClockIcon,
+  UserIcon,
+} from "@phosphor-icons/react/dist/ssr";
+import { PageHeroBand } from "@/components/public/page-hero-band";
+import { CtaBand, LINE, PageBody, Prose, Section } from "@/components/public/page-kit";
 import { BlogBanner } from "@/components/public/blog-banner";
 import { ArticleJsonLd } from "@/components/public/article-json-ld";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 type Params = { slug: string };
 
@@ -33,7 +42,10 @@ export async function generateStaticParams(): Promise<Params[]> {
   // above). The only cost is the first hit on each post after a deploy
   // rendering server-side rather than being served as ready-made HTML.
   try {
-    const posts = await db.post.findMany({ where: { status: "published" }, select: { slug: true } });
+    const posts = await db.post.findMany({
+      where: { status: "published" },
+      select: { slug: true },
+    });
     return posts.map((p) => ({ slug: p.slug }));
   } catch (err) {
     console.warn(
@@ -64,10 +76,28 @@ export async function generateMetadata({
   // subject off the end of the result. Dropping it recovers 11 characters on
   // every post (audited 2026-08-21). Canonical is self-referencing so a post
   // reached with UTM parameters doesn't read as a separate page.
+  const url = `${SITE_URL}/blog/${post.slug}`;
+  const title = post.metaTitle ?? post.title;
   return {
-    title: post.metaTitle ?? post.title,
+    title,
     description: post.description,
-    alternates: { canonical: `${SITE_URL}/blog/${post.slug}` },
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title,
+      description: post.description,
+      url,
+      ...(post.publishedAt ? { publishedTime: post.publishedAt.toISOString() } : {}),
+      ...(post.updatedAt ? { modifiedTime: post.updatedAt.toISOString() } : {}),
+      authors: [post.authorName],
+      ...(post.heroImageKey
+        ? {
+            images: [
+              { url: `${SITE_URL}/api/blog/media/${post.heroImageKey}`, alt: post.title },
+            ],
+          }
+        : {}),
+    },
   };
 }
 
@@ -83,34 +113,79 @@ export default async function BlogPostPage({ params }: { params: Promise<Params>
         datePublished={(post.publishedAt ?? post.createdAt ?? new Date()).toISOString()}
         slug={post.slug}
         authorName={post.authorName}
+        dateModified={post.updatedAt ? post.updatedAt.toISOString() : undefined}
+        image={post.heroImageKey ? `${SITE_URL}/api/blog/media/${post.heroImageKey}` : undefined}
       />
-      <BlogPostHero
-        category={post.category}
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Blog", path: "/blog" },
+          { name: post.title, path: `/blog/${post.slug}` },
+        ]}
+      />
+      <PageHeroBand
+        quote={false}
+        kicker={post.category}
         title={post.title}
         subtitle={post.description}
-        date={post.publishedAt ? formatBlogDate(post.publishedAt) : ""}
-        readTime={estimateReadTime(post.body)}
       />
 
-      <section className="bg-gray-50 px-4 py-14 md:px-8">
-        <div className="mx-auto max-w-3xl rounded-3xl border border-brand-light bg-white p-6 md:p-10">
-          <BlogBanner
-            icon={blogCategoryIcon(post.category)}
-            imageUrl={post.heroImageKey ? `/api/blog/media/${post.heroImageKey}` : null}
-            alt={post.title}
-            className="mb-8 h-48 w-full md:h-56"
-          />
-          {/* Sanitized server-side on every write (sanitize-html against
-              POST_BODY_SANITIZE_OPTIONS) before it ever reaches this
-              column — safe to render as-is. `prose` styles the raw editor
-              output; unlike LegalSection above, there are no per-element
-              classes on this HTML to hang manual styling off of. */}
-          <div
-            className="prose prose-slate max-w-none prose-headings:font-heading prose-a:text-brand"
-            dangerouslySetInnerHTML={{ __html: post.body }}
-          />
-        </div>
-      </section>
+      <PageBody>
+        <Section>
+          <article className="mx-auto max-w-[720px]">
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-brand"
+            >
+              <ArrowLeftIcon size={14} /> All articles
+            </Link>
+
+            <div
+              className={`mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-b ${LINE} pb-6 text-sm text-ink-muted`}
+            >
+              <span className="flex items-center gap-1.5">
+                <UserIcon size={16} /> By {post.authorName}
+              </span>
+              {post.publishedAt && (
+                <span className="flex items-center gap-1.5">
+                  <CalendarIcon size={16} /> {formatBlogDate(post.publishedAt)}
+                </span>
+              )}
+              <span className="flex items-center gap-1.5">
+                <ClockIcon size={16} /> {estimateReadTime(post.body)}
+              </span>
+            </div>
+
+            <BlogBanner
+              icon={blogCategoryIcon(post.category)}
+              imageUrl={post.heroImageKey ? `/api/blog/media/${post.heroImageKey}` : null}
+              alt={post.title}
+              className="mt-8 h-52 w-full md:h-72"
+            />
+
+            {/* Sanitized server-side on every write (sanitize-html against
+                POST_BODY_SANITIZE_OPTIONS) before it ever reaches this
+                column, so it is safe to render as-is. The editor's raw HTML
+                has no per-element classes, so the reading styles hang off
+                element selectors: the kit's Prose, plus the tags Prose
+                doesn't cover (h2, ol, blockquote, img, tables). */}
+            <Prose className="mt-10 [&>div]:space-y-5 [&_blockquote]:border-l-2 [&_blockquote]:border-brand [&_blockquote]:pl-5 [&_blockquote]:italic [&_h2]:mt-12 [&_h2]:text-balance [&_h2]:text-[1.55rem] [&_h2]:leading-tight [&_h2]:tracking-[-0.02em] [&_h2]:text-ink [&_img]:my-8 [&_img]:rounded-2xl [&_ol]:space-y-2 [&_ol>li]:list-decimal [&_table]:w-full [&_table]:text-left [&_td]:border-b [&_td]:border-[var(--line)] [&_td]:py-2 [&_th]:border-b [&_th]:border-[var(--line)] [&_th]:py-2 [&_th]:font-semibold [&_th]:text-ink">
+              <div dangerouslySetInnerHTML={{ __html: post.body }} />
+            </Prose>
+
+            <div className={`mt-12 border-t ${LINE} pt-6`}>
+              <Link
+                href="/blog"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-ink transition-colors hover:text-brand"
+              >
+                <ArrowLeftIcon size={14} /> Back to all articles
+              </Link>
+            </div>
+          </article>
+        </Section>
+
+        <CtaBand />
+      </PageBody>
     </>
   );
 }

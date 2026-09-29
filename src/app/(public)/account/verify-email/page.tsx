@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { AccountShell } from "@/components/public/account/shell";
 import { ResendVerificationForm } from "@/components/public/account/auth-forms";
 
-export const metadata: Metadata = { title: "Verify your email — TYS Global Logistics" };
+export const metadata: Metadata = { title: "Verify your email | TYS Global Logistics" };
 
 // Landing/status page. The actual verification happens on the emailed link
 // (GET /api/auth/verify-email?token=…), which then redirects to

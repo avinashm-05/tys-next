@@ -1,11 +1,13 @@
 // schema.org BreadcrumbList — tells Google the page's position in the site
+import { SITE_URL } from "@/lib/seo";
+import { jsonLd } from "@/lib/json-ld";
 // hierarchy (Home > Services > Auto Transport). One of the structural
 // signals behind Google generating sitelinks for a site, alongside WebSite
 // markup and clean internal linking.
 export type Crumb = { name: string; path: string };
 
 export function BreadcrumbJsonLd({ crumbs }: { crumbs: readonly Crumb[] }) {
-  const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(/\/+$/, "");
+  const siteUrl = SITE_URL;
 
   const data = {
     "@context": "https://schema.org",
@@ -19,6 +21,6 @@ export function BreadcrumbJsonLd({ crumbs }: { crumbs: readonly Crumb[] }) {
   };
 
   return (
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(data) }} />
   );
 }

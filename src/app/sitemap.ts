@@ -1,10 +1,8 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
+import { SITE_URL } from "@/lib/seo";
 
-const siteUrl = (process.env.APP_URL ?? "https://www.tysgloballogistics.com").replace(
-  /\/+$/,
-  "",
-);
+const siteUrl = SITE_URL;
 
 // Real, public, indexable marketing routes only — /account/*, /thank-you,
 // and everything under /admin + /api are excluded (see robots.ts).
@@ -25,7 +23,6 @@ const STATIC_ROUTES: {
   // site-header.tsx. Re-add when the page is linked again.
   { path: "/carriers", priority: 0.5, changeFrequency: "monthly" },
   { path: "/contact-us", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/contact-us/support", priority: 0.4, changeFrequency: "monthly" },
   { path: "/destinations", priority: 0.7, changeFrequency: "monthly" },
   { path: "/destinations/moving", priority: 0.6, changeFrequency: "monthly" },
   // Per-country landing pages, added 2026-08-21 against the highest-volume
@@ -33,6 +30,20 @@ const STATIC_ROUTES: {
   { path: "/destinations/canada", priority: 0.8, changeFrequency: "monthly" },
   { path: "/destinations/india", priority: 0.8, changeFrequency: "monthly" },
   { path: "/destinations/uk", priority: 0.8, changeFrequency: "monthly" },
+  // Added 2026-09-30 from the SFL gap analysis (US-origin routes only).
+  { path: "/destinations/pakistan", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/destinations/uae", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/destinations/australia", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/destinations/india/shipping-cost", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/destinations/india/documents", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/destinations/india/electronics", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/destinations/moving/india", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/services/ship-boxes-internationally", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/services/packers-and-movers", priority: 0.8, changeFrequency: "monthly" },
+  { path: "/services/small-business-shipping", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/services/pallet-shipping", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/locations/atlanta", priority: 0.6, changeFrequency: "monthly" },
+  { path: "/shipping-calculator", priority: 0.8, changeFrequency: "monthly" },
   { path: "/faqs", priority: 0.6, changeFrequency: "monthly" },
   // Brand defence — answers "is TYS Global Logistics legit", which people
   // search before paying a company they haven't used before.
@@ -64,6 +75,8 @@ const STATIC_ROUTES: {
     changeFrequency: "monthly",
   },
   { path: "/services/parcel-shipping", priority: 0.7, changeFrequency: "monthly" },
+  // Google Ads landing page for piano movers (added 2026-09-29).
+  { path: "/services/piano-moving", priority: 0.8, changeFrequency: "monthly" },
   { path: "/services/retailer-shipping", priority: 0.7, changeFrequency: "monthly" },
   { path: "/services/volume-shipping", priority: 0.7, changeFrequency: "monthly" },
   { path: "/terms", priority: 0.2, changeFrequency: "yearly" },
@@ -73,7 +86,8 @@ const STATIC_ROUTES: {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${siteUrl}${r.path}`,
-    lastModified: new Date(),
+    // No lastModified on static pages: stamping every page with the build
+    // time on each deploy teaches Google to ignore the field.
     changeFrequency: r.changeFrequency,
     priority: r.priority,
   }));

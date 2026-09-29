@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 
 // One place that knows the site's public origin, so canonical URLs can never
 // drift from what the sitemap and JSON-LD emit. Mirrors sitemap.ts exactly.
+// Production serves the bare domain (src/proxy.ts 308s www to it), so the
+// default is the apex too: a build without APP_URL must never emit
+// canonicals that point at a redirect. Everything else imports this.
 export const SITE_URL = (
-  process.env.APP_URL ?? "https://www.tysgloballogistics.com"
+  process.env.APP_URL ?? "https://tysgloballogistics.com"
 ).replace(/\/+$/, "");
 
 /**
@@ -32,10 +35,22 @@ export function pageMetadata({
   path: string;
   noIndex?: boolean;
 } & Omit<Metadata, "title" | "description" | "alternates" | "robots">): Metadata {
+  const url = `${SITE_URL}${path === "/" ? "" : path}`;
   return {
     title,
     ...(description ? { description } : {}),
-    alternates: { canonical: `${SITE_URL}${path === "/" ? "" : path}` },
+    alternates: { canonical: url },
+    // Each page's own social preview (they all used to show the home page's
+    // title and URL, because only the root layout set openGraph).
+    openGraph: {
+      type: "website",
+      siteName: "TYS Global Logistics",
+      locale: "en_US",
+      title,
+      ...(description ? { description } : {}),
+      url,
+    },
+    twitter: { card: "summary_large_image", title, ...(description ? { description } : {}) },
     // Thin, utility pages (a link index, a payment hand-off) are better kept
     // out of the index than padded with filler to reach a word count.
     ...(noIndex ? { robots: { index: false, follow: true } } : {}),
