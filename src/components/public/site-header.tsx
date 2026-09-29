@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PROMO_KEY } from "@/lib/promo";
 import { quoteHref } from "@/lib/quote-context";
+import { FlagIcon } from "@/components/public/flag-icon";
 import type { Icon } from "@phosphor-icons/react";
 import {
   ArrowRightIcon,
@@ -329,7 +330,7 @@ export function SiteHeader() {
       className={`sticky top-0 z-50 select-none border-b transition-colors duration-300 ${dark ? "border-white/10" : "border-[#E6EAF0] bg-white/95"}`}
       style={dark ? { backgroundColor: darkBg } : undefined}
     >
-      <div className="mx-auto flex h-16 max-w-[1320px] items-center gap-6 px-5 sm:px-10 lg:px-14">
+      <div className="mx-auto flex h-14 max-w-[1320px] items-center gap-6 px-5 sm:px-10 lg:px-14">
         <Link href="/" className="flex shrink-0 items-center" onClick={() => setMobileOpen(false)}>
           {/* The one image on the public site guaranteed to be above the
               fold on every page load: eager + high priority so it never
@@ -342,7 +343,7 @@ export function SiteHeader() {
             draggable={false}
             loading="eager"
             fetchPriority="high"
-            className="h-10 w-auto select-none"
+            className="h-9 w-auto select-none"
           />
         </Link>
 
@@ -456,6 +457,11 @@ export function SiteHeader() {
             Get a free quote
             <ArrowRightIcon size={14} />
           </Link>
+          {/* US flag: a US company, shipping from the US (it was on the old
+              header; restored 2026-09-30 at the owner's request). */}
+          <span title="United States" className="ml-1.5 hidden shrink-0 items-center sm:flex">
+            <FlagIcon code="US" className="h-[18px] !w-6 shrink-0 rounded-[3px] shadow-[0_0_0_1px_rgba(16,24,40,0.08)]" />
+          </span>
           {/* Two lines that morph into an X (and back), with a small press. */}
           <button
             type="button"
