@@ -119,6 +119,14 @@ const nextConfig: NextConfig = {
   // standalone fights it. `VERCEL=1` is set by their build environment, so
   // Hostinger (the real deploy target) is unaffected.
   ...(process.env.VERCEL ? {} : { output: "standalone" as const }),
+  // Hostinger builds on a shared plan whose 120-process cap is shared by all
+  // 10 sites (see memory: hostinger max processes). Turbopack's production
+  // build spawns helper Node processes (e.g. for PostCSS) and died with
+  // "node process exited before we could connect to it" on 2026-09-30, twice.
+  // So `npm run build` uses webpack (package.json, --webpack), which runs
+  // PostCSS in-process, and page generation is capped at 2 workers instead
+  // of one per CPU. `next dev` still uses Turbopack locally.
+  experimental: { cpus: 2 },
   images: {
     // Default is 60s — these source assets barely ever change and the CDN
     // cache is purged manually on every deploy anyway, so there's no need
