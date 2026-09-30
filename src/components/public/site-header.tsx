@@ -190,6 +190,9 @@ function MobileGroup({
   );
 }
 
+/** Safari / iOS WebKit, flagged on <html> by RevealObserver. */
+const isWebKit = () => typeof document !== "undefined" && document.documentElement.classList.contains("no-blur");
+
 const PILL = "flex h-9 items-center gap-1 rounded-[10px] px-3 transition-colors duration-300";
 
 export function SiteHeader() {
@@ -390,7 +393,8 @@ export function SiteHeader() {
           <div
             className={`absolute left-0 top-full pt-2 transition-opacity duration-200 ease-out ${openGroup ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
             style={{
-              transform: `translate(${panel.x}px, ${openGroup ? 0 : -4}px)`,
+              transform: `translate3d(${panel.x}px, ${openGroup ? 0 : -4}px, 0)`,
+              willChange: "transform, opacity",
               transition: panel.glide
                 ? "transform 320ms cubic-bezier(0.22, 0.8, 0.25, 1), opacity 200ms ease-out"
                 : "opacity 200ms ease-out, transform 200ms ease-out",
@@ -402,7 +406,16 @@ export function SiteHeader() {
               style={{
                 width: panel.w,
                 height: panel.h,
-                transition: panel.glide ? "width 320ms cubic-bezier(0.22, 0.8, 0.25, 1), height 320ms cubic-bezier(0.22, 0.8, 0.25, 1)" : "none",
+                // Safari/iOS (html.no-blur, set by RevealObserver) can't
+                // animate width/height smoothly: every frame relays out the
+                // panel, which read as jitter when moving between menus
+                // (2026-09-30). There the panel snaps to size and the glide
+                // plus crossfade carry the motion; elsewhere it still resizes
+                // smoothly, Attio-style.
+                transition:
+                  panel.glide && !isWebKit()
+                    ? "width 320ms cubic-bezier(0.22, 0.8, 0.25, 1), height 320ms cubic-bezier(0.22, 0.8, 0.25, 1)"
+                    : "none",
               }}
             >
               {GROUPS.map((g) => {
