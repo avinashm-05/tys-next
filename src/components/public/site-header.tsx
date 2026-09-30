@@ -648,6 +648,7 @@ const readDismissed = () => {
 };
 
 function PromoBar() {
+  const pathname = usePathname();
   const [closed, setClosed] = useState(false);
   // Server render always shows the bar; the browser then reads the flag.
   const dismissed = useSyncExternalStore(noSubscribe, readDismissed, () => false);
@@ -656,7 +657,7 @@ function PromoBar() {
   return (
     <div data-promo-bar className="relative bg-[#0B1220] text-white">
       <div className="mx-auto flex h-10 max-w-[1320px] items-center justify-center px-12 text-[13.5px] font-medium sm:text-sm">
-        <Link href="/quotes" className="group inline-flex items-center gap-1.5 truncate">
+        <Link href={quoteHref(pathname)} className="group inline-flex items-center gap-1.5 truncate">
           <span className="sm:hidden">Extra 20% off your first shipment</span>
           <span className="hidden sm:inline">Save an extra 20% on your first shipment</span>
           <ArrowRightIcon size={14} className="shrink-0 transition-transform group-hover:translate-x-0.5" />

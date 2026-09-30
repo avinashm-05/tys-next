@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { quoteHref } from "@/lib/quote-context";
 import { ArrowRightIcon, BuildingsIcon, CalculatorIcon, CubeIcon, HouseLineIcon, ProhibitIcon, ReceiptIcon, SuitcaseIcon } from "@phosphor-icons/react/dist/ssr";
 import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
@@ -56,7 +57,7 @@ export default function WorldwideMovingPage() {
         <ContinentCard name="Popular moving destinations" countries={MOVING_DESTINATIONS} verb="Moving">
           Moving from the US to one of these? Pick it to start a moving quote with the destination
           already filled in. Going somewhere else? We move people to more than 200 countries, so{" "}
-          <Link href="/quotes" className="font-medium text-brand hover:underline">
+          <Link href={quoteHref("/destinations/moving")} className="font-medium text-brand hover:underline">
             start a quote
           </Link>{" "}
           with yours.
@@ -85,7 +86,7 @@ export default function WorldwideMovingPage() {
             <Link href="/services/international-relocation" className="btn btn-primary btn-lg">
               International relocation service <ArrowRightIcon size={15} />
             </Link>
-            <Link href="/quotes" className="btn btn-secondary btn-lg">
+            <Link href={quoteHref("/destinations/moving")} className="btn btn-secondary btn-lg">
               Get a moving quote
             </Link>
           </div>

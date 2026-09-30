@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { pageMetadata } from "@/lib/seo";
-import { enabledSocialProviders, getSession, isCustomerSession } from "@/lib/auth";
+import { visibleSocialProviders, getSession, isCustomerSession } from "@/lib/auth";
 import { ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
-import { BookShipmentLoginForm } from "@/components/public/book-shipment-login-form";
+import { AccountShell } from "@/components/public/account/shell";
+import { LoginForm } from "@/components/public/account/auth-forms";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { PageBody, Section } from "@/components/public/page-kit";
 
@@ -16,30 +17,20 @@ export const metadata: Metadata = pageMetadata({
 
 function LoginGate() {
   return (
-    <>
-      <PageHeroBand
-        quote={false}
-        kicker="Book a shipment"
-        title="Log in to"
-        accent="book a shipment."
-        subtitle="Book and manage your shipments from your TYS Global Logistics account."
-      />
-      <PageBody>
-        <Section>
-          <div className="mx-auto max-w-md">
-            <div className="rounded-3xl border border-[var(--line)] bg-white p-6 shadow-[0_20px_60px_rgba(16,24,40,0.06)] sm:p-8">
-              <BookShipmentLoginForm socialProviders={enabledSocialProviders()} />
-            </div>
-            <p className="mt-6 text-center text-[15px] text-ink-muted">
-              Only need a price?{" "}
-              <Link href="/quotes" className="font-medium text-brand hover:underline">
-                Get a free quote
-              </Link>
-            </p>
-          </div>
-        </Section>
-      </PageBody>
-    </>
+    <AccountShell
+      kicker="Book a shipment"
+      title="Log in to"
+      accent="book a shipment."
+      subtitle="Use your TYS account to book a pickup. New here? Create an account in a minute, or just get a price first."
+    >
+      <LoginForm verified={false} socialProviders={visibleSocialProviders()} redirectTo="/account/schedule" />
+      <p className="mt-5 border-t border-[#E6EBF2] pt-4 text-center text-[15px] text-ink-muted">
+        Only need a price?{" "}
+        <Link href="/quotes" className="font-semibold text-brand hover:underline">
+          Get a free quote
+        </Link>
+      </p>
+    </AccountShell>
   );
 }
 

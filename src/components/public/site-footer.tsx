@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { QuoteLink } from "@/components/public/quote-link";
 import { ArrowRightIcon, InstagramLogoIcon, LinkedinLogoIcon, PhoneIcon } from "@phosphor-icons/react/dist/ssr";
 
 const SERVICES = [
@@ -114,9 +115,9 @@ export function SiteFooter() {
               <a href="tel:+14047938759" className="btn btn-ghost-white btn-lg w-full">
                 <PhoneIcon size={16} /> Call us
               </a>
-              <Link href="/quotes" className="btn btn-white btn-lg w-full">
+              <QuoteLink className="btn btn-white btn-lg w-full">
                 Free quote <ArrowRightIcon size={15} />
-              </Link>
+              </QuoteLink>
             </div>
           </div>
 
@@ -134,9 +135,14 @@ export function SiteFooter() {
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((l) => (
                   <li key={l.href + l.label}>
+                    {/* "Get a quote" carries the page's context, like the header CTA. */}
+                    {l.href === "/quotes" ? (
+                      <QuoteLink className="text-[15px] text-white/80 transition-colors hover:text-white">{l.label}</QuoteLink>
+                    ) : (
                     <Link href={l.href} className="text-[15px] text-white/80 transition-colors hover:text-white">
                       {l.label}
                     </Link>
+                    )}
                   </li>
                 ))}
               </ul>

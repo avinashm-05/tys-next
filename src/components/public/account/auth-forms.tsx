@@ -35,11 +35,14 @@ async function readMessage(res: Response): Promise<string> {
 // text-base (16px), not text-sm: iOS Safari auto-zooms the page on
 // focusing any input under 16px — see searchable-select.tsx for the full
 // failure mode.
+// Same high-contrast fields as the quote wizard (2026-09-30): a firm
+// slate outline, bold dark labels, 16px+ text. text-base+ also stops iOS
+// Safari zooming the page on focus (see searchable-select.tsx).
 const inputClass =
-  "w-full rounded-xl border border-brand-light bg-white px-4 py-3 text-base text-ink outline-none focus:border-brand disabled:bg-brand-pale disabled:text-ink-muted";
-const labelClass = "mb-1.5 block text-sm font-medium text-ink";
+  "w-full rounded-2xl bg-white px-4 py-3.5 text-[16px] font-medium text-ink outline-none ring-[1.5px] ring-inset ring-[#AEBBCD] transition placeholder:font-normal placeholder:text-[#6B778A] hover:ring-[#7F8FA6] focus:ring-2 focus:ring-brand disabled:bg-[#F3F6FA] disabled:text-ink-muted";
+const labelClass = "mb-1.5 block px-1 text-[14px] font-semibold text-[#2B3445]";
 const ctaClass =
-  "mt-3 w-full rounded-full bg-brand px-6 py-3 text-center text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-60";
+  "mt-2 flex h-12 w-full items-center justify-center rounded-full bg-brand px-6 text-center text-[15px] font-semibold text-white shadow-[0_12px_24px_-12px_rgba(3,100,255,0.8)] transition hover:bg-brand-dark disabled:opacity-60";
 
 export function RegisterForm({ socialProviders = [] }: { socialProviders?: SocialProvider[] }) {
   const [name, setName] = useState("");
@@ -93,7 +96,6 @@ export function RegisterForm({ socialProviders = [] }: { socialProviders?: Socia
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-4">
-      <SocialSignIn providers={socialProviders} />
       <div>
         <label className={labelClass}>Name</label>
         <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
@@ -118,6 +120,7 @@ export function RegisterForm({ socialProviders = [] }: { socialProviders?: Socia
       <button type="submit" className={ctaClass} disabled={busy}>
         {busy ? "Creating account…" : "Create account"}
       </button>
+      <SocialSignIn providers={socialProviders} />
       <p className="m-0 text-center text-sm text-ink-muted">
         Already registered?{" "}
         <Link href="/account/login" className="font-medium text-brand hover:underline">
@@ -132,10 +135,13 @@ export function LoginForm({
   verified,
   socialError = false,
   socialProviders = [],
+  redirectTo = "/account",
 }: {
   verified: boolean;
   socialError?: boolean;
   socialProviders?: SocialProvider[];
+  /** Where a successful sign-in lands (Book now → /account/schedule). */
+  redirectTo?: string;
 }) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -160,7 +166,7 @@ export function LoginForm({
         ? await post("/api/auth/sign-in/email", { email: identifier, password })
         : await post("/api/auth/sign-in/username", { username: identifier, password });
       if (res.ok) {
-        window.location.href = "/account";
+        window.location.assign(redirectTo);
         return;
       }
       if (res.status === 403) {
@@ -201,11 +207,10 @@ export function LoginForm({
           <WarningCircleIcon size={16} className="mt-0.5 shrink-0" />
           <span>
             That sign-in didn&apos;t go through. If you already have an account with this email,
-            log in with your password below.
+            log in with your password.
           </span>
         </p>
       )}
-      <SocialSignIn providers={socialProviders} />
       {verified && (
         <p className="m-0 flex items-center gap-2 font-semibold text-green-600">
           <CheckCircleIcon size={18} />
@@ -259,6 +264,7 @@ export function LoginForm({
       <button type="submit" className={ctaClass} disabled={busy}>
         {busy ? "Signing in…" : "Log in"}
       </button>
+      <SocialSignIn providers={socialProviders} callbackURL={redirectTo} />
       <p className="m-0 text-center text-sm text-ink-muted">
         <Link href="/account/forgot-password" className="font-medium text-brand hover:underline">
           Forgot password?

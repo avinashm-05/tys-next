@@ -42,6 +42,16 @@ export function enabledSocialProviders(): SocialProviderId[] {
   );
 }
 
+/**
+ * Providers whose BUTTONS to show. Production: only configured ones. Local
+ * development: all of them, so the sign-in pages can be reviewed before the
+ * keys exist (an unconfigured one just says it couldn't start).
+ */
+export function visibleSocialProviders(): SocialProviderId[] {
+  if (process.env.NODE_ENV === "production") return enabledSocialProviders();
+  return Object.keys(SOCIAL_PROVIDERS) as SocialProviderId[];
+}
+
 function socialProvidersConfig() {
   const on = enabledSocialProviders();
   const cfg = (p: SocialProviderId) => ({

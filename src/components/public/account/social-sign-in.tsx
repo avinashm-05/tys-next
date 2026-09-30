@@ -73,26 +73,30 @@ export function SocialSignIn({
     setBusy(null);
   }
 
+  // Sits BELOW the email form (owner's call, 2026-09-30): email first,
+  // then "or continue with" and the provider buttons.
   return (
     <div className="flex flex-col gap-3">
-      {providers.map((p) => (
-        <button
-          key={p}
-          type="button"
-          onClick={() => go(p)}
-          disabled={busy !== null}
-          className="flex w-full items-center justify-center gap-3 rounded-full border border-brand-light bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:border-ink/30 hover:bg-[#F7F9FC] disabled:opacity-60"
-        >
-          {p === "google" ? <GoogleMark /> : <MicrosoftMark />}
-          {busy === p ? "Redirecting…" : `Continue with ${LABEL[p]}`}
-        </button>
-      ))}
-      {error && <p className="m-0 text-sm text-red-600">{error}</p>}
-      <div className="my-1 flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-ink-muted">
-        <span className="h-px flex-1 bg-brand-light" />
-        or use email
-        <span className="h-px flex-1 bg-brand-light" />
+      <div className="my-1 flex items-center gap-3 text-[12px] font-semibold uppercase tracking-wider text-[#6B778A]">
+        <span className="h-px flex-1 bg-[#DCE3EC]" />
+        or continue with
+        <span className="h-px flex-1 bg-[#DCE3EC]" />
       </div>
+      <div className="flex flex-col gap-3">
+        {providers.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => go(p)}
+            disabled={busy !== null}
+            className="flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-white px-4 text-[15px] font-semibold text-ink ring-[1.5px] ring-inset ring-[#AEBBCD] transition hover:bg-[#F5F8FC] hover:ring-[#7F8FA6] disabled:opacity-60"
+          >
+            {p === "google" ? <GoogleMark /> : <MicrosoftMark />}
+            {busy === p ? "Redirecting…" : `Continue with ${LABEL[p]}`}
+          </button>
+        ))}
+      </div>
+      {error && <p className="m-0 text-sm text-red-600">{error}</p>}
     </div>
   );
 }

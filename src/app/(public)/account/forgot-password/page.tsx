@@ -7,6 +7,7 @@ export const metadata: Metadata = { title: "Forgot password | TYS Global Logisti
 export default function AccountForgotPasswordPage() {
   return (
     <AccountShell
+      perks={false}
       title="Forgot your password?"
       subtitle="We'll email you a link to set a new one."
     >

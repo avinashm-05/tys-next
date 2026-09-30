@@ -14,7 +14,7 @@ export default async function AccountResetPasswordPage({
 }) {
   const { token } = await searchParams;
   return (
-    <AccountShell title="Set a new password">
+    <AccountShell title="Set a new" accent="password." perks={false}>
       <StripUrlQuery />
       <ResetPasswordForm token={token ?? ""} />
     </AccountShell>

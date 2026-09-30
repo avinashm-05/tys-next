@@ -1,16 +1,10 @@
 import type { Icon } from "@phosphor-icons/react";
 
 /**
- * The portal's page container, matching the reference hub's arrangement: a
- * white card with a solid icon badge hanging off its top-left corner, the
- * page title beside it, and an optional action on the right.
- *
- * The badge is deliberately pulled outside the card (negative margin + the
- * card's own top padding making room for it) rather than sitting inside —
- * that overhang is the whole visual signature of the reference layout.
- *
- * Colours are TYS's, not the reference's: it uses magenta/purple, which is
- * that company's brand, not a layout decision worth copying.
+ * The portal's page container (2026-09-30 redesign): the quote page's white
+ * card with its blue-tinted edge and lift, overlapping the dark header band.
+ * The page title now lives in that band (portal-header.tsx), so the card
+ * carries only a small section label and an optional action.
  */
 export function PortalCard({
   icon: IconCmp,
@@ -24,12 +18,14 @@ export function PortalCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative mt-7 rounded-2xl border border-brand-light bg-white px-5 pt-8 pb-6 md:px-7">
-      <div className="absolute -top-7 left-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand shadow-[0_8px_20px_rgba(27,88,214,0.28)] md:left-7">
-        <IconCmp size={30} weight="fill" className="text-white" />
-      </div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 pl-20 md:pl-[4.75rem]">
-        <h1 className="text-xl font-bold text-ink md:text-2xl">{title}</h1>
+    <div className="rounded-[28px] bg-white p-4 shadow-[0_0_0_1px_rgba(3,100,255,0.14),0_40px_80px_-36px_rgba(3,100,255,0.55)] sm:p-6 md:p-8">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2.5 text-[18px] font-bold tracking-[-0.01em] text-ink">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E8F0FF] text-brand">
+            <IconCmp size={19} weight="fill" />
+          </span>
+          {title}
+        </h2>
         {action}
       </div>
       {children}

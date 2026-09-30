@@ -14,6 +14,7 @@ export default async function VerifyEmailPage() {
   if (isCustomerSession(session) && session?.user.emailVerified) redirect("/account");
   return (
     <AccountShell
+      perks={false}
       title="Verify your email"
       subtitle="We sent a verification link when you registered. The portal unlocks once it's clicked."
     >
