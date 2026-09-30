@@ -16,7 +16,9 @@ type Errors = Record<string, string>;
 async function post(path: string, body: Record<string, unknown>): Promise<Response> {
   return fetch(path, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    // Marks the customer sign-in forms, so staff accounts are refused
+    // here (see api/auth route) instead of landing on a 404.
+    headers: { "Content-Type": "application/json", Accept: "application/json", "X-TYS-Portal": "customer" },
     body: JSON.stringify(body),
   });
 }

@@ -80,6 +80,22 @@ export async function POST(req: NextRequest) {
     const account = identifier ? `${byUsername ? "username:" : ""}${identifier}` : "(empty)";
     const field = byEmail ? "email" : "username";
 
+    // Customer sign-in forms (header X-TYS-Portal: customer) never sign
+    // in STAFF accounts: staff use /login. Same generic answer as a wrong
+    // password, so it reveals nothing about which accounts are staff.
+    if (req.headers.get("x-tys-portal") === "customer" && identifier) {
+      const staff = await db.user.findFirst({
+        where: byUsername ? { username: identifier } : { email: identifier },
+        select: { role: true },
+      });
+      if (staff && isAdminRole(staff.role)) {
+        return Response.json(
+          { message: "Invalid email or password", code: "INVALID_EMAIL_OR_PASSWORD" },
+          { status: 401 },
+        );
+      }
+    }
+
     // Layer 3 check first: is this account locked right now?
     const lock = await rateLimitPeek(`login.account:${account}`, ACCOUNT_FAILS, ACCOUNT_WINDOW);
     if (!lock.allowed) {
