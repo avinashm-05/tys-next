@@ -23,6 +23,8 @@ export type NotesSectionHandle = {
   /** Posts whatever's currently sitting in the draft box, if anything — so
    *  the page's main Save button can't silently drop an unposted comment. */
   flushDraft: () => Promise<void>;
+  /** Re-fetch, e.g. after a save logged a status-email note server-side. */
+  reload: () => void;
 };
 
 // Backed by the real shipment_notes table (POST/DELETE
@@ -37,6 +39,8 @@ export const NotesSection = forwardRef<NotesSectionHandle, { shipmentId: number 
     const [draft, setDraft] = useState("");
     const [posting, setPosting] = useState(false);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+
+    const [reloadKey, setReloadKey] = useState(0);
 
     useEffect(() => {
       let cancelled = false;
@@ -53,7 +57,7 @@ export const NotesSection = forwardRef<NotesSectionHandle, { shipmentId: number 
       return () => {
         cancelled = true;
       };
-    }, [shipmentId]);
+    }, [shipmentId, reloadKey]);
 
     async function postDraft() {
       const comment = draft.trim();
@@ -73,7 +77,7 @@ export const NotesSection = forwardRef<NotesSectionHandle, { shipmentId: number 
       }
     }
 
-    useImperativeHandle(ref, () => ({ flushDraft: postDraft }));
+    useImperativeHandle(ref, () => ({ flushDraft: postDraft, reload: () => setReloadKey((k) => k + 1) }));
 
     async function removeNote(id: number) {
       setDeletingId(id);

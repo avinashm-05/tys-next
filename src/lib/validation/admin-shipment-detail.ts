@@ -54,6 +54,9 @@ export const adminShipmentDocumentInput = z.object({
 
 export const adminShipmentDetailInput = z.object({
   status: z.enum(["new_request", "ready_for_pickup", "in_transit", "delivered", "on_hold", "cancelled"]),
+  // "Email the recipient about this status change" (2026-09-30). Off unless
+  // staff tick it; only acts when the status actually changed.
+  notifyRecipient: z.boolean().optional().default(false),
   allClear: z.enum(["ready", "not_ready"]),
   packageType: z.enum(["package", "document", "pallet"]),
   managedBy: z.string().max(255).nullish(),

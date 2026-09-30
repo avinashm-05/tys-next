@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { adminApi, ApiError } from "@/lib/admin-api";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DetailTabs,
   DetailTabsContent,
@@ -32,6 +33,12 @@ export function ShipmentEditClient({ initial }: { initial: ShipmentDetail }) {
   const [shipment, setShipment] = useState(initial);
   const [tab, setTab] = useState("customer");
   const [saving, setSaving] = useState(false);
+  // Status as last saved, so the "Email the recipient" option only appears
+  // when this save would actually change it.
+  const [savedStatus, setSavedStatus] = useState(initial.status);
+  const [notifyRecipient, setNotifyRecipient] = useState(false);
+  const statusChanged = shipment.status !== savedStatus;
+  const recipientEmail = shipment.recipient.email?.trim() || null;
   const notesRef = useRef<NotesSectionHandle>(null);
 
   const pendingScrollY = useRef<number | null>(null);
@@ -50,6 +57,7 @@ export function ShipmentEditClient({ initial }: { initial: ShipmentDetail }) {
     setSaving(true);
     const payload = {
       status: shipment.status,
+      notifyRecipient: statusChanged && notifyRecipient && !!recipientEmail,
       allClear: shipment.allClear,
       packageType: shipment.packageType,
       managedBy: shipment.managedBy,
@@ -87,15 +95,24 @@ export function ShipmentEditClient({ initial }: { initial: ShipmentDetail }) {
       })),
     };
     try {
-      const [updated] = await Promise.all([
-        adminApi<ShipmentDetail>(`/api/admin/shipments/${shipment.id}`, {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        }),
+      const [{ recipientEmail: emailResult, ...updated }] = await Promise.all([
+        adminApi<ShipmentDetail & { recipientEmail: { sentTo: string } | { error: string } | null }>(
+          `/api/admin/shipments/${shipment.id}`,
+          { method: "PATCH", body: JSON.stringify(payload) },
+        ),
         notesRef.current?.flushDraft(),
       ]);
       setShipment(updated);
-      toast.success("Shipment saved.");
+      setSavedStatus(updated.status);
+      setNotifyRecipient(false);
+      if (emailResult && "sentTo" in emailResult) {
+        toast.success(`Shipment saved. Status email sent to ${emailResult.sentTo}.`);
+        notesRef.current?.reload();
+      } else if (emailResult && "error" in emailResult) {
+        toast.warning(`Shipment saved, but ${emailResult.error.charAt(0).toLowerCase()}${emailResult.error.slice(1)}`);
+      } else {
+        toast.success("Shipment saved.");
+      }
       if (exitAfter) router.push("/admin/shipments");
       return true;
     } catch (e) {
@@ -149,7 +166,22 @@ export function ShipmentEditClient({ initial }: { initial: ShipmentDetail }) {
 
       <NotesSection ref={notesRef} shipmentId={shipment.id} />
 
-      <div className="sticky bottom-0 -mx-6 flex justify-end gap-2 border-t border-tys-mist bg-background/95 px-6 py-3 backdrop-blur">
+      <div className="sticky bottom-0 -mx-6 flex flex-wrap items-center justify-end gap-2 border-t border-tys-mist bg-background/95 px-6 py-3 backdrop-blur">
+        {statusChanged && (
+          <label
+            className={`mr-auto flex items-center gap-2 text-sm ${recipientEmail ? "" : "text-muted-foreground"}`}
+            title={recipientEmail ? undefined : "Add a recipient email on Customer Details first"}
+          >
+            <Checkbox
+              checked={notifyRecipient && !!recipientEmail}
+              disabled={!recipientEmail || saving}
+              onCheckedChange={(v) => setNotifyRecipient(v === true)}
+            />
+            {recipientEmail
+              ? `Email the recipient (${recipientEmail}) about this status change`
+              : "No recipient email to notify"}
+          </label>
+        )}
         <Button variant="outline" onClick={() => router.push("/admin/shipments")} disabled={saving}>
           Cancel
         </Button>

@@ -77,6 +77,7 @@ const GROUPS: { title: string; links: { href: string; label: string }[] }[] = [
     links: [
       { href: "/", label: "Home" },
       { href: "/about-us", label: "About us" },
+      { href: "/reviews", label: "Customer reviews" },
       { href: "/quotes", label: "Get a free quote" },
       { href: "/tracking", label: "Track a shipment" },
       { href: "/contact-us", label: "Contact us" },

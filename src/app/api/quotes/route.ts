@@ -10,6 +10,7 @@ import {
   type QuoteEmailData,
 } from "@/lib/mail";
 import { formatPackageTypes } from "@/lib/package-type";
+import { logQuoteEmail } from "@/lib/quote-email";
 import { decimal2 } from "@/lib/serialize";
 
 // Public port of QuoteController@store (10/min, same-origin) — the only public
@@ -266,7 +267,9 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
     // unhandled rejection. Errors are still logged exactly as before — see
     // the notes on each catch — just no longer on the request's critical
     // path.
-    sendQuoteConfirmationEmail(emailData).catch((err) => {
+    sendQuoteConfirmationEmail(emailData)
+      .then(({ subject }) => logQuoteEmail(full.id, null, "Automatic confirmation", emailData.to, subject))
+      .catch((err) => {
       // Never fail the quote on a mail outage — but DO say why. These used to
       // be bare `catch {}`, which meant a silently-failing mailer in
       // production was undiagnosable: no error, no log, nothing in hPanel's

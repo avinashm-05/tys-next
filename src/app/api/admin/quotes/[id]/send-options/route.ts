@@ -3,11 +3,10 @@ import { adminRoute } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ensureTrackingToken, trackingUrl } from "@/lib/email-tracking";
 import { sendQuoteOptionsEmail, type QuoteOptionsEmailData } from "@/lib/mail";
-import { formatPackageTypes } from "@/lib/package-type";
-import { decimal2 } from "@/lib/serialize";
 import { parseId } from "@/lib/list-query";
 import { HttpError, validationError } from "@/lib/validation/errors";
 import { QUOTE_DETAIL_INCLUDE } from "../../helpers";
+import { buildQuoteEmailBase, logQuoteEmail, quoteRecipient } from "@/lib/quote-email";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -38,63 +37,15 @@ export const POST = adminRoute<Ctx>(async (req, ctx, session) => {
 
   const data = sendOptionsInput.parse(await req.json());
 
-  const contact = quote.contacts[0];
-  const to = contact?.email ?? quote.email;
+  const to = quoteRecipient(quote);
   if (!to) {
     return validationError({ _: ["This quote has no contact email to send to."] });
   }
 
   const token = await ensureTrackingToken(quote.id); // R25: explicit, reused if present
-  const weightUnit = quote.packages[0]?.weightUnit ?? "";
 
   const emailData: QuoteOptionsEmailData = {
-    to,
-    contactName: contact?.name ?? quote.name ?? "",
-    customerName: quote.name ?? contact?.name ?? "",
-    customerEmail: quote.email ?? contact?.email ?? "",
-    mobileNumber:
-      quote.mobileNumber ??
-      [contact?.countryCode, contact?.phone].filter(Boolean).join(" "),
-    fromCountry: quote.fromCountry,
-    fromZip: quote.fromZip,
-    toCountry: quote.toCountry,
-    toZip: quote.toZip,
-    isResidence: quote.isResidence,
-    packageTypeLabel: formatPackageTypes(quote.packageType),
-    boxes: quote.packages
-      .filter((p) => p.packageType === "box" || p.packageType === "boxes")
-      .map((p) => ({
-        quantity: p.quantity,
-        weight: decimal2(p.weight),
-        weightUnit,
-        length: decimal2(p.length),
-        width: decimal2(p.width),
-        height: decimal2(p.height),
-        chargeableWeight: decimal2(p.chargeableWeight),
-      })),
-    televisions: quote.packages
-      .filter((p) => p.packageType === "television")
-      .map((p) => ({
-        brandName: p.brandName,
-        tvModel: p.tvModel,
-        quantity: p.quantity,
-        weight: decimal2(p.weight),
-        weightUnit,
-        length: decimal2(p.length),
-        width: decimal2(p.width),
-        height: decimal2(p.height),
-      })),
-    autos: quote.packages
-      .filter((p) => p.packageType === "auto")
-      .map((p) => ({
-        brandName: p.brandName,
-        carModel: p.carModel,
-        carYear: p.carYear, // string passthrough (R8)
-        quantity: p.quantity,
-      })),
-    totalChargeableWeight: decimal2(quote.totalChargeableWeight),
-    weightUnit,
-    trackingUrl: trackingUrl(token),
+    ...buildQuoteEmailBase(quote, to, trackingUrl(token)),
     options: data.rates.map((r) => ({
       serviceName: r.service_name,
       amount: r.total_charge.toFixed(2),
@@ -102,8 +53,9 @@ export const POST = adminRoute<Ctx>(async (req, ctx, session) => {
     })),
   };
 
+  let subject: string;
   try {
-    await sendQuoteOptionsEmail(emailData);
+    ({ subject } = await sendQuoteOptionsEmail(emailData));
   } catch {
     // sendMail already logged the failure.
     throw new HttpError(502, "The options email could not be sent. Try again.");
@@ -113,6 +65,13 @@ export const POST = adminRoute<Ctx>(async (req, ctx, session) => {
     where: { id: quote.id },
     data: { status: "quoted", updatedAt: new Date() },
   });
+  await logQuoteEmail(
+    quote.id,
+    session.user.id,
+    `${data.rates.length} rate option${data.rates.length === 1 ? "" : "s"} (${emailData.options.map((o) => `${o.serviceName} ${o.currency} ${o.amount}`).join("; ")})`,
+    to,
+    subject,
+  );
   console.info(
     `[audit] quote ${Number(quote.id)} sent ${data.rates.length} rate option(s) to ${to} (status → quoted) by user ${session.user.id}`,
   );

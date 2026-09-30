@@ -49,6 +49,7 @@ const STATIC_ROUTES: {
   // search before paying a company they haven't used before.
   { path: "/is-tys-global-logistics-legit", priority: 0.5, changeFrequency: "yearly" },
   { path: "/locations", priority: 0.5, changeFrequency: "monthly" },
+  { path: "/reviews", priority: 0.6, changeFrequency: "monthly" },
   { path: "/privacy-policy", priority: 0.2, changeFrequency: "yearly" },
   // Highest priority after the homepage: this is the landing page every paid
   // ad points at. It was missing from the sitemap entirely until 2026-08-21,

@@ -41,6 +41,7 @@ const RESOURCES = [
 // like baggage shipping and shipping rates, with almost no inbound links).
 const COMPANY = [
   { href: "/about-us", label: "About us" },
+  { href: "/reviews", label: "Customer reviews" },
   { href: "/carriers", label: "Our carriers" },
   { href: "/locations", label: "Locations" },
   { href: "/tracking", label: "Track a shipment" },

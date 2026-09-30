@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDeleteDialog } from "@/components/admin/confirm-delete-dialog";
+import { QUOTE_NOTES_REFRESH_EVENT } from "@/components/admin/quote-follow-up-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -247,6 +248,7 @@ export function FedExRatesPanel({
         });
         toast.success(`Sent to ${res.sentTo}.`);
       }
+      window.dispatchEvent(new Event(QUOTE_NOTES_REFRESH_EVENT));
       router.refresh();
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Couldn't send the quote.");

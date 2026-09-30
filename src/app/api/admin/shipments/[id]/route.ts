@@ -1,6 +1,8 @@
 import { adminRoute } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { parseId } from "@/lib/list-query";
+import { countryName } from "@/lib/countries";
+import { sendShipmentStatusEmail, shipmentStatusLabel } from "@/lib/mail";
 import { emptyStringsToNull } from "@/lib/validation/common";
 import { adminShipmentDetailInput } from "@/lib/validation/admin-shipment-detail";
 import { HttpError } from "@/lib/validation/errors";
@@ -173,6 +175,47 @@ export const PATCH = adminRoute<Ctx>(async (req, ctx, session) => {
 
   console.info(`[audit] shipment ${Number(existing.id)} detail edited by user ${session.user.id}`);
 
+  // Optional status email to the recipient. Runs after the save commits, and
+  // a mail failure never fails the save: it's reported back so the editor
+  // can say "saved, but the email didn't go out".
+  let recipientEmail: { sentTo: string } | { error: string } | null = null;
+  const to = data.recipient.email?.trim();
+  if (data.notifyRecipient && data.status !== existing.status) {
+    if (!to) {
+      recipientEmail = { error: "No recipient email on this shipment." };
+    } else {
+      const place = (city: string | null | undefined, country: string | null | undefined) =>
+        [city, countryName(country)].filter(Boolean).join(", ");
+      try {
+        const { subject } = await sendShipmentStatusEmail({
+          to,
+          recipientName: data.recipient.contactName ?? "",
+          senderName: data.sender.contactName ?? "",
+          fromPlace: place(data.sender.city, data.sender.country) || countryName(existing.fromCountry),
+          toPlace: place(data.recipient.city, data.recipient.country) || countryName(existing.toCountry),
+          trackingNumber: existing.trackingNumber,
+          status: data.status,
+        });
+        recipientEmail = { sentTo: to };
+        await db.shipmentNote
+          .create({
+            data: {
+              shipmentId: existing.id,
+              comment: `Email sent: status update (${shipmentStatusLabel(data.status)}) to ${to}. Subject: "${subject}"`,
+              createdById: BigInt(session.user.id),
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          })
+          .catch((err) => console.error("[mail] couldn't log shipment email", err instanceof Error ? err.message : err));
+        console.info(`[audit] shipment ${Number(existing.id)} status email (${data.status}) sent to ${to} by user ${session.user.id}`);
+      } catch {
+        // sendMail already logged the failure.
+        recipientEmail = { error: "The status email could not be sent." };
+      }
+    }
+  }
+
   const row = await db.shipment.findUnique({ where: { id: existing.id }, include: SHIPMENT_DETAIL_INCLUDE });
-  return Response.json(serializeShipmentDetail(row!));
+  return Response.json({ ...serializeShipmentDetail(row!), recipientEmail });
 });

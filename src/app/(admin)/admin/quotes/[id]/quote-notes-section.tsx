@@ -2,8 +2,9 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { toast } from "sonner";
-import { PaperPlaneTiltIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
+import { EnvelopeSimpleIcon, PaperPlaneTiltIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import { adminApi, ApiError } from "@/lib/admin-api";
+import { QUOTE_NOTES_REFRESH_EVENT } from "@/components/admin/quote-follow-up-button";
 import { LocalDateTime } from "@/components/shared/local-date-time";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,18 +42,24 @@ export const QuoteNotesSection = forwardRef<QuoteNotesSectionHandle, { quoteId: 
 
     useEffect(() => {
       let cancelled = false;
-      adminApi<NoteRow[]>(`/api/admin/quotes/${quoteId}/notes`)
-        .then((rows) => {
-          if (!cancelled) setNotes(rows);
-        })
-        .catch((e) => {
-          if (!cancelled) toast.error(e instanceof ApiError ? e.message : "Couldn't load notes.");
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
+      const load = () =>
+        adminApi<NoteRow[]>(`/api/admin/quotes/${quoteId}/notes`)
+          .then((rows) => {
+            if (!cancelled) setNotes(rows);
+          })
+          .catch((e) => {
+            if (!cancelled) toast.error(e instanceof ApiError ? e.message : "Couldn't load notes.");
+          })
+          .finally(() => {
+            if (!cancelled) setLoading(false);
+          });
+      load();
+      // Email sends (quote, options, follow-up) log a note server-side;
+      // reload so it shows up without a page refresh.
+      window.addEventListener(QUOTE_NOTES_REFRESH_EVENT, load);
       return () => {
         cancelled = true;
+        window.removeEventListener(QUOTE_NOTES_REFRESH_EVENT, load);
       };
     }, [quoteId]);
 
@@ -151,10 +158,17 @@ export const QuoteNotesSection = forwardRef<QuoteNotesSectionHandle, { quoteId: 
                     {note.createdAt ? <LocalDateTime iso={note.createdAt} /> : "—"}
                   </TableCell>
                   <TableCell className="align-top text-sm whitespace-pre-wrap">
-                    {note.comment}
-                    {note.createdByName && (
-                      <span className="mt-1 block text-xs text-muted-foreground">— {note.createdByName}</span>
+                    {note.comment.startsWith("Email sent:") ? (
+                      <span className="flex items-start gap-2">
+                        <EnvelopeSimpleIcon size={16} className="mt-0.5 shrink-0 text-tys-blue" />
+                        <span>{note.comment}</span>
+                      </span>
+                    ) : (
+                      note.comment
                     )}
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {note.createdByName ? `By ${note.createdByName}` : note.comment.startsWith("Email sent:") ? "Sent automatically" : null}
+                    </span>
                   </TableCell>
                   <TableCell className="text-right align-top">
                     <Button
