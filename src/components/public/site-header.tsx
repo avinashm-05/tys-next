@@ -35,13 +35,12 @@ import {
   XIcon,
 } from "@phosphor-icons/react";
 
-// Book Shipment stays out of the marketing nav on purpose: scheduling lives
-// inside the account portal (its sidebar's primary action), matching the
-// reference hub rather than exposing a booking form to logged-out visitors.
+// Book Shipment isn't a nav DROPDOWN item: it's the "Book now" action
+// next to the quote button (see below), which leads into the portal.
 //
-// Account entry point (hidden 2026-08-11, launched 2026-09-30): a quiet
-// "Sign in" link next to the phone number, and a third button in the mobile
-// sheet. /account sends signed-out visitors to the login page and signed-in
+// Account entry points (hidden 2026-08-11, launched 2026-09-30): "Book now"
+// (SFL-style: log in / sign up, then straight into booking) plus a quiet
+// "Sign in" link, in the bar and in the mobile sheet. /account sends signed-out visitors to the login page and signed-in
 // customers straight to their shipments.
 //
 // 2026-09-29 redesign, modelled on Attio's navigation (user's request):
@@ -466,12 +465,25 @@ export function SiteHeader() {
             <PhoneIcon size={15} />
             +1 (404) 793-8759
           </a>
+          {/* Icon-only until 2xl: at 1280px the full nav + phone + Book now
+              + quote leave no room, and the flag was pushed off the edge. */}
           <Link
             href="/account"
-            className={`btn hidden text-[15px] lg:inline-flex ${dark ? "text-white/80 hover:bg-white/10 hover:text-white" : "text-ink/80 hover:bg-[#F2F3F5] hover:text-ink"}`}
+            title="Sign in"
+            aria-label="Sign in"
+            className={`btn hidden text-[15px] lg:inline-flex max-2xl:px-2.5 ${dark ? "text-white/80 hover:bg-white/10 hover:text-white" : "text-ink/80 hover:bg-[#F2F3F5] hover:text-ink"}`}
           >
-            <UserCircleIcon size={17} />
-            Sign in
+            <UserCircleIcon size={19} />
+            <span className="hidden 2xl:inline">Sign in</span>
+          </Link>
+          {/* "Book now", like SFL's: /book-shipment is the log-in / sign-up
+              door, and a signed-in customer goes straight into Schedule
+              Shipment inside the portal. */}
+          <Link
+            href="/book-shipment"
+            className={`btn hidden border md:inline-flex ${dark ? "border-white/25 text-white hover:bg-white/10" : "border-[#D9DEE7] bg-white text-ink hover:bg-[#F2F3F5]"}`}
+          >
+            Book now
           </Link>
           <Link href={quoteHref(pathname)} className="btn btn-primary hidden sm:inline-flex">
             Get a free quote
@@ -596,6 +608,14 @@ export function SiteHeader() {
             ) : (
               <ArrowRightIcon size={15} className="transition-transform duration-300 group-hover:translate-x-0.5" />
             )}
+          </Link>
+          <Link
+            href="/book-shipment"
+            tabIndex={mobileOpen ? 0 : -1}
+            onClick={() => navigateFromMenu("/book-shipment")}
+            className="btn btn-secondary btn-lg w-full"
+          >
+            Book now
           </Link>
           <a href="tel:+14047938759" tabIndex={mobileOpen ? 0 : -1} className="btn btn-secondary btn-lg w-full">
             <PhoneIcon size={15} /> +1 (404) 793-8759
