@@ -94,6 +94,9 @@ export const auth = betterAuth({
     ...(appUrl().startsWith("http://localhost") ? ["http://localhost:3001"] : []),
   ].filter(Boolean),
   socialProviders: socialProvidersConfig(),
+  // OAuth errors land on the CUSTOMER login page, never Better Auth's
+  // generic error page on the auth base URL (the admin host).
+  onAPIError: { errorURL: `${appUrl()}/account/login?social_error=1` },
   emailAndPassword: {
     enabled: true,
     // C1: customer self-registration is OPEN — the database hook below forces
@@ -429,8 +432,9 @@ export async function requireCustomerPage(): Promise<AppSession> {
   const session = await getSession();
   if (!session?.user) redirect("/account/login");
   // Staff don't use the customer portal (they'd book shipments as
-  // themselves); send them to admin instead.
-  if (isAdmin(session)) redirect("/admin");
+  // themselves). A plain 404, never a redirect: nothing on the customer
+  // side may point at or reveal the staff area.
+  if (isAdmin(session)) notFound();
   if (!session.user.emailVerified) redirect("/account/verify-email");
   return session;
 }

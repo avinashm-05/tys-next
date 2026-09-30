@@ -106,6 +106,10 @@ const crossOriginReadableHeaders = [{ key: "Access-Control-Allow-Origin", value:
 const noStoreHeaders = [
   { key: "Cache-Control", value: "private, no-store, no-cache, must-revalidate" },
   { key: "Vary", value: "Cookie" },
+  // None of these (staff pages, sign-in pages, account area, APIs) belong in
+  // search results. A header, not robots.txt: listing staff paths in
+  // robots.txt would advertise them.
+  { key: "X-Robots-Tag", value: "noindex, nofollow" },
 ];
 
 const nextConfig: NextConfig = {
