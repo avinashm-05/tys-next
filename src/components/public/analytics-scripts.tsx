@@ -1,16 +1,39 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Script from "next/script";
-import { NOT_LOCAL_HOST } from "@/lib/tracking-guard";
+import { NOT_LOCAL_HOST, NO_TRACKING_PATH } from "@/lib/tracking-guard";
 
 // Site-wide analytics — GA4, Google Tag Manager, and Microsoft Clarity.
 // Each is independently env-gated and no-ops (renders nothing) when its ID
 // isn't set, same pattern as google-ads-conversion.tsx. Public pages only —
 // rendered from (public)/layout.tsx, never loaded on /admin.
+//
+// Never on NO_TRACKING_PATH (account area, sign-in and password pages;
+// privacy audit 2026-09-30). A visit that STARTS on one of those never loads
+// the tags at all. A visit that starts on a public page and then navigates
+// in-app to /account keeps the already-loaded scripts, so GA4/Ads hits are
+// switched off with Google's documented `window['ga-disable-<ID>']` flag
+// while there, and the account area is wrapped in data-clarity-mask so
+// Clarity records no text from it.
 export function AnalyticsScripts() {
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID;
   const adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
+  const pathname = usePathname() ?? "";
+  const blocked = NO_TRACKING_PATH.test(pathname);
+  // Once the tags have been rendered, keep them mounted (unmounting a
+  // next/script doesn't unload it; re-mounting could run it twice).
+  const [loaded, setLoaded] = useState(!blocked);
+  if (!blocked && !loaded) setLoaded(true);
+
+  useEffect(() => {
+    const w = window as unknown as Record<string, unknown>;
+    for (const id of [gaId, adsId]) if (id) w[`ga-disable-${id}`] = blocked;
+  }, [blocked, gaId, adsId]);
+
+  if (blocked && !loaded) return null;
 
   return (
     <>

@@ -11,6 +11,7 @@ import {
 } from "@/lib/mail";
 import { formatPackageTypes } from "@/lib/package-type";
 import { logQuoteEmail } from "@/lib/quote-email";
+import { maskEmailsIn } from "@/lib/mask";
 import { decimal2 } from "@/lib/serialize";
 
 // Public port of QuoteController@store (10/min, same-origin) — the only public
@@ -276,7 +277,7 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
       // Runtime logs, and the customer still saw a success page.
       console.error(
         `[quote ${Number(full.id)}] customer confirmation email FAILED:`,
-        err instanceof Error ? `${err.name}: ${err.message}` : err,
+        err instanceof Error ? maskEmailsIn(`${err.name}: ${err.message}`) : "(non-Error thrown)",
       );
     });
     sendAdminQuoteNotification({
@@ -303,7 +304,7 @@ export const POST = publicApiRoute({ name: "quotes.store", limit: 10 }, async (r
       // Best-effort, but logged — see the note on the confirmation catch above.
       console.error(
         `[quote ${Number(full.id)}] admin notification email FAILED:`,
-        err instanceof Error ? `${err.name}: ${err.message}` : err,
+        err instanceof Error ? maskEmailsIn(`${err.name}: ${err.message}`) : "(non-Error thrown)",
       );
     });
   }

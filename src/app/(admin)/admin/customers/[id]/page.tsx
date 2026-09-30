@@ -43,7 +43,12 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   await requireAdminPage();
   const id = parseId((await params).id);
   const customer =
-    id !== null ? await db.user.findFirst({ where: { id, role: "user" } }) : null;
+    id !== null ? await db.user.findFirst({
+          where: { id, role: "user" },
+          // Only what the page shows (privacy audit 2026-09-30): never load
+          // the legacy password hash / remember token into the render.
+          select: { name: true, email: true, emailVerified: true, phone: true, createdAt: true },
+        }) : null;
   if (!customer) notFound();
 
   // Same join rule as the customer's own /account dashboard: quotes are

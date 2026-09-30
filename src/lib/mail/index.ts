@@ -1,5 +1,6 @@
 import nodemailer, { type Transporter } from "nodemailer";
 import { countryName } from "@/lib/countries";
+import { maskEmail, maskEmailsIn } from "@/lib/mask";
 
 /**
  * Mailer. Password-reset (A1) + quote-confirmation (A4.3). Production sends
@@ -255,7 +256,16 @@ export async function sendMail(opts: {
   } catch (error) {
     // Logged in ALL environments — this is the only trace of a swallowed
     // reset-email failure (see sendPasswordResetEmail).
-    console.error("[mail] send failed", { to: opts.to, error });
+    // Masked (privacy audit 2026-09-30): no full customer address, and not
+    // the raw error object, whose envelope/response can repeat it.
+    const e = error as { code?: string; responseCode?: number; message?: string };
+    console.error("[mail] send failed", {
+      to: maskEmail(opts.to),
+      subject: opts.subject,
+      code: e?.code,
+      responseCode: e?.responseCode,
+      message: e?.message ? maskEmailsIn(e.message) : String(error),
+    });
     throw error;
   }
 }

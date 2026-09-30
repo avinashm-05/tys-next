@@ -1,4 +1,5 @@
 import { adminRoute } from "@/lib/auth";
+import { maskEmail } from "@/lib/mask";
 import { db } from "@/lib/db";
 import { parseId } from "@/lib/list-query";
 import { countryName } from "@/lib/countries";
@@ -208,7 +209,7 @@ export const PATCH = adminRoute<Ctx>(async (req, ctx, session) => {
             },
           })
           .catch((err) => console.error("[mail] couldn't log shipment email", err instanceof Error ? err.message : err));
-        console.info(`[audit] shipment ${Number(existing.id)} status email (${data.status}) sent to ${to} by user ${session.user.id}`);
+        console.info(`[audit] shipment ${Number(existing.id)} status email (${data.status}) sent to ${maskEmail(to)} by user ${session.user.id}`);
       } catch {
         // sendMail already logged the failure.
         recipientEmail = { error: "The status email could not be sent." };

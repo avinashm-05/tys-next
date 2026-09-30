@@ -6,3 +6,9 @@
 // (user's request, 2026-09-29).
 export const NOT_LOCAL_HOST =
   "!/^(localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0|\\[::1\\])$|\\.(localhost|test|local)$/.test(location.hostname)";
+
+// Paths where NO analytics may run (2026-09-30 privacy audit): staff pages,
+// sign-in/password pages (reset links carry a one-time token in the URL) and
+// the customer account area (shows addresses, phones, shipments). GTM's own
+// guard in app/layout.tsx uses the same list; keep the two in sync.
+export const NO_TRACKING_PATH = /^\/(admin|login|forgot-password|reset-password|account)(\/|$)/;

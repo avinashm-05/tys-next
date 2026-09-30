@@ -30,8 +30,7 @@ const EMAIL_SENDING_LIMITS: Array<[suffix: string, name: string, limit: number]>
 //  2. Per account + IP: 5 failed sign-ins per minute (Laravel's old limiter).
 //  3. Per account, from ANY IP: 10 failed sign-ins in 15 minutes locks that
 //     account for the rest of the window. When an ADMIN account locks,
-//     staff get an email alert. Both sign-in paths (email and username)
-//     share the same account key, so switching paths doesn't reset it.
+//     staff get an email alert. Keyed on the identifier as typed (see below).
 const ALL_AUTH_POSTS_PER_MIN = 30;
 const PAIR_FAILS = 5;
 const PAIR_WINDOW = 60;
@@ -71,9 +70,13 @@ export async function POST(req: NextRequest) {
     } catch {
       // non-JSON body — Better Auth will reject it below
     }
-    // One account key for both paths: resolve a username to its email when
-    // the account exists, so email and username attempts count together.
-    const account = await accountKey(identifier, byUsername);
+    // Keyed on the identifier EXACTLY as typed (privacy audit 2026-09-30).
+    // It used to resolve a username to its email so both paths shared one
+    // counter, but that made the lock an oracle: lock "jsmith" by username,
+    // then try an email and see whether it's locked too, and you learn the
+    // two belong to the same account. Separate counters give an attacker at
+    // most 10 guesses per 15 minutes per spelling, still negligible.
+    const account = identifier ? `${byUsername ? "username:" : ""}${identifier}` : "(empty)";
     const field = byEmail ? "email" : "username";
 
     // Layer 3 check first: is this account locked right now?
@@ -115,17 +118,10 @@ export async function POST(req: NextRequest) {
   return handlers.POST(req);
 }
 
-/** Lower-cased email for the account behind this identifier, or the identifier itself. */
-async function accountKey(identifier: string, isUsername: boolean): Promise<string> {
-  if (!identifier) return "(empty)";
-  if (!isUsername) return identifier;
-  const user = await db.user.findFirst({ where: { username: identifier }, select: { email: true } });
-  return user?.email?.toLowerCase() ?? `username:${identifier}`;
-}
-
 async function alertIfAdmin(account: string, ip: string) {
-  if (!account.includes("@")) return;
-  const user = await db.user.findFirst({ where: { email: account }, select: { role: true } });
+  const user = account.startsWith("username:")
+    ? await db.user.findFirst({ where: { username: account.slice("username:".length) }, select: { role: true } })
+    : await db.user.findFirst({ where: { email: account }, select: { role: true } });
   if (!user || !ADMIN_ROLES.includes(user.role as (typeof ADMIN_ROLES)[number])) return;
   await sendAdminSecurityAlert({ account, ip, failures: ACCOUNT_FAILS, lockMinutes: ACCOUNT_WINDOW / 60 });
 }

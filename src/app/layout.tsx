@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
-import { NOT_LOCAL_HOST } from "@/lib/tracking-guard";
+import { NOT_LOCAL_HOST, NO_TRACKING_PATH } from "@/lib/tracking-guard";
 import { SITE_URL } from "@/lib/seo";
 
 // Root layout is intentionally minimal — it owns only <html>/<body> + fonts.
@@ -38,7 +38,7 @@ const siteUrl = SITE_URL;
 // location.pathname at execution time. Same effect, no rendering cost.
 const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
 const GTM_SNIPPET = gtmId
-  ? `if(!/^\\/(admin|login|forgot-password|reset-password|account)(\\/|$)/.test(location.pathname) && ${NOT_LOCAL_HOST}){(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  ? `if(!${NO_TRACKING_PATH}.test(location.pathname) && ${NOT_LOCAL_HOST}){(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);

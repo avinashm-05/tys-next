@@ -146,6 +146,11 @@ const nextConfig: NextConfig = {
       { source: "/api/auth/:path*", headers: noStoreHeaders },
       { source: "/api/admin/:path*", headers: noStoreHeaders },
       { source: "/account/:path*", headers: noStoreHeaders },
+      { source: "/account", headers: noStoreHeaders },
+      // Session-dependent (privacy audit 2026-09-30): renders differently
+      // for a signed-in customer; account APIs are session-scoped.
+      { source: "/book-shipment", headers: noStoreHeaders },
+      { source: "/api/account/:path*", headers: noStoreHeaders },
       { source: "/frontend/:path*", headers: staticAssetCacheHeaders },
       { source: "/_next/static/:path*", headers: crossOriginReadableHeaders },
       { source: "/frontend/:path*", headers: crossOriginReadableHeaders },

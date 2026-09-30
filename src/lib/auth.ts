@@ -180,6 +180,10 @@ export const auth = betterAuth({
   // alongside the existing email path, and owns the username/displayUsername
   // columns. nextCookies() stays last — it has to observe the other plugins'
   // Set-Cookie headers.
+  // Privacy audit 2026-09-30: nothing in the app calls this, and usernames
+  // are derived from real names, so it let anyone confirm "does John Smith
+  // have an account?". 404 it.
+  disabledPaths: ["/is-username-available"],
   plugins: [username(), nextCookies()],
 });
 

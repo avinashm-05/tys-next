@@ -91,16 +91,7 @@ export function QuoteNextStep({ quote }: { quote: Quote }) {
       <Banner icon={CheckCircleIcon} tone="emerald" title="Accepted — ready to book.">
         <Button asChild className="bg-tys-indigo text-white hover:bg-tys-indigo/90">
           <Link
-            href={buildConvertToShipmentHref({
-              id: quote.id,
-              fromCountry: quote.fromCountry,
-              fromZip: quote.fromZip,
-              toCountry: quote.toCountry,
-              toZip: quote.toZip,
-              contactName: quote.contactName,
-              contactEmail: quote.contactEmail,
-              contactPhone: quote.contactPhone,
-            })}
+            href={buildConvertToShipmentHref({ id: quote.id })}
           >
             Convert to Shipment
             <ArrowRightIcon size={16} weight="bold" />

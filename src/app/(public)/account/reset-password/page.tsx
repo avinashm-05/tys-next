@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AccountShell } from "@/components/public/account/shell";
 import { ResetPasswordForm } from "@/components/public/account/auth-forms";
+import { StripUrlQuery } from "@/components/shared/strip-url-query";
 
 export const metadata: Metadata = { title: "Reset password | TYS Global Logistics" };
 
@@ -14,6 +15,7 @@ export default async function AccountResetPasswordPage({
   const { token } = await searchParams;
   return (
     <AccountShell title="Set a new password">
+      <StripUrlQuery />
       <ResetPasswordForm token={token ?? ""} />
     </AccountShell>
   );

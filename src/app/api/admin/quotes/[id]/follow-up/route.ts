@@ -1,4 +1,5 @@
 import { adminRoute } from "@/lib/auth";
+import { maskEmail } from "@/lib/mask";
 import { db } from "@/lib/db";
 import { ensureTrackingToken, trackingUrl } from "@/lib/email-tracking";
 import { sendQuoteFollowUpEmail } from "@/lib/mail";
@@ -63,7 +64,7 @@ export const POST = adminRoute<Ctx>(async (_req, ctx, session) => {
   }
 
   await logQuoteEmail(quote.id, session.user.id, "Follow-up", to, subject);
-  console.info(`[audit] quote ${Number(quote.id)} follow-up sent to ${to} by user ${session.user.id}`);
+  console.info(`[audit] quote ${Number(quote.id)} follow-up sent to ${maskEmail(to)} by user ${session.user.id}`);
 
   return Response.json({ success: true, sentTo: to });
 });

@@ -38,7 +38,9 @@ const TOPICS: Topic[] = [
         <ul>
           <li>
             Contact details you provide, such as your name, email address, and phone
-            number.
+            number. When you fill in the first step of our quote form (name, email and
+            phone), we save those details even if you don&apos;t finish the form, so our
+            team can follow up and help you complete your quote.
           </li>
           <li>
             Shipment details, such as origin and destination, package information, and

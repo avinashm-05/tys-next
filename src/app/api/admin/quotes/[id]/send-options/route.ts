@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { maskEmail } from "@/lib/mask";
 import { adminRoute } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ensureTrackingToken, trackingUrl } from "@/lib/email-tracking";
@@ -73,7 +74,7 @@ export const POST = adminRoute<Ctx>(async (req, ctx, session) => {
     subject,
   );
   console.info(
-    `[audit] quote ${Number(quote.id)} sent ${data.rates.length} rate option(s) to ${to} (status → quoted) by user ${session.user.id}`,
+    `[audit] quote ${Number(quote.id)} sent ${data.rates.length} rate option(s) to ${maskEmail(to)} (status → quoted) by user ${session.user.id}`,
   );
 
   return Response.json({ success: true, sentTo: to, count: data.rates.length });

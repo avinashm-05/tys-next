@@ -1,4 +1,5 @@
 import { adminRoute } from "@/lib/auth";
+import { maskEmail } from "@/lib/mask";
 import { db } from "@/lib/db";
 import { ensureTrackingToken, trackingUrl } from "@/lib/email-tracking";
 import { sendQuoteConfirmationEmail } from "@/lib/mail";
@@ -52,7 +53,7 @@ export const POST = adminRoute<Ctx>(async (_req, ctx, session) => {
   });
   await logQuoteEmail(quote.id, session.user.id, `Quote (${currency} ${price})`, to, subject);
   console.info(
-    `[audit] quote ${Number(quote.id)} sent to ${to} (status → quoted) by user ${session.user.id}`,
+    `[audit] quote ${Number(quote.id)} sent to ${maskEmail(to)} (status → quoted) by user ${session.user.id}`,
   );
 
   return Response.json({ success: true, sentTo: to });

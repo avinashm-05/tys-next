@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { StripUrlQuery } from "@/components/shared/strip-url-query";
 import { ResetPasswordForm } from "./reset-password-form";
 
 export const metadata: Metadata = { title: "Set new password — TYS Global Logistics" };
@@ -38,5 +39,10 @@ export default async function ResetPasswordPage({
     );
   }
 
-  return <ResetPasswordForm token={token} />;
+  return (
+    <>
+      <StripUrlQuery />
+      <ResetPasswordForm token={token} />
+    </>
+  );
 }
