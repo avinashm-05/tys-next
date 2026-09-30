@@ -8,6 +8,7 @@ import { TrustedReviewsSection } from "@/components/public/trusted-reviews-secti
 import { FlagIcon } from "@/components/public/flag-icon";
 import type { DestinationCountry } from "@/components/public/destination-pill-grid";
 import { CardGrid, CtaBand, PAD, PageBody, Rail, Section, SectionHead, StatRow } from "@/components/public/page-kit";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "International Shipping Destinations | TYS Global Logistics",
@@ -89,6 +90,12 @@ const flag = (code: string) => <FlagIcon code={code} className="h-4 w-6" />;
 export default function DestinationsPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Destinations", path: "/destinations" },
+        ]}
+      />
       <PageHeroBand
         title="International shipping to"
         accent="200+ countries"

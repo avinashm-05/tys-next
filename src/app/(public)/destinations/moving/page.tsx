@@ -18,6 +18,7 @@ import {
   SplitSection,
   Steps,
 } from "@/components/public/page-kit";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Worldwide Moving Services from the US | TYS Global Logistics",
@@ -38,6 +39,13 @@ const MOVING_DESTINATIONS: DestinationCountry[] = [
 export default function WorldwideMovingPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Destinations", path: "/destinations" },
+          { name: "Worldwide Moving", path: "/destinations/moving" },
+        ]}
+      />
       <PageHeroBand
         title="Worldwide moving,"
         accent="door to door"

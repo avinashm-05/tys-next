@@ -22,6 +22,7 @@ import {
   SuitcaseRollingIcon,
   TruckIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Shipping, Moving & Freight Services | TYS Global Logistics",
@@ -36,6 +37,12 @@ export const metadata: Metadata = pageMetadata({
 export default function ServicesPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Services", path: "/services" },
+        ]}
+      />
       <PageHeroBand
         title="Shipping, moving and freight services"
         accent="from one team."

@@ -10,6 +10,7 @@ import { TrustedReviewsSection } from "@/components/public/trusted-reviews-secti
 import { TopicScroller } from "@/components/public/topic-scroller";
 import { ContactDetails } from "@/app/(public)/contact-us/contact-details";
 import { CtaBand, PAD, PageBody, Section, SectionHead } from "@/components/public/page-kit";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Shipping and Moving FAQs, Answered | TYS Global Logistics",
@@ -169,6 +170,12 @@ export default function FaqsPage() {
   return (
     <>
       <FaqJsonLd faqs={ALL_FAQS} />
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "FAQs", path: "/faqs" },
+        ]}
+      />
       <PageHeroBand quote={false}
         title="Frequently asked"
         accent="questions"

@@ -16,6 +16,7 @@ import {
   Section,
   SectionHead,
 } from "@/components/public/page-kit";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Shipping and Moving Blog | TYS Global Logistics",
@@ -71,6 +72,12 @@ export default async function BlogPage() {
 
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Blog", path: "/blog" },
+        ]}
+      />
       <PageHeroBand quote={false}
         title="Shipping and moving"
         accent="guides."

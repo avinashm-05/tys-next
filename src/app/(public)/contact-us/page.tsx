@@ -10,6 +10,7 @@ import {
   MapPinAreaIcon,
   WalletIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Contact Us: Talk to a Real Person | TYS Global Logistics",
@@ -29,6 +30,12 @@ export default function ContactUsPage() {
   return (
     <>
       {/* Call / email in the hero, where other pages have the quote bar. */}
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Contact Us", path: "/contact-us" },
+        ]}
+      />
       <PageHeroBand
         title="Contact"
         accent="TYS Global Logistics"

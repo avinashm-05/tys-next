@@ -19,6 +19,7 @@ import {
   Steps,
 } from "@/components/public/page-kit";
 import { ArrowRightIcon, MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Shipment Tracking: Track Your Package | TYS Global Logistics",
@@ -39,6 +40,12 @@ export default function TrackingPage() {
     <>
       {/* The lookup sits in the hero, where other pages have the quote bar:
           people land here to track, not to get a quote. */}
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Track a Shipment", path: "/tracking" },
+        ]}
+      />
       <PageHeroBand
         title="Track your"
         accent="shipment"

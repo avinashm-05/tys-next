@@ -4,6 +4,7 @@ import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { PageBody, Prose } from "@/components/public/page-kit";
 import { TopicScroller, type Topic } from "@/components/public/topic-scroller";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Security | TYS Global Logistics",
@@ -106,6 +107,12 @@ const TOPICS: Topic[] = [
 export default function SecurityPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Security", path: "/security" },
+        ]}
+      />
       <PageHeroBand
         quote={false}
         kicker="Security"

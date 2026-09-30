@@ -11,6 +11,7 @@ import { GOOGLE_PROFILE_URL, GOOGLE_RATING } from "@/lib/google-reviews";
 import { CONTACT } from "@/app/(public)/contact-us/contact-details";
 import { CtaBand, LINE, PageBody, Prose, SplitSection } from "@/components/public/page-kit";
 import { PhoneIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Is TYS Legit? How to Verify Us | TYS Global Logistics",
@@ -42,6 +43,12 @@ const RED_FLAGS = [
 export default function IsTysLegitPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Is TYS Global Logistics Legit?", path: "/is-tys-global-logistics-legit" },
+        ]}
+      />
       <PageHeroBand quote={false}
         title="Is TYS Global Logistics"
         accent="legit?"

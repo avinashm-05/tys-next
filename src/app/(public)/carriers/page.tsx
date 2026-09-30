@@ -17,6 +17,7 @@ import {
   Steps,
 } from "@/components/public/page-kit";
 import { EnvelopeSimpleIcon, PackageIcon, StackIcon } from "@phosphor-icons/react/dist/ssr";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Major Carriers: FedEx, DHL, UPS, USPS | TYS Global Logistics",
@@ -38,6 +39,12 @@ const CARRIER_NOTES: Record<string, { name: string; body: string }> = {
 export default function CarriersPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Our Carriers", path: "/carriers" },
+        ]}
+      />
       <PageHeroBand
         title="Major carriers,"
         accent="for less."

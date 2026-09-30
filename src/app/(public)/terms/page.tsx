@@ -3,6 +3,7 @@ import { pageMetadata } from "@/lib/seo";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import { PageBody, Prose } from "@/components/public/page-kit";
 import { TopicScroller, type Topic } from "@/components/public/topic-scroller";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Terms and Conditions | TYS Global Logistics",
@@ -173,6 +174,12 @@ const TOPICS: Topic[] = [
 export default function TermsPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Terms and Conditions", path: "/terms" },
+        ]}
+      />
       <PageHeroBand
         quote={false}
         kicker="Legal"

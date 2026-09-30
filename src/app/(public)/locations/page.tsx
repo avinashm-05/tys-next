@@ -16,6 +16,7 @@ import {
   Steps,
 } from "@/components/public/page-kit";
 import { BriefcaseIcon, CubeIcon, GlobeHemisphereWestIcon, HouseLineIcon, MapPinIcon, TruckIcon } from "@phosphor-icons/react/dist/ssr";
+import { BreadcrumbJsonLd } from "@/components/public/breadcrumb-json-ld";
 
 export const metadata: Metadata = pageMetadata({
   title: "Our Offices: Atlanta and Ahmedabad | TYS Global Logistics",
@@ -35,6 +36,12 @@ export const metadata: Metadata = pageMetadata({
 export default function LocationsPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        crumbs={[
+          { name: "Home", path: "/" },
+          { name: "Locations", path: "/locations" },
+        ]}
+      />
       <PageHeroBand quote={false}
         title="Atlanta, Ahmedabad,"
         accent="and your front door."
