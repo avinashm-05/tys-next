@@ -143,6 +143,7 @@ const nextConfig: NextConfig = {
       { source: "/login", headers: noStoreHeaders },
       { source: "/forgot-password", headers: noStoreHeaders },
       { source: "/reset-password", headers: noStoreHeaders },
+      { source: "/two-step", headers: noStoreHeaders },
       { source: "/api/auth/:path*", headers: noStoreHeaders },
       { source: "/api/admin/:path*", headers: noStoreHeaders },
       { source: "/account/:path*", headers: noStoreHeaders },

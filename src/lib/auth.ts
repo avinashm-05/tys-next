@@ -1,13 +1,15 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { username } from "better-auth/plugins";
+import { twoFactor, username } from "better-auth/plugins";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { audit } from "@/lib/audit";
+import { clientIp } from "@/lib/client-ip";
 import { AUTH_COOKIE_PREFIX } from "@/lib/auth-cookie";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
 import { generateUniqueUsername } from "@/lib/username";
@@ -254,7 +256,11 @@ export const auth = betterAuth({
   // are derived from real names, so it let anyone confirm "does John Smith
   // have an account?". 404 it.
   disabledPaths: ["/is-username-available"],
-  plugins: [username(), nextCookies()],
+  // twoFactor (2026-09-30): authenticator-app codes + one-time backup codes.
+  // Required for every admin account (see requireAdmin/requireAdminPage);
+  // optional and unused for customers. No "trust this device": staff enter
+  // a code on every sign-in.
+  plugins: [username(), twoFactor({ issuer: "TYS Global Logistics" }), nextCookies()],
 });
 
 export type AppSession = typeof auth.$Infer.Session;
@@ -296,12 +302,23 @@ async function endSession(session: AppSession) {
   if (token) await db.session.deleteMany({ where: { token } });
 }
 
+/** Staff must have 2-step sign-in switched on before the admin panel opens. */
+export function hasTwoFactor(session: AppSession): boolean {
+  return (session.user as { twoFactorEnabled?: boolean | null }).twoFactorEnabled === true;
+}
+
+/** Where an admin without 2-step sign-in is sent to set it up. */
+export const TWO_STEP_SETUP_PATH = "/two-step";
+
 export function requireAdmin(session: AppSession | null): AppSession {
   if (!session?.user) throw new HttpError(401, "Unauthenticated.");
   if (!isAdmin(session)) throw new HttpError(403, "This action is unauthorized.");
   if (adminSessionExpired(session)) {
     void endSession(session).catch(() => {});
     throw new HttpError(401, "Your session has expired. Please sign in again.");
+  }
+  if (!hasTwoFactor(session)) {
+    throw new HttpError(403, "Set up 2-step sign-in first.");
   }
   return session;
 }
@@ -319,12 +336,28 @@ export function adminRoute<Ctx = unknown>(
   handler: (req: Request, ctx: Ctx, session: AppSession) => Promise<Response> | Response,
 ): (req: Request, ctx: Ctx) => Promise<Response> {
   return async (req, ctx) => {
+    let session: AppSession | null = null;
+    let res: Response;
     try {
-      const session = requireAdmin(await getSession());
-      return await handler(req, ctx, session);
+      session = requireAdmin(await getSession());
+      res = await handler(req, ctx, session);
     } catch (e) {
-      return toErrorResponse(e);
+      res = toErrorResponse(e);
     }
+    // Activity log: every WRITE by a signed-in admin, whatever its outcome
+    // (reads aren't logged, they'd drown it; anonymous hits aren't either,
+    // so nobody can flood the table from outside).
+    if (session && req.method !== "GET" && req.method !== "HEAD") {
+      await audit({
+        userId: session?.user.id ?? null,
+        action: "admin.api",
+        method: req.method,
+        path: new URL(req.url).pathname,
+        statusCode: res.status,
+        ip: clientIp(req),
+      });
+    }
+    return res;
   };
 }
 
@@ -334,6 +367,13 @@ export function adminRoute<Ctx = unknown>(
  * login redirect loop — the API layer still answers real 403s via adminRoute).
  */
 export async function requireAdminPage(): Promise<AppSession> {
+  const session = await requireAdminPageAllowingSetup();
+  if (!hasTwoFactor(session)) redirect(TWO_STEP_SETUP_PATH);
+  return session;
+}
+
+/** Same as requireAdminPage, minus the 2-step check: for the setup page itself. */
+export async function requireAdminPageAllowingSetup(): Promise<AppSession> {
   const session = await getSession();
   if (!session?.user) redirect("/login");
   if (!isAdmin(session)) notFound();

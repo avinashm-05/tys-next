@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { clientIp } from "@/lib/client-ip";
 import { rateLimit, rateLimitPeek, rateLimitHit, rateLimitClear } from "@/lib/ratelimit";
 import { sendAdminSecurityAlert } from "@/lib/mail";
+import { audit } from "@/lib/audit";
 import { validationError } from "@/lib/validation/errors";
 
 const handlers = toNextJsHandler(auth);
@@ -99,6 +100,8 @@ export async function POST(req: NextRequest) {
     }
 
     const res = await handlers.POST(req);
+    // Activity log for STAFF accounts only (customers aren't logged).
+    void logStaffSignIn(identifier, byUsername, res.clone(), ip).catch(() => {});
     if (res.ok) {
       await rateLimitClear(pairKey);
     } else if (res.status === 400 || res.status === 401 || res.status === 422) {
@@ -115,13 +118,71 @@ export async function POST(req: NextRequest) {
     return res;
   }
 
+  // 2-step sign-in events (staff activity log).
+  const twoStep = TWO_STEP_EVENTS.find(([suffix]) => path.endsWith(suffix));
+  if (twoStep) {
+    const pending = (req.headers.get("cookie") ?? "").includes("two_factor");
+    const sessionUser = twoStep[1].startsWith("two_factor.verify")
+      ? null
+      : (await auth.api.getSession({ headers: req.headers }).catch(() => null))?.user ?? null;
+    const res = await handlers.POST(req);
+    void logTwoStep(twoStep[1], res.clone(), sessionUser?.id ?? null, pending, ip).catch(() => {});
+    return res;
+  }
+
   return handlers.POST(req);
+}
+
+const TWO_STEP_EVENTS: Array<[suffix: string, action: string]> = [
+  ["/two-factor/verify-totp", "two_factor.verify"],
+  ["/two-factor/verify-backup-code", "two_factor.verify_backup_code"],
+  ["/two-factor/enable", "two_factor.enable_started"],
+  ["/two-factor/disable", "two_factor.disabled"],
+];
+
+function isAdminRole(role: string | null | undefined) {
+  return ADMIN_ROLES.includes(role as (typeof ADMIN_ROLES)[number]);
+}
+
+async function logStaffSignIn(identifier: string, byUsername: boolean, res: Response, ip: string) {
+  if (!identifier) return;
+  const user = await db.user.findFirst({
+    where: byUsername ? { username: identifier } : { email: identifier },
+    select: { id: true, role: true },
+  });
+  if (!user || !isAdminRole(user.role)) return;
+  let action = "sign_in.failed";
+  if (res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { twoFactorRedirect?: boolean };
+    action = body.twoFactorRedirect ? "sign_in.password_ok_code_pending" : "sign_in.success";
+  } else if (res.status === 422) {
+    action = "sign_in.blocked";
+  }
+  await audit({ userId: user.id, action, method: "POST", path: byUsername ? "/sign-in/username" : "/sign-in/email", statusCode: res.status, ip });
+}
+
+async function logTwoStep(action: string, res: Response, sessionUserId: string | null, pending: boolean, ip: string) {
+  if (action.startsWith("two_factor.verify")) {
+    if (res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { user?: { id?: string | number; role?: string } };
+      if (!isAdminRole(body.user?.role)) return;
+      await audit({ userId: body.user?.id ?? null, action: `${action}.success`, statusCode: res.status, ip });
+    } else if (pending) {
+      // Only when a password step really happened (the pending cookie), so
+      // anonymous junk requests can't fill the log.
+      await audit({ action: `${action}.failed`, statusCode: res.status, ip });
+    }
+    return;
+  }
+  if (!res.ok || !sessionUserId) return;
+  await audit({ userId: sessionUserId, action, statusCode: res.status, ip });
 }
 
 async function alertIfAdmin(account: string, ip: string) {
   const user = account.startsWith("username:")
-    ? await db.user.findFirst({ where: { username: account.slice("username:".length) }, select: { role: true } })
-    : await db.user.findFirst({ where: { email: account }, select: { role: true } });
-  if (!user || !ADMIN_ROLES.includes(user.role as (typeof ADMIN_ROLES)[number])) return;
+    ? await db.user.findFirst({ where: { username: account.slice("username:".length) }, select: { id: true, role: true } })
+    : await db.user.findFirst({ where: { email: account }, select: { id: true, role: true } });
+  if (!user || !isAdminRole(user.role)) return;
+  await audit({ userId: user.id, action: "sign_in.locked", ip, detail: `${ACCOUNT_FAILS} failed attempts; locked ${ACCOUNT_WINDOW / 60} min` });
   await sendAdminSecurityAlert({ account, ip, failures: ACCOUNT_FAILS, lockMinutes: ACCOUNT_WINDOW / 60 });
 }

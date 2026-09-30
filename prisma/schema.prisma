@@ -17,7 +17,7 @@
 //     code reads the first row to model the hasOne.
 
 generator client {
-  provider      = "prisma-client-js"
+  provider        = "prisma-client-js"
   // driverAdapters lets the client talk to MySQL through a pure-JS driver
   // instead of Prisma's Rust query engine. Added 2026-09-14 after the engine
   // began panicking in production with "PANIC: timer has gone away" on every
@@ -31,7 +31,7 @@ generator client {
   // Linux server configurations for the Hostinger deploy, since the exact
   // distro/libc isn't known from here — harmless to over-include, each
   // unused engine just doesn't get shipped in that particular build.
-  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x", "linux-musl-openssl-3.0.x"]
+  binaryTargets   = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -66,8 +66,11 @@ model User {
   // keeps the original casing for display. Nullable because every pre-existing
   // row predates the feature — scripts/backfill-usernames.ts fills them in,
   // and new signups get one generated in the user.create hook (lib/auth.ts).
-  username        String? @unique(map: "users_username_unique") @db.VarChar(30)
-  displayUsername String? @map("display_username") @db.VarChar(30)
+  username         String? @unique(map: "users_username_unique") @db.VarChar(30)
+  displayUsername  String? @map("display_username") @db.VarChar(30)
+  // Better Auth twoFactor plugin (2026-09-30): staff must enable 2-step
+  // sign-in (authenticator-app code) before the admin panel opens.
+  twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")
 
   companyName  String? @map("company_name") @db.VarChar(255) // C1 customer profile field (additive)
   addressLine1 String? @map("address_line_1") @db.VarChar(255) // C1 customer profile field (additive)
@@ -81,6 +84,8 @@ model User {
   userType               UserType?               @relation(fields: [userTypeId], references: [id], onUpdate: NoAction, map: "users_user_type_id_foreign")
   sessions               Session[]
   accounts               Account[]
+  twoFactors             TwoFactor[]
+  adminAuditLogs         AdminAuditLog[]
   vendorsAdded           Vendor[]                @relation("VendorAddedBy")
   contactsCreated        VendorContact[]         @relation("ContactCreatedBy")
   contactsUpdated        VendorContact[]         @relation("ContactUpdatedBy")
@@ -319,9 +324,9 @@ model ShipmentDocument {
   // storageKey is a key into the storage layer (src/lib/storage.ts), never a
   // URL and never a client-supplied path — downloads go through an
   // auth-gated route that resolves the key server-side.
-  storageKey  String? @map("storage_key") @db.VarChar(255)
-  contentType String? @map("content_type") @db.VarChar(100)
-  sizeBytes   Int?    @map("size_bytes")
+  storageKey     String? @map("storage_key") @db.VarChar(255)
+  contentType    String? @map("content_type") @db.VarChar(100)
+  sizeBytes      Int?    @map("size_bytes")
   // The tracking number FedEx returned with a generated label. Kept on the
   // document, not just Shipment.trackingNumber, so a shipment that gets a
   // second label (reprint after a correction) keeps each label paired with
@@ -640,9 +645,9 @@ model Setting {
 // pattern). See src/app/api/admin/blog/posts for the CRUD API and
 // src/app/(public)/blog/[slug]/page.tsx for public rendering.
 model Post {
-  id    BigInt @id @default(autoincrement()) @db.UnsignedBigInt
-  slug  String @unique(map: "posts_slug_unique") @db.VarChar(255)
-  title String @db.VarChar(255)
+  id          BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  slug        String     @unique(map: "posts_slug_unique") @db.VarChar(255)
+  title       String     @db.VarChar(255)
   // Optional, separate <title> tag text. The 6 originally hand-written posts
   // each had a shorter, keyword-front-loaded title tag distinct from their
   // on-page H1 — standard practice since search results truncate around 60
@@ -862,4 +867,42 @@ enum VendorCommentPriority {
   normal
   high
   critical
+}
+
+// Better Auth twoFactor plugin table (2026-09-30). `secret` and
+// `backupCodes` are stored encrypted by Better Auth; never returned to clients.
+model TwoFactor {
+  id                      BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  secret                  String    @db.VarChar(255)
+  backupCodes             String    @map("backup_codes") @db.Text
+  userId                  BigInt    @map("user_id") @db.UnsignedBigInt
+  verified                Boolean   @default(true)
+  failedVerificationCount Int       @default(0) @map("failed_verification_count")
+  lockedUntil             DateTime? @map("locked_until")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "two_factors_user_id_foreign")
+
+  @@index([userId], map: "two_factors_user_id_index")
+  @@map("two_factors")
+}
+
+// Admin activity log (2026-09-30): every admin write (non-GET /api/admin/*)
+// plus staff sign-in events. Append-only from the app; viewable at
+// /admin/activity.
+model AdminAuditLog {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId     BigInt?  @map("user_id") @db.UnsignedBigInt
+  action     String   @db.VarChar(100)
+  method     String?  @db.VarChar(10)
+  path       String?  @db.VarChar(255)
+  statusCode Int?     @map("status_code") @db.UnsignedSmallInt
+  ip         String?  @db.VarChar(45)
+  detail     String?  @db.VarChar(500)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "admin_audit_logs_user_id_foreign")
+
+  @@index([createdAt], map: "admin_audit_logs_created_at_index")
+  @@index([userId], map: "admin_audit_logs_user_id_index")
+  @@map("admin_audit_logs")
 }

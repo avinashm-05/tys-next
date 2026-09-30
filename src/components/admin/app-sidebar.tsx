@@ -4,6 +4,7 @@ import type { Icon } from "@phosphor-icons/react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  ClockCounterClockwiseIcon,
   CurrencyDollarIcon,
   FileTextIcon,
   UserListIcon,
@@ -46,6 +47,7 @@ const ITEMS = [
   // Flat, not nested under Vendors-style sub-items — this resource has no
   // separate sub-view (no map/settings-equivalent), just the one list.
   { title: "Blog", href: "/admin/blog", icon: NewspaperIcon },
+  { title: "Activity", href: "/admin/activity", icon: ClockCounterClockwiseIcon },
 ] as const;
 
 // Services and Vendor Types no longer have standalone management pages —

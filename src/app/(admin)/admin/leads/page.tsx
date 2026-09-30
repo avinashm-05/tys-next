@@ -101,6 +101,10 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
                     <Link href={`/admin/quotes/${l.quoteId}`}>
                       <Badge variant="secondary">Submitted, quote #{String(l.quoteId)}</Badge>
                     </Link>
+                  ) : l.convertedAt ? (
+                    // Submitted, but not linked: the quote's email didn't
+                    // match this lead (see quote-leads/convert).
+                    <Badge variant="secondary">Submitted</Badge>
                   ) : (
                     <Badge variant="outline">Didn&rsquo;t submit</Badge>
                   )}

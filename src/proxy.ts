@@ -20,7 +20,7 @@ import { AUTH_COOKIE_PREFIX } from "@/lib/auth-cookie";
  */
 
 // Paths that belong to the admin world.
-const ADMIN_PAGE_PREFIXES = ["/admin", "/login", "/forgot-password", "/reset-password"];
+const ADMIN_PAGE_PREFIXES = ["/admin", "/login", "/forgot-password", "/reset-password", "/two-step"];
 const ADMIN_API_PREFIXES = ["/api/admin"];
 // Always served regardless of host. /api/auth is SHARED since C1: customers
 // authenticate on the apex, admins on the admin host — sessions stay host-only

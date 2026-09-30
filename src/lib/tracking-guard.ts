@@ -11,4 +11,4 @@ export const NOT_LOCAL_HOST =
 // sign-in/password pages (reset links carry a one-time token in the URL) and
 // the customer account area (shows addresses, phones, shipments). GTM's own
 // guard in app/layout.tsx uses the same list; keep the two in sync.
-export const NO_TRACKING_PATH = /^\/(admin|login|forgot-password|reset-password|account)(\/|$)/;
+export const NO_TRACKING_PATH = /^\/(admin|login|forgot-password|reset-password|two-step|account)(\/|$)/;
