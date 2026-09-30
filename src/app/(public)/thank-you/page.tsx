@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ThankYouTitle } from "@/components/public/thank-you-title";
 import Link from "next/link";
 import { ArrowRightIcon, PhoneIcon, WhatsappLogoIcon } from "@phosphor-icons/react/dist/ssr";
 import { GoogleAdsConversion } from "@/components/public/google-ads-conversion";
@@ -43,9 +44,9 @@ const TIME_SLOT_LABEL: Record<string, string> = Object.fromEntries(
   TIME_SLOTS.map((s) => [s.value, `${s.label} (${s.hint})`]),
 );
 
-// B1/B2 redesign — Tailwind rebuild (was a faithful Bootstrap port). `name`
-// comes from the wizard redirect (?name=); React escapes it, so the
-// interpolation is XSS-safe. `quote_id` (also from the redirect) fires the
+// B1/B2 redesign — Tailwind rebuild (was a faithful Bootstrap port). The
+// customer's name is NOT in the URL any more (privacy, 2026-09-30): the forms
+// put it in sessionStorage and <ThankYouTitle> reads it client-side. `quote_id` (also from the redirect) fires the
 // Google Ads lead conversion below and doubles as its dedupe key — digits
 // only, since it flows into an inline script. `type=callback` (from the old
 // /quick-quote redirect, no longer produced but still honored) swaps the
@@ -56,15 +57,13 @@ export default async function ThankYouPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    name?: string;
     quote_id?: string;
     type?: string;
     time_slot?: string;
     package_type?: string;
   }>;
 }) {
-  const { name, quote_id, type, time_slot, package_type } = await searchParams;
-  const customer = name?.trim();
+  const { quote_id, type, time_slot, package_type } = await searchParams;
   const transactionId = quote_id && /^\d+$/.test(quote_id) ? quote_id : undefined;
   const isCallback = type === "callback";
 
@@ -77,7 +76,6 @@ export default async function ThankYouPage({
     ...new Set(selectedTypes.map((t) => PACKAGE_PREP[t]).filter((v): v is string => !!v)),
   ];
 
-  const title = customer ? `Thank you, ${customer}.` : "Thank you.";
   const subtitle = isCallback
     ? "We\u2019ve received your callback request. One of our shipping experts will call you back during the window you picked."
     : timeSlotLabel
@@ -137,7 +135,7 @@ export default async function ThankYouPage({
       <PageHeroBand
         quote={false}
         kicker="Request received"
-        title={title}
+        title={<ThankYouTitle />}
         subtitle={subtitle}
       >
         <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">

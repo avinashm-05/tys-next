@@ -23,7 +23,7 @@ export function PageHeroBand({
   quotePackage,
   children,
 }: {
-  title: string;
+  title: React.ReactNode;
   /** Rendered after the title in brand blue. */
   accent?: string;
   subtitle?: string;
