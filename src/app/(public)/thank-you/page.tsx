@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import { ThankYouTitle } from "@/components/public/thank-you-title";
+import { ThankYouConversions, ThankYouTitle, ThankYouWhatsAppLink } from "@/components/public/thank-you-context";
 import Link from "next/link";
 import { ArrowRightIcon, PhoneIcon, WhatsappLogoIcon } from "@phosphor-icons/react/dist/ssr";
-import { GoogleAdsConversion } from "@/components/public/google-ads-conversion";
-import { GtmConversionEvent } from "@/components/public/analytics-scripts";
 import { TIME_SLOTS } from "@/lib/validation/quote-store";
 import { PageHeroBand } from "@/components/public/page-hero-band";
 import {
@@ -45,10 +43,10 @@ const TIME_SLOT_LABEL: Record<string, string> = Object.fromEntries(
 );
 
 // B1/B2 redesign — Tailwind rebuild (was a faithful Bootstrap port). The
-// customer's name is NOT in the URL any more (privacy, 2026-09-30): the forms
-// put it in sessionStorage and <ThankYouTitle> reads it client-side. `quote_id` (also from the redirect) fires the
-// Google Ads lead conversion below and doubles as its dedupe key — digits
-// only, since it flows into an inline script. `type=callback` (from the old
+// customer's name and quote number are NOT in the URL any more (privacy,
+// 2026-09-30): the forms put them in sessionStorage (thank-you-context.tsx),
+// which also fires the Ads conversion only after a real submission (the quote
+// number is still its transaction_id dedupe key). `type=callback` (from the old
 // /quick-quote redirect, no longer produced but still honored) swaps the
 // body copy — there's no quote to review, just a callback to make.
 // `time_slot`/`package_type` (from the single-page /quotes form) drive the
@@ -57,14 +55,12 @@ export default async function ThankYouPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    quote_id?: string;
     type?: string;
     time_slot?: string;
     package_type?: string;
   }>;
 }) {
-  const { quote_id, type, time_slot, package_type } = await searchParams;
-  const transactionId = quote_id && /^\d+$/.test(quote_id) ? quote_id : undefined;
+  const { type, time_slot, package_type } = await searchParams;
   const isCallback = type === "callback";
 
   const timeSlotLabel = time_slot ? TIME_SLOT_LABEL[time_slot] : undefined;
@@ -121,16 +117,12 @@ export default async function ThankYouPage({
 
   // WhatsApp (added 2026-09-29): many customers, especially those sending
   // to family in India, would rather message than wait for a call. The
-  // prefilled text carries only the quote reference, never personal details.
-  const whatsappText = transactionId
-    ? `Hi TYS, I just requested a quote (ref ${transactionId}).`
-    : "Hi TYS, I just requested a quote.";
-  const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappText)}`;
+  // prefilled text carries only the quote reference (from sessionStorage,
+  // see thank-you-context), never personal details.
 
   return (
     <>
-      <GoogleAdsConversion transactionId={transactionId} />
-      <GtmConversionEvent transactionId={transactionId} />
+      <ThankYouConversions />
 
       <PageHeroBand
         quote={false}
@@ -139,14 +131,12 @@ export default async function ThankYouPage({
         subtitle={subtitle}
       >
         <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noopener noreferrer"
+          <ThankYouWhatsAppLink
+            number={WHATSAPP_NUMBER}
             className="btn btn-lg w-full bg-[#1FAF5A] text-white hover:bg-[#199A4E] sm:w-auto"
           >
             <WhatsappLogoIcon size={18} weight="fill" /> Message us on WhatsApp
-          </a>
+          </ThankYouWhatsAppLink>
           <a href="tel:+14047938759" className="btn btn-secondary btn-lg w-full sm:w-auto">
             <PhoneIcon size={15} /> +1 (404) 793-8759
           </a>
@@ -195,9 +185,9 @@ export default async function ThankYouPage({
                 <a href="tel:+14047938759" className="btn btn-secondary btn-lg">
                   <PhoneIcon size={15} /> +1 (404) 793-8759
                 </a>
-                <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-lg">
+                <ThankYouWhatsAppLink number={WHATSAPP_NUMBER} className="btn btn-secondary btn-lg">
                   <WhatsappLogoIcon size={16} weight="fill" className="text-[#1FAF5A]" /> WhatsApp
-                </a>
+                </ThankYouWhatsAppLink>
                 <Link href="/" className="btn btn-lg text-ink hover:bg-[#F3F5F9]">
                   Back to home
                 </Link>

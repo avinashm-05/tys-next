@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { rememberThankYouName } from "@/components/public/thank-you-title";
+import { rememberThankYou } from "@/components/public/thank-you-context";
 import { useRouter } from "next/navigation";
 import { Controller, useForm, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -121,7 +121,7 @@ export function CallbackRequestForm() {
         return;
       }
       // The name goes to sessionStorage, never the URL (privacy).
-      rememberThankYouName(values.contact.name);
+      rememberThankYou({ name: values.contact.name });
       router.push("/thank-you?type=callback");
     } catch {
       setSubmitError("Network error. Please try again.");

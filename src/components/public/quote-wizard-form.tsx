@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { rememberThankYouName } from "@/components/public/thank-you-title";
+import { rememberThankYou } from "@/components/public/thank-you-context";
 import { useRouter } from "next/navigation";
 import {
   Controller,
@@ -412,11 +412,9 @@ export function QuoteWizardForm({
       if (SHOW_LIVE_RATES_RESULT && data.show_fedex_rates) {
         setResult(data as SubmitResult);
       } else {
-        // The name goes to sessionStorage, never the URL (privacy).
-        rememberThankYouName(values.contact.name);
-        const params = new URLSearchParams();
-        if (data.quote_id) params.set("quote_id", String(data.quote_id));
-        router.push(params.size ? `/thank-you?${params.toString()}` : "/thank-you");
+        // Name and quote number go to sessionStorage, never the URL (privacy).
+        rememberThankYou({ name: values.contact.name, ref: data.quote_id });
+        router.push("/thank-you");
       }
     } catch {
       setSubmitError("Network error. Please try again.");

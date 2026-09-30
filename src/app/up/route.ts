@@ -16,6 +16,10 @@ export function GET(req: Request) {
         xRealIp: req.headers.get("x-real-ip"),
         trustedProxyHops: process.env.TRUSTED_PROXY_HOPS ?? "(unset, defaults to 1)",
         bucketedAs: clientIp(req),
+        // Names only (2026-09-30): does the CDN add any location headers
+        // (city/region/country)? If so, Clarity could get a city tag with no
+        // third-party IP lookup. Values are the caller's own anyway.
+        geoHeaders: [...req.headers.keys()].filter((k) => /geo|country|city|region|ipcountry|cf-|x-hcdn|x-hostinger/i.test(k)),
       },
       { headers: { "Cache-Control": "no-store" } },
     );
