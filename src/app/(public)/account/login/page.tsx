@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { enabledSocialProviders, getSession } from "@/lib/auth";
+import { enabledSocialProviders, getSession, isCustomerSession } from "@/lib/auth";
 import { AccountShell } from "@/components/public/account/shell";
 import { LoginForm } from "@/components/public/account/auth-forms";
 
@@ -12,7 +12,7 @@ export default async function AccountLoginPage({
   searchParams: Promise<{ verified?: string; social_error?: string }>;
 }) {
   const session = await getSession();
-  if (session?.user) redirect("/account");
+  if (isCustomerSession(session)) redirect("/account");
   const { verified, social_error } = await searchParams;
   return (
     <AccountShell title="Log in" subtitle="Access your quotes and profile.">

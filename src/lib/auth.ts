@@ -277,6 +277,11 @@ export const getSession = cache(async (): Promise<AppSession | null> => {
   return auth.api.getSession({ headers: await headers() });
 });
 
+/** A signed-in CUSTOMER (staff sessions don't count on the customer side). */
+export function isCustomerSession(session: AppSession | null): boolean {
+  return !!session?.user && !isAdmin(session);
+}
+
 /** Mirrors Laravel's User::isAdmin() — slug ∈ {super-admin, admin}. */
 export function isAdmin(session: AppSession | null): boolean {
   const role = (session?.user as { role?: string | null } | undefined)?.role;
@@ -437,9 +442,10 @@ export async function requireCustomerPage(): Promise<AppSession> {
   const session = await getSession();
   if (!session?.user) redirect("/account/login");
   // Staff don't use the customer portal (they'd book shipments as
-  // themselves). A plain 404, never a redirect: nothing on the customer
-  // side may point at or reveal the staff area.
-  if (isAdmin(session)) notFound();
+  // themselves). To the customer side a staff session counts as signed
+  // out: the ordinary customer login, never a 404 and never anything that
+  // points at or reveals the staff area.
+  if (isAdmin(session)) redirect("/account/login");
   if (!session.user.emailVerified) redirect("/account/verify-email");
   return session;
 }

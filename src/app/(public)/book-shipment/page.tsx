@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { pageMetadata } from "@/lib/seo";
-import { enabledSocialProviders, getSession } from "@/lib/auth";
+import { enabledSocialProviders, getSession, isCustomerSession } from "@/lib/auth";
 import { ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
 import { BookShipmentLoginForm } from "@/components/public/book-shipment-login-form";
 import { PageHeroBand } from "@/components/public/page-hero-band";
@@ -75,7 +75,8 @@ function VerifyEmailNotice() {
 // sidebar doesn't vanish mid-flow — this just forwards you there.
 export default async function BookShipmentPage() {
   const session = await getSession();
-  if (!session?.user) return <LoginGate />;
+  // Staff sessions count as signed out here (see requireCustomerPage).
+  if (!session || !isCustomerSession(session)) return <LoginGate />;
   if (!session.user.emailVerified) return <VerifyEmailNotice />;
   redirect("/account/schedule");
 }

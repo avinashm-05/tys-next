@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { enabledSocialProviders, getSession } from "@/lib/auth";
+import { enabledSocialProviders, getSession, isCustomerSession } from "@/lib/auth";
 import { AccountShell } from "@/components/public/account/shell";
 import { RegisterForm } from "@/components/public/account/auth-forms";
 
@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Create account | TYS Global Logistic
 
 export default async function RegisterPage() {
   const session = await getSession();
-  if (session?.user) redirect("/account");
+  if (isCustomerSession(session)) redirect("/account");
   return (
     <AccountShell
       title="Create your account"
