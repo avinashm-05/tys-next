@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { PaperPlaneTiltIcon } from "@phosphor-icons/react/dist/ssr";
 import { requireCustomerPage } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { PortalCard } from "@/components/public/account/portal-card";
 import { ShipmentWizardForm } from "@/components/public/shipment-wizard-form";
 
@@ -16,13 +16,42 @@ export const metadata: Metadata = { title: "Schedule Shipment | TYS Global Logis
 // unverified ones to /account/verify-email. /book-shipment still exists for
 // logged-out visitors and deep links, and forwards here once you're in.
 //
-// `embedded` drops the wizard's own heading so PortalCard owns the title,
-// same arrangement the reference uses.
 export default async function SchedulePage() {
-  await requireCustomerPage();
+  const session = await requireCustomerPage();
+  // Saved profile details pre-fill the Sender step.
+  const u = await db.user.findUnique({
+    where: { id: BigInt(session.user.id) },
+    select: {
+      name: true,
+      email: true,
+      phone: true,
+      companyName: true,
+      addressLine1: true,
+      addressLine2: true,
+      city: true,
+      state: true,
+      country: true,
+      postalCode: true,
+    },
+  });
   return (
-    <PortalCard icon={PaperPlaneTiltIcon} title="Schedule Shipment">
-      <ShipmentWizardForm embedded />
-    </PortalCard>
+    <div className="mx-auto max-w-[1100px]">
+      <PortalCard>
+        <ShipmentWizardForm
+          senderDefaults={{
+            contact_name: u?.name ?? session.user.name,
+            email: u?.email ?? session.user.email,
+            phone_1: u?.phone ?? undefined,
+            company_name: u?.companyName ?? undefined,
+            address_line_1: u?.addressLine1 ?? undefined,
+            address_line_2: u?.addressLine2 ?? undefined,
+            city: u?.city ?? undefined,
+            state: u?.state ?? undefined,
+            country: u?.country ?? undefined,
+            postal_code: u?.postalCode ?? undefined,
+          }}
+        />
+      </PortalCard>
+    </div>
   );
 }

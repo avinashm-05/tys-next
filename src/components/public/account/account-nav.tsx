@@ -66,7 +66,7 @@ export function QuoteStatusPill({ status }: { status: string }) {
 }
 
 const SHIPMENT_STATUS_LABELS: Record<string, string> = {
-  new_request: "New Request",
+  new_request: "Booked",
   ready_for_pickup: "Ready for Pickup",
   in_transit: "In Transit",
   delivered: "Delivered",

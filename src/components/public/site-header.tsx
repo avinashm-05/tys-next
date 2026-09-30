@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CUSTOMER_AUTH_PATH } from "@/lib/portal-paths";
 import { PROMO_KEY } from "@/lib/promo";
 import { quoteHref } from "@/lib/quote-context";
 import { FlagIcon } from "@/components/public/flag-icon";
@@ -196,6 +197,9 @@ const PILL = "flex h-9 items-center gap-1 rounded-[10px] px-3 transition-colors 
 
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  // On the login / sign-up / Book now pages, "Book now" and "Sign in" would
+  // just point at the page you're already on.
+  const onAccountPage = CUSTOMER_AUTH_PATH.test(usePathname() ?? "");
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   // Every group starts collapsed, so all five rows are visible at once.
   const [mobileGroup, setMobileGroup] = useState<string | null>(null);
@@ -467,6 +471,7 @@ export function SiteHeader() {
           </a>
           {/* Icon-only until 2xl: at 1280px the full nav + phone + Book now
               + quote leave no room, and the flag was pushed off the edge. */}
+          {!onAccountPage && (
           <Link
             href="/account"
             title="Sign in"
@@ -476,15 +481,18 @@ export function SiteHeader() {
             <UserCircleIcon size={19} />
             <span className="hidden 2xl:inline">Sign in</span>
           </Link>
+          )}
           {/* "Book now", like SFL's: /book-shipment is the log-in / sign-up
               door, and a signed-in customer goes straight into Schedule
               Shipment inside the portal. */}
+          {!onAccountPage && (
           <Link
             href="/book-shipment"
             className={`btn hidden border md:inline-flex ${dark ? "border-white/25 text-white hover:bg-white/10" : "border-[#D9DEE7] bg-white text-ink hover:bg-[#F2F3F5]"}`}
           >
             Book now
           </Link>
+          )}
           <Link href={quoteHref(pathname)} className="btn btn-primary hidden sm:inline-flex">
             Get a free quote
             <ArrowRightIcon size={14} />
@@ -609,6 +617,7 @@ export function SiteHeader() {
               <ArrowRightIcon size={15} className="transition-transform duration-300 group-hover:translate-x-0.5" />
             )}
           </Link>
+          {!onAccountPage && (
           <Link
             href="/book-shipment"
             tabIndex={mobileOpen ? 0 : -1}
@@ -617,9 +626,11 @@ export function SiteHeader() {
           >
             Book now
           </Link>
+          )}
           <a href="tel:+14047938759" tabIndex={mobileOpen ? 0 : -1} className="btn btn-secondary btn-lg w-full">
             <PhoneIcon size={15} /> +1 (404) 793-8759
           </a>
+          {!onAccountPage && (
           <Link
             href="/account"
             tabIndex={mobileOpen ? 0 : -1}
@@ -628,6 +639,7 @@ export function SiteHeader() {
           >
             <UserCircleIcon size={16} /> Sign in to your account
           </Link>
+          )}
         </div>
       </div>
     </header>

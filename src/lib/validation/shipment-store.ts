@@ -60,6 +60,31 @@ export const shipmentPackageLineInput = z.object({
   insured_value: z.coerce.number().min(0).nullish(),
 });
 
+// SFL-style booking extras (2026-09-30): what kind of package, whether TYS
+// should collect it (and when), and any notes. All map to existing Shipment
+// columns (packageType, pickupDate/pickupProvider, specialInstruction).
+export const SHIPMENT_PACKAGE_TYPES = ["package", "document", "pallet"] as const;
+const isoDate = /^\d{4}-\d{2}-\d{2}$/;
+export const shipmentExtrasShape = {
+  package_type: z.enum(SHIPMENT_PACKAGE_TYPES).default("package"),
+  pickup_needed: z.boolean().default(false),
+  pickup_date: z.string().regex(isoDate, "Please pick a valid date.").nullish(),
+  special_instruction: z.string().max(1000, "Please keep notes under 1,000 characters.").nullish(),
+};
+
+/** Pickup date required (and not in the past) only when a pickup is requested. */
+export function refinePickup(v: { pickup_needed?: boolean; pickup_date?: string | null }, ctx: z.RefinementCtx) {
+  if (!v.pickup_needed) return;
+  if (!v.pickup_date) {
+    ctx.addIssue({ code: "custom", path: ["pickup_date"], message: "Please choose a pickup date." });
+    return;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  if (v.pickup_date < today) {
+    ctx.addIssue({ code: "custom", path: ["pickup_date"], message: "Pickup date can't be in the past." });
+  }
+}
+
 export const shipmentStoreInput = z.object({
   shipment_type: z.enum(["air", "ground", "ocean"], {
     error: () => "Please select a shipment type.",
@@ -79,6 +104,8 @@ export const shipmentStoreInput = z.object({
   // counterpart (a customer re-booking an already-quoted route) — server
   // verifies it belongs to the requesting session before trusting it.
   linked_quote_id: z.coerce.number().int().positive().nullish(),
-});
+
+  ...shipmentExtrasShape,
+}).superRefine(refinePickup);
 
 export type ShipmentStoreInput = z.infer<typeof shipmentStoreInput>;

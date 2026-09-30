@@ -840,3 +840,89 @@ export async function sendAdminSecurityAlert(d: AdminSecurityAlert) {
   const { subject, html, text } = renderAdminSecurityAlert(d);
   return sendMail({ to: recipients.join(","), subject, text, html });
 }
+
+// ── Customer self-booked shipment (portal Schedule Shipment, 2026-09-30) ──
+export type ShipmentBookedData = {
+  shipmentId: number;
+  customerName: string;
+  customerEmail: string;
+  fromPlace: string;
+  toPlace: string;
+  shipmentType: string;
+  packageTypeLabel: string;
+  packages: number;
+  totalWeightLb: number;
+  pickup: string;
+  instructions: string | null;
+  adminUrl: string;
+};
+
+export function renderShipmentBookedCustomer(d: ShipmentBookedData) {
+  const html = emailShell({
+    title: "We got your booking",
+    preheader: `Booking #${d.shipmentId}: ${d.fromPlace} to ${d.toPlace}. We'll confirm pickup and price shortly.`,
+    eyebrow: `Booking #${d.shipmentId}`,
+    heading: "Thanks, your shipment is booked",
+    bodyHtml:
+      p(`Hi ${esc(d.customerName)},`) +
+      p("We've received your booking. Someone from our team will confirm the pickup and the price with you, usually within one business day.") +
+      routeCallout(d.fromPlace, d.toPlace) +
+      section("Your booking", [
+        ["Shipping by", d.shipmentType],
+        ["Sending", d.packageTypeLabel],
+        ["Packages", `${d.packages} (${d.totalWeightLb} lb total)`],
+        ["Pickup", d.pickup],
+      ]) +
+      ctaButton(`${SITE_URL}/account/shipments`, "View my shipments") +
+      signOff(true),
+    footerNote: "Reply to this email any time. It comes straight to our team.",
+  });
+  const text =
+    `Hi ${d.customerName},\n\nWe've received your booking #${d.shipmentId} (${d.fromPlace} to ${d.toPlace}). ` +
+    `Our team will confirm the pickup and price with you, usually within one business day.\n\n` +
+    `Pickup: ${d.pickup}\nPackages: ${d.packages} (${d.totalWeightLb} lb)\n\nView your shipments: ${SITE_URL}/account/shipments\n\n${contactLineText}\n\nBest regards,\n${SALES_REP_NAME}\nTYS Global Logistics`;
+  return { subject: `Booking received: ${d.fromPlace} to ${d.toPlace}`, html, text };
+}
+
+export function renderShipmentBookedAdmin(d: ShipmentBookedData) {
+  const html = emailShell({
+    title: `New booking #${d.shipmentId}`,
+    preheader: `${d.customerName} booked ${d.fromPlace} to ${d.toPlace}. Pickup: ${d.pickup}.`,
+    eyebrow: `New booking #${d.shipmentId}`,
+    heading: `${d.customerName} booked a shipment`,
+    bodyHtml:
+      routeCallout(d.fromPlace, d.toPlace) +
+      section("Booking", [
+        ["Customer", `${d.customerName} (${d.customerEmail})`],
+        ["Shipping by", d.shipmentType],
+        ["Sending", d.packageTypeLabel],
+        ["Packages", `${d.packages} (${d.totalWeightLb} lb total)`],
+        ["Pickup", d.pickup],
+        ...(d.instructions ? ([["Notes", d.instructions]] as Array<[string, unknown]>) : []),
+      ]) +
+      ctaButton(d.adminUrl, "Open in admin"),
+    footerNote: "Internal notification for the TYS team. Booked through the customer portal.",
+    showContact: false,
+  });
+  const text =
+    `New booking #${d.shipmentId} from ${d.customerName} <${d.customerEmail}>\n` +
+    `${d.fromPlace} to ${d.toPlace}\nShipping by: ${d.shipmentType}\nPackages: ${d.packages} (${d.totalWeightLb} lb)\nPickup: ${d.pickup}\n` +
+    (d.instructions ? `Notes: ${d.instructions}\n` : "") +
+    `\nOpen in admin: ${d.adminUrl}`;
+  return { subject: `New booking #${d.shipmentId}: ${d.fromPlace} to ${d.toPlace}`, html, text };
+}
+
+/**
+ * Both emails for a portal booking: the customer's confirmation (from
+ * sales@, invites a reply) and the staff alert (ADMIN_NOTIFICATION_EMAILS,
+ * no-reply). Never throws: a mail outage must not fail the booking.
+ */
+export async function sendShipmentBookedEmails(d: ShipmentBookedData) {
+  const c = renderShipmentBookedCustomer(d);
+  const a = renderShipmentBookedAdmin(d);
+  const staff = adminRecipients();
+  await Promise.allSettled([
+    sendMail({ to: d.customerEmail, subject: c.subject, text: c.text, html: c.html, from: SALES_FROM, useSalesAuth: true }),
+    staff.length ? sendMail({ to: staff.join(", "), subject: a.subject, text: a.text, html: a.html }) : Promise.resolve(null),
+  ]);
+}

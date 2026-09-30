@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "../globals.css";
-import { SiteHeader } from "@/components/public/site-header";
+import { ConditionalHeader } from "@/components/public/conditional-header";
 import { PROMO_KEY } from "@/lib/promo";
 import { ConditionalFooter } from "@/components/public/conditional-footer";
 import { OrganizationJsonLd } from "@/components/public/organization-json-ld";
@@ -76,7 +76,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           __html: `try{if(localStorage.getItem(${JSON.stringify(PROMO_KEY)}))document.documentElement.setAttribute("data-promo","off")}catch(e){}`,
         }}
       />
-      <SiteHeader />
+      <ConditionalHeader />
       <main className="flex-1">{children}</main>
       <ConditionalFooter />
     </div>

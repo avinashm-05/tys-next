@@ -46,6 +46,7 @@ export function SearchableSelect({
   bare,
   placeholderIcon,
   label,
+  searchPlaceholder = "Search country",
 }: {
   options: readonly SearchableOption[];
   value: string;
@@ -62,6 +63,8 @@ export function SearchableSelect({
   placeholderIcon?: boolean;
   /** Shown as the title of the phone bottom sheet ("Sending to"...). */
   label?: string;
+  /** Hint in the search box; most lists are countries, hence the default. */
+  searchPlaceholder?: string;
 }) {
   const [open, setOpen] = useState(false);
   // Phones get a bottom sheet instead of a dropdown (2026-09-29): opening a
@@ -313,7 +316,7 @@ export function SearchableSelect({
             listRef.current?.scrollTo({ top: 0 });
           }}
           onKeyDown={onSearchKeyDown}
-          placeholder="Search country"
+          placeholder={searchPlaceholder}
           // text-base (16px), not text-sm (14px): iOS Safari auto-zooms the
           // whole page on focusing any input under 16px, which then desyncs
           // this panel's position:fixed coords from the trigger. Staying at

@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { sendShipmentBookedEmails } from "@/lib/mail";
+import { countryName } from "@/lib/countries";
 import { customerRoute } from "@/lib/auth";
 import { HttpError } from "@/lib/validation/errors";
 import { emptyStringsToNull } from "@/lib/validation/common";
@@ -69,6 +71,10 @@ export const POST = customerRoute(async (req, _ctx, session) => {
         ...senderColumns(data.sender),
         ...recipientColumns(data.recipient),
         recipientLocationType: data.recipient.location_type,
+        packageType: data.package_type,
+        pickupProvider: data.pickup_needed ? "TYS pickup requested" : "Customer drop-off",
+        pickupDate: data.pickup_needed && data.pickup_date ? new Date(`${data.pickup_date}T00:00:00Z`) : null,
+        specialInstruction: data.special_instruction ?? null,
         createdAt: now,
         updatedAt: now,
       },
@@ -100,6 +106,29 @@ export const POST = customerRoute(async (req, _ctx, session) => {
     }
 
     return shipment.id;
+  });
+
+  // Customer confirmation + staff alert (fire-and-forget: a mail outage
+  // must never fail the booking; sendShipmentBookedEmails never throws).
+  const place = (city: string, country: string) => [city, countryName(country)].filter(Boolean).join(", ");
+  const pkgCount = data.packages.reduce((n, l) => n + l.quantity, 0);
+  const weight = Math.round(data.packages.reduce((w, l) => w + l.weight * l.quantity, 0) * 100) / 100;
+  void sendShipmentBookedEmails({
+    shipmentId: Number(shipmentId),
+    customerName: session.user.name,
+    customerEmail: session.user.email,
+    fromPlace: place(data.sender.city, data.sender.country),
+    toPlace: place(data.recipient.city, data.recipient.country),
+    shipmentType: { air: "Air", ground: "Ground", ocean: "Ocean" }[data.shipment_type],
+    packageTypeLabel: { package: "Boxes / packages", document: "Documents", pallet: "Pallet / freight" }[data.package_type],
+    packages: pkgCount,
+    totalWeightLb: weight,
+    pickup:
+      data.pickup_needed && data.pickup_date
+        ? `TYS pickup on ${new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${data.pickup_date}T00:00:00Z`))}`
+        : "Customer drops it off",
+    instructions: data.special_instruction ?? null,
+    adminUrl: `${(process.env.BETTER_AUTH_URL ?? "").replace(/\/+$/, "")}/admin/shipments/${Number(shipmentId)}/edit`,
   });
 
   return Response.json({ id: Number(shipmentId) }, { status: 201 });

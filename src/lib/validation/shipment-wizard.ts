@@ -1,5 +1,7 @@
 import { z } from "zod";
 import {
+  refinePickup,
+  shipmentExtrasShape,
   shipmentPackageLineInput,
   shipmentPartyBase,
   shipmentRecipientInput,
@@ -25,16 +27,19 @@ export const shipmentWizardSchema = z.object({
   recipient: shipmentRecipientInput,
 
   packages: z.array(shipmentPackageLineInput).min(1, "Please add at least one package."),
-});
+
+  ...shipmentExtrasShape,
+  agree_terms: z.boolean().refine((v) => v === true, "Please agree to the terms to book."),
+}).superRefine(refinePickup);
 
 export type ShipmentWizardValues = z.output<typeof shipmentWizardSchema>;
 export type ShipmentWizardInput = z.input<typeof shipmentWizardSchema>;
 
 export const STEP_FIELDS = {
   1: ["shipment_type", "from_country", "to_country"],
-  2: ["sender"],
+  2: ["sender", "pickup_needed", "pickup_date"],
   3: ["recipient"],
-  4: ["packages"],
+  4: ["packages", "package_type", "special_instruction", "agree_terms"],
 } as const;
 
 /** Builds the exact POST /api/account/shipments payload shipmentStoreInput validates. */
@@ -47,5 +52,9 @@ export function toApiPayload(values: ShipmentWizardValues, linkedQuoteId?: numbe
     recipient: values.recipient,
     packages: values.packages,
     linked_quote_id: linkedQuoteId ?? null,
+    package_type: values.package_type,
+    pickup_needed: values.pickup_needed,
+    pickup_date: values.pickup_needed ? values.pickup_date : null,
+    special_instruction: values.special_instruction || null,
   };
 }

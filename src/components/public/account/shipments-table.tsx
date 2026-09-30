@@ -1,12 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CaretDownIcon, CaretUpIcon, TruckIcon } from "@phosphor-icons/react";
+import Link from "next/link";
+import {
+  AirplaneTiltIcon,
+  ArrowRightIcon,
+  BoatIcon,
+  CaretDownIcon,
+  CaretUpIcon,
+  MagnifyingGlassIcon,
+  PaperPlaneTiltIcon,
+  TruckIcon,
+} from "@phosphor-icons/react";
 import { ShipmentStatusPill } from "@/components/public/account/account-nav";
 
 export type PortalShipmentRow = {
   id: number;
   date: string;
+  sortDate: number;
   trackingNumber: string | null;
   senderName: string;
   senderCity: string;
@@ -14,206 +25,219 @@ export type PortalShipmentRow = {
   receiverName: string;
   receiverCity: string;
   receiverState: string;
+  receiverCountry: string;
   shipmentType: string;
   status: string;
 };
 
-const TYPE_LABELS: Record<string, string> = { air: "Air", ground: "Ground", ocean: "Ocean" };
+const TYPE: Record<string, { label: string; icon: typeof TruckIcon }> = {
+  air: { label: "Air", icon: AirplaneTiltIcon },
+  ground: { label: "Ground", icon: TruckIcon },
+  ocean: { label: "Ocean", icon: BoatIcon },
+};
 
-// Column order copied from the reference hub's My Shipment table: sender and
-// receiver each get their own City and State columns rather than being
-// stacked into one cell, which is what makes the table scannable by lane.
-const COLUMNS = [
-  { key: "date", label: "Date", sortable: true, filter: true },
-  { key: "trackingNumber", label: "Tracking", sortable: true, filter: true },
-  { key: "senderName", label: "Sender", sortable: true, filter: true },
-  { key: "senderCity", label: "City", sortable: true, filter: true },
-  { key: "senderState", label: "State", sortable: true, filter: true },
-  { key: "receiverName", label: "Receiver", sortable: true, filter: true },
-  { key: "receiverCity", label: "City", sortable: true, filter: true },
-  { key: "receiverState", label: "State", sortable: true, filter: true },
-  { key: "shipmentType", label: "Type", sortable: true, filter: true },
-  { key: "status", label: "Status", sortable: true, filter: true },
+const STATUS_FILTERS = [
+  { value: "", label: "All" },
+  { value: "new_request", label: "Booked" },
+  { value: "ready_for_pickup", label: "Ready for pickup" },
+  { value: "in_transit", label: "In transit" },
+  { value: "delivered", label: "Delivered" },
+  { value: "on_hold", label: "On hold" },
 ] as const;
 
-type SortKey = (typeof COLUMNS)[number]["key"];
+type SortKey = "sortDate" | "trackingNumber" | "senderName" | "receiverName" | "status";
+const PAGE_SIZE = 10;
 
-const PAGE_SIZES = [10, 25, 50] as const;
-
-/**
- * Filtering, sorting and paging all happen client-side on purpose: the server
- * component hands over at most 50 rows (a customer's own shipments), so a
- * round trip per keystroke would be slower and buy nothing. The admin lists
- * page server-side because those tables are unbounded.
- */
+// My Shipments (2026-09-30 redesign). SFL's column set (date, tracking,
+// sender + city/state, receiver + city/state, type, status) folded into
+// five columns that fit the screen with no sideways scrolling: each party's
+// city and state sit under the name. One search box and status chips
+// replace the old filter-per-column row. Phones get stacked cards. All
+// client-side on purpose: a customer has at most 50 rows here.
 export function ShipmentsTable({ rows }: { rows: PortalShipmentRow[] }) {
-  const [filters, setFilters] = useState<Partial<Record<SortKey, string>>>({});
-  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
-    key: "date",
-    dir: "desc",
-  });
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("");
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "sortDate", dir: "desc" });
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState<number>(10);
-
-  const cell = (r: PortalShipmentRow, k: SortKey): string => {
-    if (k === "shipmentType") return TYPE_LABELS[r.shipmentType] ?? r.shipmentType;
-    return String(r[k] ?? "");
-  };
 
   const filtered = useMemo(() => {
-    const active = Object.entries(filters).filter(([, v]) => v && v.trim());
-    const out = rows.filter((r) =>
-      active.every(([k, v]) =>
-        cell(r, k as SortKey).toLowerCase().includes(v!.trim().toLowerCase()),
-      ),
-    );
+    const term = q.trim().toLowerCase();
+    const out = rows.filter((r) => {
+      if (status && r.status !== status) return false;
+      if (!term) return true;
+      return [r.trackingNumber, r.senderName, r.senderCity, r.senderState, r.receiverName, r.receiverCity, r.receiverState, r.receiverCountry]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(term));
+    });
     out.sort((a, b) => {
-      const x = cell(a, sort.key);
-      const y = cell(b, sort.key);
-      const c = x.localeCompare(y, undefined, { numeric: true });
+      const x = a[sort.key] ?? "";
+      const y = b[sort.key] ?? "";
+      const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), undefined, { numeric: true });
       return sort.dir === "asc" ? c : -c;
     });
     return out;
-  }, [rows, filters, sort]);
+  }, [rows, q, status, sort]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const current = Math.min(page, pageCount - 1);
-  const visible = filtered.slice(current * pageSize, current * pageSize + pageSize);
-
-  function toggleSort(k: SortKey) {
-    setSort((s) => (s.key === k ? { key: k, dir: s.dir === "asc" ? "desc" : "asc" } : { key: k, dir: "asc" }));
-  }
-  function setFilter(k: SortKey, v: string) {
-    setFilters((f) => ({ ...f, [k]: v }));
-    setPage(0);
-  }
+  const visible = filtered.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
 
   if (rows.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-brand-light bg-gray-50 px-6 py-14 text-center">
-        <TruckIcon size={40} className="text-brand-light" />
-        <p className="m-0 text-sm text-ink-muted">No shipments yet.</p>
+      <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EBF2FF] text-brand">
+          <TruckIcon size={28} />
+        </span>
+        <p className="text-[16px] font-semibold text-ink">No shipments yet</p>
+        <p className="max-w-[360px] text-[14.5px] text-[#5B6472]">When you book one, it shows up here with its tracking number and status.</p>
+        <Link href="/account/schedule" className="mt-1 inline-flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-[14.5px] font-semibold text-white hover:bg-brand-dark">
+          <PaperPlaneTiltIcon size={16} weight="fill" /> Schedule a shipment
+        </Link>
       </div>
     );
   }
 
+  const th = (key: SortKey, label: string, cls = "") => {
+    const active = sort.key === key;
+    return (
+      <th className={`px-4 py-2.5 ${cls}`}>
+        <button
+          type="button"
+          onClick={() => setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }))}
+          className={`inline-flex items-center gap-1 text-[12px] font-semibold uppercase tracking-[0.06em] ${active ? "text-ink" : "text-[#6B778A] hover:text-ink"}`}
+        >
+          {label}
+          {active ? sort.dir === "asc" ? <CaretUpIcon size={11} weight="bold" /> : <CaretDownIcon size={11} weight="bold" /> : null}
+        </button>
+      </th>
+    );
+  };
+
   return (
     <div>
-      <div className="overflow-x-auto rounded-xl border border-brand-light">
-        <table className="w-full min-w-[1040px] text-left text-sm">
-          <thead>
-            <tr className="bg-brand-pale">
-              {COLUMNS.map((c) => {
-                const active = sort.key === c.key;
-                return (
-                  <th key={c.key} className="px-3 py-3 align-bottom">
-                    <button
-                      type="button"
-                      onClick={() => toggleSort(c.key)}
-                      className="flex items-center gap-1 text-xs font-semibold tracking-wide text-ink-muted uppercase hover:text-brand"
-                    >
-                      {c.label}
-                      {active ? (
-                        sort.dir === "asc" ? (
-                          <CaretUpIcon size={11} weight="bold" />
-                        ) : (
-                          <CaretDownIcon size={11} weight="bold" />
-                        )
-                      ) : (
-                        <CaretDownIcon size={11} className="opacity-25" />
-                      )}
-                    </button>
-                  </th>
-                );
-              })}
-            </tr>
-            {/* Per-column filter row, same pattern the admin lists use. */}
-            <tr className="bg-brand-pale/60">
-              {COLUMNS.map((c) => (
-                <th key={c.key} className="px-3 pb-3">
-                  <input
-                    aria-label={`Filter by ${c.label}`}
-                    value={filters[c.key] ?? ""}
-                    onChange={(e) => setFilter(c.key, e.target.value)}
-                    className="w-full min-w-[72px] rounded-md border border-brand-light bg-white px-2 py-1 text-xs text-ink outline-none placeholder:text-ink-muted/60 focus:border-brand"
-                    placeholder="Filter"
-                  />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white">
-            {visible.map((r) => (
-              <tr key={r.id} className="border-t border-brand-light">
-                <td className="px-3 py-3 whitespace-nowrap text-ink-muted">{r.date}</td>
-                <td className="px-3 py-3 font-medium whitespace-nowrap text-ink">
-                  {r.trackingNumber ?? "Not yet"}
+      <div className="flex flex-wrap items-center gap-3 border-b border-[#EEF0F3] px-5 py-3.5 md:px-6">
+        <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl bg-white px-3 ring-[1.5px] ring-inset ring-[#DCE0E6] focus-within:ring-2 focus-within:ring-brand sm:max-w-[320px]">
+          <MagnifyingGlassIcon size={16} className="shrink-0 text-[#6B778A]" />
+          <input
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setPage(0);
+            }}
+            placeholder="Search tracking, name or city"
+            className="w-full min-w-0 bg-transparent text-[15px] text-ink outline-none placeholder:text-[#8A94A6]"
+          />
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          {STATUS_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => {
+                setStatus(f.value);
+                setPage(0);
+              }}
+              className={`rounded-full px-3 py-1.5 text-[13px] font-semibold transition ${
+                status === f.value ? "bg-[#0B1220] text-white" : "bg-[#F2F4F7] text-[#3A4353] hover:bg-[#E6E9EE]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop/tablet table: five columns, fixed layout, never wider than the panel. */}
+      <table className="hidden w-full table-fixed text-left md:table">
+        <colgroup>
+          <col className="w-[16%]" />
+          <col className="w-[18%]" />
+          <col className="w-[24%]" />
+          <col className="w-[24%]" />
+          <col className="w-[18%]" />
+        </colgroup>
+        <thead className="border-b border-[#EEF0F3] bg-[#FAFBFC]">
+          <tr>
+            {th("sortDate", "Booked")}
+            {th("trackingNumber", "Tracking")}
+            {th("senderName", "From")}
+            {th("receiverName", "To")}
+            {th("status", "Status")}
+          </tr>
+        </thead>
+        <tbody>
+          {visible.map((r) => {
+            const t = TYPE[r.shipmentType];
+            return (
+              <tr key={r.id} className="border-b border-[#F0F2F5] last:border-0 hover:bg-[#FAFBFC]">
+                <td className="px-4 py-3 align-top">
+                  <span className="block text-[14.5px] font-medium text-ink">{r.date}</span>
+                  <span className="mt-0.5 flex items-center gap-1 text-[13px] text-[#5B6472]">
+                    {t && <t.icon size={14} />} {t?.label ?? r.shipmentType}
+                  </span>
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-ink">{r.senderName}</td>
-                <td className="px-3 py-3 whitespace-nowrap text-ink-muted">{r.senderCity}</td>
-                <td className="px-3 py-3 whitespace-nowrap text-ink-muted">{r.senderState}</td>
-                <td className="px-3 py-3 whitespace-nowrap text-ink">{r.receiverName}</td>
-                <td className="px-3 py-3 whitespace-nowrap text-ink-muted">{r.receiverCity}</td>
-                <td className="px-3 py-3 whitespace-nowrap text-ink-muted">{r.receiverState}</td>
-                <td className="px-3 py-3 whitespace-nowrap text-ink-muted">
-                  {TYPE_LABELS[r.shipmentType] ?? r.shipmentType}
+                <td className="truncate px-4 py-3 align-top text-[14.5px] font-semibold text-ink">
+                  {r.trackingNumber ?? <span className="font-medium text-[#8A94A6]">Not assigned yet</span>}
                 </td>
-                <td className="px-3 py-3">
+                <td className="px-4 py-3 align-top">
+                  <span className="block truncate text-[14.5px] font-medium text-ink">{r.senderName}</span>
+                  <span className="block truncate text-[13px] text-[#5B6472]">{[r.senderCity, r.senderState].filter(Boolean).join(", ")}</span>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  <span className="block truncate text-[14.5px] font-medium text-ink">{r.receiverName}</span>
+                  <span className="block truncate text-[13px] text-[#5B6472]">
+                    {[r.receiverCity, r.receiverState, r.receiverCountry].filter(Boolean).join(", ")}
+                  </span>
+                </td>
+                <td className="px-4 py-3 align-top">
                   <ShipmentStatusPill status={r.status} />
                 </td>
               </tr>
-            ))}
-            {visible.length === 0 && (
-              <tr className="border-t border-brand-light">
-                <td colSpan={COLUMNS.length} className="px-3 py-10 text-center text-sm text-ink-muted">
-                  No shipments match those filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            );
+          })}
+        </tbody>
+      </table>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-        <button
-          type="button"
-          onClick={() => setPage((p) => Math.max(0, p - 1))}
-          disabled={current === 0}
-          className="rounded-lg border border-brand-light px-4 py-2 font-medium text-ink disabled:opacity-40"
-        >
-          Previous
-        </button>
-        <div className="flex flex-wrap items-center gap-4 text-ink-muted">
-          <span>
-            Total rows: {filtered.length}
-            {filtered.length !== rows.length && ` of ${rows.length}`}
-          </span>
-          <label className="flex items-center gap-2">
-            <span className="sr-only">Rows per page</span>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPage(0);
-              }}
-              className="rounded-lg border border-brand-light bg-white px-2 py-1.5 text-ink outline-none focus:border-brand"
-            >
-              {PAGE_SIZES.map((n) => (
-                <option key={n} value={n}>
-                  {n} rows
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <button
-          type="button"
-          onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-          disabled={current >= pageCount - 1}
-          className="rounded-lg border border-brand-light px-4 py-2 font-medium text-ink disabled:opacity-40"
-        >
-          Next
-        </button>
+      {/* Phones: one card per shipment. */}
+      <ul className="divide-y divide-[#F0F2F5] md:hidden">
+        {visible.map((r) => (
+          <li key={r.id} className="px-5 py-3.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[14.5px] font-semibold text-ink">{r.trackingNumber ?? "Tracking pending"}</span>
+              <ShipmentStatusPill status={r.status} />
+            </div>
+            <p className="mt-1 flex items-center gap-1.5 text-[14px] text-[#3A4353]">
+              <span className="truncate">{r.senderCity || r.senderName}</span>
+              <ArrowRightIcon size={13} className="shrink-0 text-[#8A94A6]" />
+              <span className="truncate">{[r.receiverCity, r.receiverCountry].filter(Boolean).join(", ") || r.receiverName}</span>
+            </p>
+            <p className="mt-0.5 text-[13px] text-[#6B778A]">
+              {r.date} · {TYPE[r.shipmentType]?.label ?? r.shipmentType}
+            </p>
+          </li>
+        ))}
+      </ul>
+
+      {visible.length === 0 && <p className="px-6 py-10 text-center text-[14.5px] text-[#5B6472]">No shipments match that search.</p>}
+
+      <div className="flex items-center justify-between gap-3 border-t border-[#EEF0F3] px-5 py-3 text-[13.5px] text-[#5B6472] md:px-6">
+        <span>
+          {filtered.length} shipment{filtered.length === 1 ? "" : "s"}
+          {filtered.length !== rows.length && ` of ${rows.length}`}
+        </span>
+        {pageCount > 1 && (
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setPage(current - 1)} disabled={current === 0} className="rounded-lg px-3 py-1.5 font-semibold text-ink ring-1 ring-inset ring-[#DCE0E6] hover:bg-[#F2F4F7] disabled:opacity-40">
+              Previous
+            </button>
+            <span>
+              {current + 1} / {pageCount}
+            </span>
+            <button type="button" onClick={() => setPage(current + 1)} disabled={current >= pageCount - 1} className="rounded-lg px-3 py-1.5 font-semibold text-ink ring-1 ring-inset ring-[#DCE0E6] hover:bg-[#F2F4F7] disabled:opacity-40">
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
