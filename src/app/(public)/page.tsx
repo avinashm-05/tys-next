@@ -608,19 +608,28 @@ function DockAction({
   visual: React.ReactNode;
 }) {
   return (
+    // Hover (2026-09-30, "this hover is jittery"): the card used to animate a
+    // large blurred box-shadow and rotate its icon, both repainted every
+    // frame (worst in Safari). Now the lift is a GPU transform only, the glow
+    // is its own pre-rendered layer that just fades in, and the icon scales
+    // without rotating (rotation re-rasterized its text-like glyph).
     <Link
       href={href}
-      className="group flex flex-col gap-5 rounded-[22px] bg-white p-5 ring-1 ring-[#E6EDF8] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_40px_-24px_rgba(3,100,255,0.45)] hover:ring-[#BCD2F5] sm:p-6"
+      className="group relative isolate flex flex-col gap-5 rounded-[22px] bg-white p-5 ring-1 ring-[#E6EDF8] transition-transform duration-300 ease-out [transform:translate3d(0,0,0)] [will-change:transform] hover:[transform:translate3d(0,-2px,0)] hover:ring-[#BCD2F5] sm:p-6"
     >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 rounded-[22px] opacity-0 shadow-[0_22px_40px_-24px_rgba(3,100,255,0.45)] transition-opacity duration-300 group-hover:opacity-100"
+      />
       <span className="flex items-start gap-4">
-        <span className="transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105">
+        <span className="transition-transform duration-300 ease-out group-hover:scale-105">
           <IconTile icon={icon} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[18px] font-semibold tracking-[-0.015em] text-ink">{title}</span>
           <span className="mt-0.5 block text-[14.5px] leading-snug text-ink-muted">{body}</span>
         </span>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E1E7F0] text-ink transition duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E1E7F0] text-ink transition-colors duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
           <ArrowRightIcon size={15} className="transition-transform duration-300 group-hover:translate-x-0.5" />
         </span>
       </span>
