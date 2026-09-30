@@ -9,6 +9,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { CheckCircleIcon, EnvelopeSimpleIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
 import { FieldError } from "@/components/public/account/shell";
+import { SocialSignIn, type SocialProvider } from "@/components/public/account/social-sign-in";
 
 type Errors = Record<string, string>;
 
@@ -38,7 +39,7 @@ const labelClass = "mb-1.5 block text-sm font-medium text-ink";
 const ctaClass =
   "mt-3 w-full rounded-full bg-brand px-6 py-3 text-center text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-60";
 
-export function RegisterForm() {
+export function RegisterForm({ socialProviders = [] }: { socialProviders?: SocialProvider[] }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -90,6 +91,7 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      <SocialSignIn providers={socialProviders} />
       <div>
         <label className={labelClass}>Name</label>
         <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
@@ -124,7 +126,15 @@ export function RegisterForm() {
   );
 }
 
-export function LoginForm({ verified }: { verified: boolean }) {
+export function LoginForm({
+  verified,
+  socialError = false,
+  socialProviders = [],
+}: {
+  verified: boolean;
+  socialError?: boolean;
+  socialProviders?: SocialProvider[];
+}) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -184,6 +194,16 @@ export function LoginForm({ verified }: { verified: boolean }) {
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      {socialError && (
+        <p className="m-0 flex items-start gap-2 text-sm text-red-600">
+          <WarningCircleIcon size={16} className="mt-0.5 shrink-0" />
+          <span>
+            That sign-in didn&apos;t go through. If you already have an account with this email,
+            log in with your password below.
+          </span>
+        </p>
+      )}
+      <SocialSignIn providers={socialProviders} />
       {verified && (
         <p className="m-0 flex items-center gap-2 font-semibold text-green-600">
           <CheckCircleIcon size={18} />

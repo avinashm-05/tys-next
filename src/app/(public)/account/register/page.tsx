@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { enabledSocialProviders, getSession } from "@/lib/auth";
 import { AccountShell } from "@/components/public/account/shell";
 import { RegisterForm } from "@/components/public/account/auth-forms";
 
@@ -14,7 +14,7 @@ export default async function RegisterPage() {
       title="Create your account"
       subtitle="Track your quote requests and manage your profile."
     >
-      <RegisterForm />
+      <RegisterForm socialProviders={enabledSocialProviders()} />
     </AccountShell>
   );
 }

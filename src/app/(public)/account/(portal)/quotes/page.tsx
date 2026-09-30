@@ -34,7 +34,7 @@ export default async function MyQuotesPage() {
         <div className="rounded-2xl border border-brand-light bg-white p-6">
           <p className="m-0 text-sm text-ink-muted">
             No quote requests yet.{" "}
-            <Link href="/#bookShipmentForm" className="font-medium text-brand hover:underline">
+            <Link href="/quotes" className="font-medium text-brand hover:underline">
               Get a free quote
             </Link>{" "}
             to see it here.

@@ -31,6 +31,7 @@ import {
   SuitcaseRollingIcon,
   SpinnerGapIcon,
   TruckIcon,
+  UserCircleIcon,
   XIcon,
 } from "@phosphor-icons/react";
 
@@ -38,11 +39,10 @@ import {
 // inside the account portal (its sidebar's primary action), matching the
 // reference hub rather than exposing a booking form to logged-out visitors.
 //
-// The account entry points are hidden (2026-08-11): the customer portal
-// isn't being shown to the public yet. The /account routes, auth and portal
-// all still work; this only removes the ways in from the marketing site. To
-// bring them back, add a "My Account" link to COMPANY below and the footer's
-// Help entry in site-footer.tsx.
+// Account entry point (hidden 2026-08-11, launched 2026-09-30): a quiet
+// "Sign in" link next to the phone number, and a third button in the mobile
+// sheet. /account sends signed-out visitors to the login page and signed-in
+// customers straight to their shipments.
 //
 // 2026-09-29 redesign, modelled on Attio's navigation (user's request):
 // - Desktop: a full-width flat bar, every destination reachable from it,
@@ -466,6 +466,13 @@ export function SiteHeader() {
             <PhoneIcon size={15} />
             +1 (404) 793-8759
           </a>
+          <Link
+            href="/account"
+            className={`btn hidden text-[15px] lg:inline-flex ${dark ? "text-white/80 hover:bg-white/10 hover:text-white" : "text-ink/80 hover:bg-[#F2F3F5] hover:text-ink"}`}
+          >
+            <UserCircleIcon size={17} />
+            Sign in
+          </Link>
           <Link href={quoteHref(pathname)} className="btn btn-primary hidden sm:inline-flex">
             Get a free quote
             <ArrowRightIcon size={14} />
@@ -593,6 +600,14 @@ export function SiteHeader() {
           <a href="tel:+14047938759" tabIndex={mobileOpen ? 0 : -1} className="btn btn-secondary btn-lg w-full">
             <PhoneIcon size={15} /> +1 (404) 793-8759
           </a>
+          <Link
+            href="/account"
+            tabIndex={mobileOpen ? 0 : -1}
+            onClick={() => navigateFromMenu("/account")}
+            className="mx-auto inline-flex items-center gap-1.5 py-1.5 text-sm font-medium text-ink/70 hover:text-ink"
+          >
+            <UserCircleIcon size={16} /> Sign in to your account
+          </Link>
         </div>
       </div>
     </header>

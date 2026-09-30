@@ -17,6 +17,60 @@ export const ADMIN_ROLES = ["super-admin", "admin"] as const;
 
 const appUrl = () => (process.env.APP_URL ?? "").replace(/\/+$/, "");
 
+// ── Customer social sign-in (2026-09-30): Google + Microsoft ──
+// Each provider is switched on only when BOTH its env vars are set, so a
+// missing key simply hides that button instead of breaking sign-in. The
+// OAuth redirect always lands on the PUBLIC site (APP_URL), never the admin
+// host, so the customer's session cookie is set where the portal lives.
+// Linking: a social sign-in joins an existing account with the same email
+// only when the provider says it verified that email (Better Auth's rule;
+// Microsoft reports this from Entra's verified-email claims). Neither
+// provider is "trusted", so an unverified provider email can never take over
+// an account. Admin accounts can never gain a social login (hook below).
+const SOCIAL_PROVIDERS = {
+  google: { id: "GOOGLE_CLIENT_ID", secret: "GOOGLE_CLIENT_SECRET" },
+  microsoft: { id: "MICROSOFT_CLIENT_ID", secret: "MICROSOFT_CLIENT_SECRET" },
+} as const;
+export type SocialProviderId = keyof typeof SOCIAL_PROVIDERS;
+
+/** Providers with credentials configured, for the sign-in buttons. */
+export function enabledSocialProviders(): SocialProviderId[] {
+  return (Object.keys(SOCIAL_PROVIDERS) as SocialProviderId[]).filter(
+    (p) => process.env[SOCIAL_PROVIDERS[p].id] && process.env[SOCIAL_PROVIDERS[p].secret],
+  );
+}
+
+function socialProvidersConfig() {
+  const on = enabledSocialProviders();
+  const cfg = (p: SocialProviderId) => ({
+    clientId: process.env[SOCIAL_PROVIDERS[p].id]!,
+    clientSecret: process.env[SOCIAL_PROVIDERS[p].secret]!,
+    redirectURI: `${appUrl()}/api/auth/callback/${p}`,
+  });
+  return {
+    ...(on.includes("google") ? { google: { ...cfg("google"), prompt: "select_account" as const } } : {}),
+    // "common": personal Outlook/Hotmail AND work/school accounts.
+    ...(on.includes("microsoft") ? { microsoft: { ...cfg("microsoft"), tenantId: "common", prompt: "select_account" as const } } : {}),
+  };
+}
+
+// The public site answers on both the apex and www (www 301s to the apex),
+// so trust both spellings of APP_URL for Better Auth's origin check. Before,
+// a www APP_URL made every customer auth form on the apex fail with
+// "Invalid origin".
+function siteOrigins(): string[] {
+  const u = appUrl();
+  if (!u) return [];
+  try {
+    const url = new URL(u);
+    const host = url.hostname.replace(/^www\./, "");
+    if (host === "localhost" || /^[\d.]+$/.test(host)) return [u];
+    return [`${url.protocol}//${host}`, `${url.protocol}//www.${host}`];
+  } catch {
+    return [u];
+  }
+}
+
 export const auth = betterAuth({
   database: prismaAdapter(db, { provider: "mysql" }),
   // baseURL is the ADMIN host. The session cookie is host-only (we never set
@@ -34,9 +88,10 @@ export const auth = betterAuth({
   // production — self-scoping since APP_URL is only ever a localhost URL in
   // dev, never in a real deployment.
   trustedOrigins: [
-    appUrl(),
+    ...siteOrigins(),
     ...(appUrl().startsWith("http://localhost") ? ["http://localhost:3001"] : []),
   ].filter(Boolean),
+  socialProviders: socialProvidersConfig(),
   emailAndPassword: {
     enabled: true,
     // C1: customer self-registration is OPEN — the database hook below forces
@@ -109,6 +164,21 @@ export const auth = betterAuth({
     sendOnSignUp: true,
   },
   databaseHooks: {
+    account: {
+      create: {
+        // Staff accounts sign in with password (+ the coming 2-step code)
+        // only: a Google/Microsoft login must never attach to an admin, or
+        // it would bypass those checks. Returning false aborts the link.
+        before: async (account) => {
+          if (account.providerId === "credential") return;
+          const owner = await db.user.findUnique({
+            where: { id: BigInt(account.userId) },
+            select: { role: true },
+          });
+          if (owner && ADMIN_ROLES.includes(owner.role as (typeof ADMIN_ROLES)[number])) return false;
+        },
+      },
+    },
     user: {
       create: {
         // SECURITY INVARIANT (C1): every user created through Better Auth's
@@ -286,6 +356,7 @@ export async function requireAdminPage(): Promise<AppSession> {
  */
 export function requireCustomer(session: AppSession | null): AppSession {
   if (!session?.user) throw new HttpError(401, "Unauthenticated.");
+  if (isAdmin(session)) throw new HttpError(403, "Staff accounts can't use the customer portal.");
   if (!session.user.emailVerified) {
     throw new HttpError(403, "Please verify your email address first.");
   }
@@ -317,6 +388,9 @@ export function customerRoute<Ctx = unknown>(
 export async function requireCustomerPage(): Promise<AppSession> {
   const session = await getSession();
   if (!session?.user) redirect("/account/login");
+  // Staff don't use the customer portal (they'd book shipments as
+  // themselves); send them to admin instead.
+  if (isAdmin(session)) redirect("/admin");
   if (!session.user.emailVerified) redirect("/account/verify-email");
   return session;
 }

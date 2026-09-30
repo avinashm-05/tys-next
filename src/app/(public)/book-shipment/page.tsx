@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { pageMetadata } from "@/lib/seo";
-import { getSession } from "@/lib/auth";
+import { enabledSocialProviders, getSession } from "@/lib/auth";
 import { ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
 import { BookShipmentLoginForm } from "@/components/public/book-shipment-login-form";
 import { PageHeroBand } from "@/components/public/page-hero-band";
@@ -28,7 +28,7 @@ function LoginGate() {
         <Section>
           <div className="mx-auto max-w-md">
             <div className="rounded-3xl border border-[var(--line)] bg-white p-6 shadow-[0_20px_60px_rgba(16,24,40,0.06)] sm:p-8">
-              <BookShipmentLoginForm />
+              <BookShipmentLoginForm socialProviders={enabledSocialProviders()} />
             </div>
             <p className="mt-6 text-center text-[15px] text-ink-muted">
               Only need a price?{" "}

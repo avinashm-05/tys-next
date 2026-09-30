@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SocialSignIn, type SocialProvider } from "@/components/public/account/social-sign-in";
 import Link from "next/link";
 import {
   EnvelopeSimpleIcon,
@@ -23,7 +24,7 @@ async function post(path: string, body: Record<string, unknown>): Promise<Respon
 // server component re-evaluates the session and renders the booking wizard
 // instead of this gate. Same /api/auth/sign-in/email endpoint the
 // /account/login form uses, just styled for this page.
-export function BookShipmentLoginForm() {
+export function BookShipmentLoginForm({ socialProviders = [] }: { socialProviders?: SocialProvider[] }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -60,6 +61,9 @@ export function BookShipmentLoginForm() {
 
   return (
     <form onSubmit={submit} noValidate>
+      <div className="mb-5">
+        <SocialSignIn providers={socialProviders} callbackURL="/account/schedule" />
+      </div>
       <label className="block text-sm font-medium text-ink">Email Address</label>
       <div className="relative mt-1.5">
         <EnvelopeSimpleIcon

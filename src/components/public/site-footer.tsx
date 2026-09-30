@@ -35,8 +35,8 @@ const RESOURCES = [
   { href: "/faqs", label: "FAQs" },
 ] as const;
 
-// "Book Shipment" and "My Account" both stay out here, see the matching
-// note in site-header.tsx. The portal isn't being shown to the public yet.
+// "My account" launched 2026-09-30 (see site-header.tsx). "Book Shipment"
+// stays out: booking lives inside the account portal.
 // 2026-09-29: the footer links every key page (the SEO audit found several,
 // like baggage shipping and shipping rates, with almost no inbound links).
 const COMPANY = [
@@ -47,6 +47,7 @@ const COMPANY = [
   { href: "/tracking", label: "Track a shipment" },
   { href: "/contact-us", label: "Contact us" },
   { href: "/quotes", label: "Get a quote" },
+  { href: "/account", label: "My account" },
 ] as const;
 
 const LEGAL = [
