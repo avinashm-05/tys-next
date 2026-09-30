@@ -378,7 +378,12 @@ export async function requireAdminPage(): Promise<AppSession> {
 /** Same as requireAdminPage, minus the 2-step check: for the setup page itself. */
 export async function requireAdminPageAllowingSetup(): Promise<AppSession> {
   const session = await getSession();
-  if (!session?.user) redirect("/login");
+  // Single-domain mode: no session → plain 404 (same reason as proxy.ts),
+  // e.g. a stale cookie the proxy let through.
+  if (!session?.user) {
+    if (process.env.ADMIN_ROUTING === "path") notFound();
+    redirect("/login");
+  }
   if (!isAdmin(session)) notFound();
   if (adminSessionExpired(session)) {
     await endSession(session);

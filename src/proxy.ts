@@ -83,12 +83,14 @@ export default function proxy(req: NextRequest) {
 
   // ── Single-domain (path) mode ────────────────────────────────────────────
   // Admin and public share one host, split by path. No host comparison, no
-  // subdomain redirects. Only the UX bounce for anonymous /admin remains.
+  // subdomain redirects.
+  // Anonymous /admin shows the site's ordinary 404 (2026-09-30, owner's
+  // request) instead of bouncing to /login: on the shared public domain
+  // nothing should point visitors at the staff sign-in. Staff open /login
+  // directly. Goes away with the admin subdomain (host mode below).
   if (process.env.ADMIN_ROUTING === "path") {
     if (pathname.startsWith("/admin") && !hasSessionCookie(req)) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
+      return NextResponse.rewrite(new URL("/__not-found", req.url));
     }
     return NextResponse.next();
   }
