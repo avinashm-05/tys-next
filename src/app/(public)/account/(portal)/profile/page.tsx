@@ -54,9 +54,6 @@ export default async function ProfilePage() {
           postalCode: user?.postalCode ?? "",
         }}
         email={user?.email ?? session.user.email}
-        // displayUsername keeps the original casing; username is the
-        // normalized one actually used to sign in.
-        username={user?.displayUsername ?? user?.username ?? ""}
       />
       <SecurityPanel
         hasPassword={providers.includes("credential")}

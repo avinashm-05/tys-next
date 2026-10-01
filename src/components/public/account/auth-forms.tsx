@@ -150,11 +150,6 @@ export function LoginForm({
   const [resent, setResent] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // An "@" is the whole test: handles are [a-z0-9_] only (see lib/username.ts),
-  // so anything containing one can only be an email attempt. Picking the wrong
-  // endpoint just yields the same 401 as a bad password, so this never leaks
-  // which accounts exist.
-  const looksLikeEmail = identifier.includes("@");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -162,9 +157,9 @@ export function LoginForm({
     setUnverified(false);
     setBusy(true);
     try {
-      const res = looksLikeEmail
-        ? await post("/api/auth/sign-in/email", { email: identifier, password })
-        : await post("/api/auth/sign-in/username", { username: identifier, password });
+      // Email only (owner, 2026-10-01): usernames still exist server-side
+      // but aren't part of the customer experience any more.
+      const res = await post("/api/auth/sign-in/email", { email: identifier, password });
       if (res.ok) {
         window.location.assign(redirectTo);
         return;
@@ -218,16 +213,15 @@ export function LoginForm({
         </p>
       )}
       <div>
-        <label className={labelClass}>Email or username</label>
-        {/* type="text", not "email" — a handle would trip the browser's own
-            email validation and the field accepts both. */}
+        <label className={labelClass}>Email</label>
         <input
-          type="text"
-          autoComplete="username"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
           className={inputClass}
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
-          placeholder="you@example.com or yourhandle"
+          placeholder="you@example.com"
         />
       </div>
       <div>
@@ -243,7 +237,7 @@ export function LoginForm({
               Your email isn&apos;t verified yet.{" "}
               {resent ? (
                 <strong>Verification email sent. Check your inbox.</strong>
-              ) : looksLikeEmail ? (
+              ) : (
                 <button
                   type="button"
                   onClick={resend}
@@ -252,10 +246,6 @@ export function LoginForm({
                 >
                   Resend the verification email
                 </button>
-              ) : (
-                // Signed in by handle, so we have no address to send to —
-                // say so rather than offer a button that can't work.
-                <>Enter your email address above to have the link resent.</>
               )}
             </span>
           </p>

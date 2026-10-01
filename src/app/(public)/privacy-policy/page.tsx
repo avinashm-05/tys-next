@@ -114,6 +114,33 @@ const TOPICS: Topic[] = [
     ),
   },
   {
+    id: "signing-in",
+    title: "Signing in and your account",
+    content: (
+      <Prose>
+        <ul>
+          <li>
+            If you sign in with Google or Microsoft, we receive only your name and email
+            address from them, and nothing else. We never see or store your Google or
+            Microsoft password, and we get no access to your contacts, files, calendar or
+            anything in those accounts.
+          </li>
+          <li>
+            If you sign in with a password, we store it only in a scrambled (hashed) form
+            that cannot be turned back into your password, and we never send it by email
+            or show it to anyone, including our own staff.
+          </li>
+          <li>
+            Staying signed in uses a cookie that contains only a random session number,
+            never your email, password or any personal details. Signing out, changing
+            your password, or using &ldquo;Sign out other devices&rdquo; ends those
+            sessions immediately.
+          </li>
+        </ul>
+      </Prose>
+    ),
+  },
+  {
     id: "data-security",
     title: "Data security",
     content: (

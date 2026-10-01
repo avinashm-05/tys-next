@@ -76,13 +76,11 @@ export function ProfileForm({
   initialPhone,
   initialAddress,
   email,
-  username,
 }: {
   initialName: string;
   initialPhone: string;
   initialAddress: ProfileAddress;
   email: string;
-  username: string;
 }) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
@@ -168,15 +166,11 @@ export function ProfileForm({
           <span className={wellLabel}>Phone</span>
           <input className={bareInput} type="tel" autoComplete="tel" placeholder="+1 404 555 0100" value={phone} onChange={(e) => { setSaved(false); setPhone(e.target.value); }} />
         </label>
-        <div className={lockedWell} title="Your email links your quotes to this account">
+        <div className={`${lockedWell} sm:col-span-2`} title="Your email links your quotes to this account">
           <span className={wellLabel}>Email</span>
           <span className="mt-0.5 flex items-center gap-2 truncate py-0.5 text-[16px] font-medium text-[#3A4353]">
             <LockKeyIcon size={15} className="shrink-0 text-[#8A94A6]" /> {email}
           </span>
-        </div>
-        <div className={lockedWell}>
-          <span className={wellLabel}>Username</span>
-          <span className="mt-0.5 block truncate py-0.5 text-[16px] font-medium text-[#3A4353]">{username || "Not set"}</span>
         </div>
         <label className={`${well()} sm:col-span-2`}>
           <span className={wellLabel}>Company</span>
