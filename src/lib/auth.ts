@@ -43,13 +43,12 @@ export function enabledSocialProviders(): SocialProviderId[] {
 }
 
 /**
- * Providers whose BUTTONS to show. Production: only configured ones. Local
- * development: all of them, so the sign-in pages can be reviewed before the
- * keys exist (an unconfigured one just says it couldn't start).
+ * Providers whose BUTTONS to show: only configured ones, in every
+ * environment, so localhost matches production (Microsoft stays hidden until
+ * MICROSOFT_CLIENT_ID/SECRET exist).
  */
 export function visibleSocialProviders(): SocialProviderId[] {
-  if (process.env.NODE_ENV === "production") return enabledSocialProviders();
-  return Object.keys(SOCIAL_PROVIDERS) as SocialProviderId[];
+  return enabledSocialProviders();
 }
 
 function socialProvidersConfig() {

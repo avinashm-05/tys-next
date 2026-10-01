@@ -37,8 +37,12 @@ function MicrosoftMark() {
 export function SocialSignIn({
   providers,
   callbackURL = "/account",
+  mode = "signin",
 }: {
   providers: SocialProvider[];
+  /** "signup" on the register page: same flow (the first Google sign-in
+   *  creates the account), just labelled "Sign up with Google". */
+  mode?: "signin" | "signup";
   /** Where to land after a successful sign-in (e.g. /account/schedule from Book a shipment). */
   callbackURL?: string;
 }) {
@@ -91,7 +95,7 @@ export function SocialSignIn({
     <div className="flex flex-col gap-3">
       <div className="my-1 flex items-center gap-3 text-[12px] font-semibold uppercase tracking-wider text-[#6B778A]">
         <span className="h-px flex-1 bg-[#DCE3EC]" />
-        or continue with
+        {mode === "signup" ? "or sign up with" : "or continue with"}
         <span className="h-px flex-1 bg-[#DCE3EC]" />
       </div>
       <div className="flex flex-col gap-3">
@@ -104,7 +108,7 @@ export function SocialSignIn({
             className="flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-white px-4 text-[15px] font-semibold text-ink ring-[1.5px] ring-inset ring-[#AEBBCD] transition hover:bg-[#F5F8FC] hover:ring-[#7F8FA6] disabled:opacity-60"
           >
             {p === "google" ? <GoogleMark /> : <MicrosoftMark />}
-            {busy === p ? "Redirecting…" : `Continue with ${LABEL[p]}`}
+            {busy === p ? "Redirecting…" : `${mode === "signup" ? "Sign up" : "Continue"} with ${LABEL[p]}`}
           </button>
         ))}
       </div>

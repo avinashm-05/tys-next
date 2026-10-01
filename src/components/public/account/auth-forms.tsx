@@ -120,7 +120,7 @@ export function RegisterForm({ socialProviders = [] }: { socialProviders?: Socia
       <button type="submit" className={ctaClass} disabled={busy}>
         {busy ? "Creating account…" : "Create account"}
       </button>
-      <SocialSignIn providers={socialProviders} />
+      <SocialSignIn providers={socialProviders} mode="signup" />
       <p className="m-0 text-center text-sm text-ink-muted">
         Already registered?{" "}
         <Link href="/account/login" className="font-medium text-brand hover:underline">
