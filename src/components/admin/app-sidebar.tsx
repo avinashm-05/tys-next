@@ -10,6 +10,7 @@ import {
   UserListIcon,
   MapPinLineIcon,
   NewspaperIcon,
+  ShieldCheckIcon,
   ShippingContainerIcon,
   SlidersHorizontalIcon,
   SpinnerIcon,
@@ -49,6 +50,10 @@ const ITEMS = [
   { title: "Blog", href: "/admin/blog", icon: NewspaperIcon },
   { title: "Activity", href: "/admin/activity", icon: ClockCounterClockwiseIcon },
 ] as const;
+
+// Owner only (2026-09-30): add/remove staff, roles, 2-step resets. Hidden
+// for admins; the page and its API 403 them regardless.
+const STAFF_ITEM = { title: "Staff", href: "/admin/staff", icon: ShieldCheckIcon } as const;
 
 // Services and Vendor Types no longer have standalone management pages —
 // both are creatable inline from the fields that use them (vendor type field,
@@ -142,7 +147,8 @@ export function AppSidebar({
   const pathname = usePathname();
   // Exact for the dashboard; prefix for sections — longest match wins so
   // /admin/vendors/map lights "Map", not "List".
-  const allHrefs = [...ITEMS, ...VENDOR_ITEMS, ...SETTINGS_ITEMS].map((i) => i.href);
+  const items = user.role === "super-admin" ? [...ITEMS, STAFF_ITEM] : [...ITEMS];
+  const allHrefs = [...items, ...VENDOR_ITEMS, ...SETTINGS_ITEMS].map((i) => i.href);
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
     if (pathname !== href && !pathname.startsWith(href + "/")) return false;
@@ -177,7 +183,7 @@ export function AppSidebar({
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {ITEMS.map((item) => (
+              {items.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild

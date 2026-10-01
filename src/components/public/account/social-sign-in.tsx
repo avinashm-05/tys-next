@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // "Continue with Google / Microsoft" (2026-09-30). The server decides which
 // providers are configured (enabledSocialProviders in lib/auth) and passes
@@ -44,6 +44,18 @@ export function SocialSignIn({
 }) {
   const [busy, setBusy] = useState<SocialProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Coming BACK from Google/Microsoft restores this page from the browser's
+  // back-forward cache with the old state, leaving the button stuck on
+  // "Redirecting…" (owner's report, 2026-10-01). pageshow fires on that
+  // restore; reset so the form is usable again.
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setBusy(null);
+    };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, []);
   if (providers.length === 0) return null;
 
   async function go(provider: SocialProvider) {
