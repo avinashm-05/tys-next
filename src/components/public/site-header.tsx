@@ -311,7 +311,12 @@ export function SiteHeader() {
   useEffect(() => {
     if (!mobileOpen) return;
     const prev = document.body.style.overflow;
+    const prevPad = document.body.style.paddingRight;
+    const bar = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
+    // Hiding the scrollbar would widen the page and shift everything; pad
+    // by its width so nothing moves (desktop/narrow windows; phones have 0).
+    if (bar > 0) document.body.style.paddingRight = `${bar}px`;
     const onTouchMove = (e: TouchEvent) => {
       const list = sheetNavRef.current;
       if (list && e.target instanceof Node && list.contains(e.target) && list.scrollHeight > list.clientHeight) return;
@@ -320,6 +325,7 @@ export function SiteHeader() {
     document.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => {
       document.body.style.overflow = prev;
+      document.body.style.paddingRight = prevPad;
       document.removeEventListener("touchmove", onTouchMove);
     };
   }, [mobileOpen]);
@@ -333,7 +339,15 @@ export function SiteHeader() {
     : "text-ink/80 hover:bg-[#F2F3F5] hover:text-ink";
   const pillOn = dark ? "bg-white/10 text-white" : "bg-[#F2F3F5] text-ink";
 
-  const toggleMobile = () => setMobileOpen((v) => !v);
+  // The sheet's own bar opens exactly where the page header is (below the
+  // announcement bar at the top of the page, at 0 once scrolled), so the
+  // logo and close button don't jump when the menu opens (2026-10-06).
+  const [sheetTop, setSheetTop] = useState(0);
+  const toggleMobile = () => {
+    const top = headerRef.current?.getBoundingClientRect().top ?? 0;
+    setSheetTop(Math.max(0, Math.round(top)));
+    setMobileOpen((v) => !v);
+  };
 
   return (
     <>
@@ -549,15 +563,15 @@ export function SiteHeader() {
         aria-hidden={!mobileOpen}
         style={{
           position: "fixed",
-          top: 0,
+          top: sheetTop,
           left: 0,
           right: 0,
           bottom: 0,
           opacity: mobileOpen ? 1 : 0,
-          transform: mobileOpen ? "translateY(0)" : "translateY(-8px)",
+          // Fade only: any slide made the logo/close bar visibly hop.
           visibility: mobileOpen ? "visible" : "hidden",
           pointerEvents: mobileOpen ? "auto" : "none",
-          transition: `opacity 250ms ease-out, transform 350ms ${MENU_EASE}, visibility 0s linear ${mobileOpen ? "0s" : "250ms"}`,
+          transition: `opacity 200ms ease-out, visibility 0s linear ${mobileOpen ? "0s" : "200ms"}`,
         }}
         className="z-[60] flex flex-col bg-white xl:hidden"
       >
@@ -566,7 +580,6 @@ export function SiteHeader() {
             is (on iPhone it could scroll away under an open menu). */}
         <div
           className="flex h-14 shrink-0 items-center justify-between border-b border-[#E6EAF0] px-5 sm:px-10"
-          style={{ marginTop: "env(safe-area-inset-top, 0px)" }}
         >
           <Link href="/" className="flex items-center" onClick={() => setMobileOpen(false)} tabIndex={mobileOpen ? 0 : -1}>
             <img src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png" alt="TYS Global Logistics" width={480} height={177} draggable={false} className="h-9 w-auto select-none" />
