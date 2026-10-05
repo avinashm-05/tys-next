@@ -203,7 +203,6 @@ export function SiteHeader() {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   // Every group starts collapsed, so all five rows are visible at once.
   const [mobileGroup, setMobileGroup] = useState<string | null>(null);
-  const [sheetTop, setSheetTop] = useState(64);
   const pathname = usePathname();
 
   // Tapping a link in the phone menu keeps the menu up (with a spinner on
@@ -304,18 +303,14 @@ export function SiteHeader() {
   const keepMenu = () => window.clearTimeout(closeTimer.current);
 
   // Lock page scroll behind the open mobile sheet. body{overflow:hidden}
-  // alone is ignored by iPhone Safari for touch: a swipe still scrolled the
-  // page behind, the announcement bar scrolled away and the sheet looked
-  // like it slid off or vanished (owner's report, 2026-10-06). So: lock the
-  // root element too, and cancel any touch-drag that isn't inside the
-  // sheet's own scrolling list.
+  // alone is ignored by iPhone Safari for touch, so touch-drags that aren't
+  // inside the sheet's own scrolling list are cancelled too (owner's report,
+  // 2026-10-06). The <html> element is deliberately NOT locked: on iPhone
+  // that un-stuck the sticky header and it scrolled out of view.
   const sheetNavRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!mobileOpen) return;
-    const root = document.documentElement;
-    const prev = { html: root.style.overflow, body: document.body.style.overflow, ob: root.style.overscrollBehavior };
-    root.style.overflow = "hidden";
-    root.style.overscrollBehavior = "none";
+    const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onTouchMove = (e: TouchEvent) => {
       const list = sheetNavRef.current;
@@ -324,9 +319,7 @@ export function SiteHeader() {
     };
     document.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => {
-      root.style.overflow = prev.html;
-      root.style.overscrollBehavior = prev.ob;
-      document.body.style.overflow = prev.body;
+      document.body.style.overflow = prev;
       document.removeEventListener("touchmove", onTouchMove);
     };
   }, [mobileOpen]);
@@ -340,13 +333,7 @@ export function SiteHeader() {
     : "text-ink/80 hover:bg-[#F2F3F5] hover:text-ink";
   const pillOn = dark ? "bg-white/10 text-white" : "bg-[#F2F3F5] text-ink";
 
-  const toggleMobile = () => {
-    // The sheet hangs from the bar's bottom edge, which moves while the
-    // announcement bar is still on screen.
-    const bottom = headerRef.current?.getBoundingClientRect().bottom;
-    if (bottom) setSheetTop(Math.round(bottom));
-    setMobileOpen((v) => !v);
-  };
+  const toggleMobile = () => setMobileOpen((v) => !v);
 
   return (
     <>
@@ -562,7 +549,7 @@ export function SiteHeader() {
         aria-hidden={!mobileOpen}
         style={{
           position: "fixed",
-          top: sheetTop,
+          top: 0,
           left: 0,
           right: 0,
           bottom: 0,
@@ -572,8 +559,30 @@ export function SiteHeader() {
           pointerEvents: mobileOpen ? "auto" : "none",
           transition: `opacity 250ms ease-out, transform 350ms ${MENU_EASE}, visibility 0s linear ${mobileOpen ? "0s" : "250ms"}`,
         }}
-        className="z-40 flex flex-col bg-white xl:hidden"
+        className="z-[60] flex flex-col bg-white xl:hidden"
       >
+        {/* Its own top bar (2026-10-06): the sheet is full screen, so the
+            logo and close button never depend on where the page's header
+            is (on iPhone it could scroll away under an open menu). */}
+        <div
+          className="flex h-14 shrink-0 items-center justify-between border-b border-[#E6EAF0] px-5 sm:px-10"
+          style={{ marginTop: "env(safe-area-inset-top, 0px)" }}
+        >
+          <Link href="/" className="flex items-center" onClick={() => setMobileOpen(false)} tabIndex={mobileOpen ? 0 : -1}>
+            <img src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png" alt="TYS Global Logistics" width={480} height={177} draggable={false} className="h-9 w-auto select-none" />
+          </Link>
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            tabIndex={mobileOpen ? 0 : -1}
+            aria-label="Close menu"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F2F4F7] text-ink transition active:scale-90"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+              <path d="M3 3l12 12M15 3L3 15" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
         <nav ref={sheetNavRef} data-lenis-prevent className="flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-2 sm:px-10">
           {[...GROUPS.map((g) => ({ kind: "group" as const, g })), ...NAV_LINKS.map((l) => ({ kind: "link" as const, l }))].map(
             (row, i) => (
