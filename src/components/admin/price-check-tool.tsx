@@ -550,12 +550,9 @@ export function PriceCheckTool() {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <Button
-              className="bg-tys-blue text-white hover:bg-tys-blue/90"
-              onClick={addRow}
-            >
+            <Button variant="outline" onClick={addRow}>
               <PlusIcon size={16} weight="bold" />
-              Add new row
+              Add another package
             </Button>
             <div className="flex gap-2">
               <Button variant="outline" onClick={reset} disabled={loading}>
