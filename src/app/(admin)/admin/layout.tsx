@@ -16,14 +16,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // toggle, but never read it back here — so a manual expand never survived
   // a reload, and with no defaultOpen it always came back expanded. Default
   // to collapsed (icon rail) until the user opts into expanded themselves.
+  // 2026-10-05: open (with labels, like the customer portal) unless the
+  // user collapsed it themselves.
   const sidebarState = (await cookies()).get("sidebar_state")?.value;
-  const sidebarOpen = sidebarState === "true";
+  const sidebarOpen = sidebarState !== "false";
 
   return (
     <TooltipProvider>
       <SidebarProvider defaultOpen={sidebarOpen}>
         <AppSidebar user={{ name, email, role }} />
-        <SidebarInset>
+        {/* min-w-0: lets wide tables scroll inside the page instead of
+            pushing the whole page past the window edge now that the
+            sidebar is open by default. */}
+        <SidebarInset className="min-w-0">
           <AdminHeader />
           <div className="flex-1 p-6">{children}</div>
         </SidebarInset>

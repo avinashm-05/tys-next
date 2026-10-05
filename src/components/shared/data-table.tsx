@@ -118,7 +118,7 @@ export function DataTable<TData, TValue>({
     <div className="space-y-2">
       <div
         className={cn(
-          "overflow-hidden rounded-xl border border-tys-mist",
+          "overflow-x-auto rounded-xl border border-tys-mist bg-card",
           server?.loading && "pointer-events-none opacity-60",
         )}
       >

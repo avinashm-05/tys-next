@@ -270,7 +270,7 @@ export function PriceCheckTool() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-2xl bg-tys-blue text-white">
+        <div className="flex size-10 items-center justify-center rounded-xl bg-[#ebf2ff] text-tys-blue">
           <CurrencyDollarIcon size={22} weight="bold" />
         </div>
         <h1 className="text-h2">Get Rates</h1>
@@ -551,7 +551,7 @@ export function PriceCheckTool() {
 
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Button
-              className="bg-tys-blue text-white uppercase hover:bg-tys-blue/90"
+              className="bg-tys-blue text-white hover:bg-tys-blue/90"
               onClick={addRow}
             >
               <PlusIcon size={16} weight="bold" />
@@ -564,7 +564,7 @@ export function PriceCheckTool() {
               <Button
                 onClick={check}
                 disabled={loading}
-                className="bg-tys-rose text-white uppercase hover:bg-tys-rose/90"
+                className="bg-tys-blue text-white hover:bg-tys-blue/90"
               >
                 {loading ? "Getting rate…" : "Get rate"}
               </Button>

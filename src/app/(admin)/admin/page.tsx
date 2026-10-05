@@ -116,10 +116,10 @@ export default async function AdminDashboardPage() {
   const total14 = days.reduce((s, [, n]) => s + n, 0);
 
   const kpis = [
-    { label: "Need a price", value: needsPrice, hint: "New quote requests", href: "/admin/quotes", icon: FileTextIcon, tone: "bg-amber-50 text-amber-700" },
-    { label: "Waiting on customer", value: waiting, hint: "Quoted, not booked yet", href: "/admin/quotes", icon: HourglassMediumIcon, tone: "bg-blue-50 text-tys-blue" },
-    { label: "New bookings", value: newBookings, hint: "Booked online, to confirm", href: "/admin/shipments", icon: PackageIcon, tone: "bg-emerald-50 text-emerald-700" },
-    { label: "In transit", value: inTransit, hint: "On the way", href: "/admin/shipments", icon: TruckIcon, tone: "bg-violet-50 text-violet-700" },
+    { label: "Need a price", value: needsPrice, hint: "New requests", href: "/admin/quotes", icon: FileTextIcon },
+    { label: "Waiting on customer", value: waiting, hint: "Quoted", href: "/admin/quotes", icon: HourglassMediumIcon },
+    { label: "New bookings", value: newBookings, hint: "To confirm", href: "/admin/shipments", icon: PackageIcon },
+    { label: "In transit", value: inTransit, hint: "On the way", href: "/admin/shipments", icon: TruckIcon },
   ];
 
   return (
@@ -145,27 +145,41 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs: the most urgent one in the brand blue (public-site CTA
+          gradient), the rest as clean white cards. */}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {kpis.map((k) => (
-          <Link key={k.label} href={k.href} className="group flex flex-col gap-3 rounded-2xl border bg-background p-5 transition hover:border-tys-blue/40 hover:shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">{k.label}</span>
-              <span className={`flex size-8 items-center justify-center rounded-lg ${k.tone}`}>
-                <k.icon size={17} weight="bold" />
-              </span>
-            </div>
-            <span className="text-[34px] font-semibold leading-none tracking-tight tabular-nums">{k.value}</span>
-            <span className="flex items-center justify-between text-xs text-muted-foreground">
-              {k.hint}
-              <ArrowRightIcon size={13} className="opacity-0 transition group-hover:opacity-100" />
-            </span>
-          </Link>
-        ))}
+        {kpis.map((k, i) => {
+          const hero = i === 0;
+          return (
+            <Link
+              key={k.label}
+              href={k.href}
+              className={`group relative flex flex-col justify-between gap-6 overflow-hidden rounded-2xl p-5 transition ${
+                hero
+                  ? "bg-[radial-gradient(120%_120%_at_50%_-20%,#3d86ff_0%,#0364ff_55%)] text-white shadow-[0_10px_30px_-12px_rgba(3,100,255,0.55)] hover:shadow-[0_14px_34px_-12px_rgba(3,100,255,0.7)]"
+                  : "border bg-card hover:border-tys-blue/40 hover:shadow-[0_8px_24px_-14px_rgba(16,24,40,0.25)]"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className={`text-sm font-medium ${hero ? "text-white/85" : "text-muted-foreground"}`}>{k.label}</span>
+                <span className={`flex size-8 items-center justify-center rounded-full ${hero ? "bg-white/15 text-white" : "bg-[#ebf2ff] text-tys-blue"}`}>
+                  <k.icon size={16} weight="bold" />
+                </span>
+              </div>
+              <div className="flex items-end justify-between gap-2">
+                <span className="text-[44px] leading-none tracking-tight tabular-nums [font-family:var(--font-display)]">{k.value}</span>
+                <span className={`flex items-center gap-1 pb-1 text-xs font-medium ${hero ? "text-white/85" : "text-muted-foreground"}`}>
+                  {k.hint}
+                  <ArrowRightIcon size={12} className="transition group-hover:translate-x-0.5" />
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Trend */}
-      <section className="rounded-2xl border bg-background p-5">
+      <section className="rounded-2xl border bg-card p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-sm font-semibold">Quote requests, last 14 days</h2>
           <p className="text-sm text-muted-foreground">
@@ -181,7 +195,7 @@ export default async function AdminDashboardPage() {
             <div key={day} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5" title={`${day}: ${n} quote${n === 1 ? "" : "s"}`}>
               {n > 0 && <span className="text-[11px] tabular-nums text-muted-foreground">{n}</span>}
               <div
-                className={`w-full rounded-md ${i === days.length - 1 ? "bg-tys-blue" : "bg-tys-blue/25"}`}
+                className={`w-full rounded-md ${i === days.length - 1 ? "bg-tys-blue" : "bg-[#cfe0ff]"}`}
                 style={{ height: `${Math.max(n ? 8 : 3, (n / max) * 100)}%` }}
               />
               <span className="text-[10px] text-muted-foreground">{Number(day.slice(8))}</span>
@@ -237,7 +251,7 @@ export default async function AdminDashboardPage() {
 
 function Panel({ title, href, empty, children }: { title: string; href?: string; empty: string; children: React.ReactNode[] }) {
   return (
-    <section className="flex flex-col rounded-2xl border bg-background">
+    <section className="flex flex-col rounded-2xl border bg-card">
       <div className="flex items-center justify-between border-b px-5 py-3.5">
         <h2 className="text-sm font-semibold">{title}</h2>
         {href && (

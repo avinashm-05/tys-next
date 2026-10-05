@@ -218,33 +218,30 @@ function useNowInTimeZone(timezone: string | null): string | null {
 // layout: Customer Details, then From, then To).
 function LocationGlance({ zipInfo, liveTime }: { zipInfo: ZipInfoState; liveTime: string | null }) {
   return (
-    <FieldRow label="City, State">
-      <div className="flex h-9 items-center gap-1.5 overflow-hidden rounded-md border border-tys-mist bg-muted/30 px-3 text-sm text-muted-foreground">
-        {zipInfo ? (
-          <>
-            <BuildingsIcon size={14} className="shrink-0" />
-            <span className="truncate">
-              {zipInfo.city}, {zipInfo.state}
-            </span>
-            {liveTime && (
-              <>
-                <span className="shrink-0 text-tys-mist">·</span>
-                <ClockIcon size={14} className="shrink-0" />
-                <span className="shrink-0">{liveTime}</span>
-              </>
-            )}
-          </>
-        ) : (
-          <span>—</span>
-        )}
-      </div>
-    </FieldRow>
+    <p className="flex min-h-5 items-center gap-1.5 text-sm text-muted-foreground">
+      {zipInfo ? (
+        <>
+          <BuildingsIcon size={14} className="shrink-0" />
+          <span className="truncate font-medium text-foreground/80">
+            {zipInfo.city}, {zipInfo.state}
+          </span>
+          {liveTime && (
+            <>
+              <span className="shrink-0">·</span>
+              <ClockIcon size={14} className="shrink-0" />
+              <span className="shrink-0">{liveTime} there now</span>
+            </>
+          )}
+        </>
+      ) : (
+        <span>Enter a ZIP to see the city</span>
+      )}
+    </p>
   );
 }
 
 function RouteSection({
   title,
-  icon: Icon,
   country,
   zip,
   onCountryChange,
@@ -252,7 +249,6 @@ function RouteSection({
   extra,
 }: {
   title: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
   country: string;
   zip: string;
   onCountryChange: (v: string) => void;
@@ -263,21 +259,18 @@ function RouteSection({
   const liveTime = useNowInTimeZone(zipInfo?.timezone ?? null);
 
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <Icon size={18} className="text-tys-blue" />
-        <h2 className="font-heading text-lg font-semibold">{title}</h2>
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <section className="flex flex-col gap-3 rounded-xl border bg-[#fafbfc] p-4">
+      <h2 className="text-[15px] font-semibold">{title}</h2>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FieldRow label="Country">
           <IconInput icon={GlobeIcon} value={country} onChange={(e) => onCountryChange(e.target.value)} />
         </FieldRow>
         <FieldRow label="Zip / Postal code">
           <IconInput icon={BuildingsIcon} value={zip} onChange={(e) => onZipChange(e.target.value)} />
         </FieldRow>
-        <LocationGlance zipInfo={zipInfo} liveTime={liveTime} />
       </div>
-      {extra && <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">{extra}</div>}
+      <LocationGlance zipInfo={zipInfo} liveTime={liveTime} />
+      {extra}
     </section>
   );
 }
@@ -403,10 +396,7 @@ export function QuoteDetailEditor({ quote: quoteProp }: { quote?: QuoteDetail })
         <CardContent className="flex flex-col gap-6">
           <section className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <UserIcon size={18} className="text-tys-blue" />
-                <h2 className="font-heading text-lg font-semibold">Customer Details</h2>
-              </div>
+              <h2 className="text-[15px] font-semibold">Customer</h2>
               {quote.preferredTimeSlot && (
                 <span className="flex items-center gap-1.5 rounded-full bg-tys-blue/10 px-3 py-1 text-xs font-medium text-tys-blue">
                   <ClockIcon size={14} />
@@ -431,9 +421,9 @@ export function QuoteDetailEditor({ quote: quoteProp }: { quote?: QuoteDetail })
             </div>
           </section>
 
+          <div className="grid gap-4 lg:grid-cols-2">
           <RouteSection
             title="From"
-            icon={GlobeIcon}
             country={fromCountry}
             zip={fromZip}
             onCountryChange={setFromCountry}
@@ -441,7 +431,6 @@ export function QuoteDetailEditor({ quote: quoteProp }: { quote?: QuoteDetail })
           />
           <RouteSection
             title="To"
-            icon={GlobeIcon}
             country={toCountry}
             zip={toZip}
             onCountryChange={setToCountry}
@@ -463,21 +452,19 @@ export function QuoteDetailEditor({ quote: quoteProp }: { quote?: QuoteDetail })
               </FieldRow>
             }
           />
+          </div>
         </CardContent>
       </Card>
 
       <Card size="sm">
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <BuildingsIcon size={18} className="text-tys-blue" />
-              <h2 className="font-heading text-lg font-semibold">Package</h2>
-            </div>
+            <h2 className="text-[15px] font-semibold">Package</h2>
             <Button
               type="button"
               size="sm"
               onClick={addPackage}
-              className="bg-tys-indigo text-white hover:bg-tys-indigo/90"
+              variant="outline"
             >
               <PlusIcon size={14} weight="bold" />
               Add package
@@ -707,7 +694,7 @@ export function QuoteDetailEditor({ quote: quoteProp }: { quote?: QuoteDetail })
           type="button"
           disabled={saving}
           onClick={() => handleSave(false)}
-          className="bg-tys-rose text-white hover:bg-tys-rose/90"
+          className="border border-input bg-background text-foreground shadow-none hover:bg-muted"
         >
           {saving ? "Saving…" : "Save"}
         </Button>

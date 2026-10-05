@@ -279,7 +279,7 @@ export function ShipmentsList() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-tys-blue text-white">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-[#ebf2ff] text-tys-blue">
             <ShippingContainerIcon size={22} weight="bold" />
           </div>
           <h1 className="text-h2">Shipments</h1>
@@ -296,7 +296,7 @@ export function ShipmentsList() {
               setSelectedStatuses(on ? new Set(STATUS_OPTIONS) : new Set());
               list.setPage(1);
             }}
-            className="bg-tys-indigo text-white uppercase hover:bg-tys-indigo/90"
+            className="border border-input bg-background text-foreground shadow-none hover:bg-muted"
           />
           <CheckboxFilterDropdown
             label="Type"
@@ -309,9 +309,9 @@ export function ShipmentsList() {
               setSelectedTypes(on ? new Set(TYPE_OPTIONS) : new Set());
               list.setPage(1);
             }}
-            className="bg-tys-teal text-white uppercase hover:bg-tys-teal/90"
+            className="border border-input bg-background text-foreground shadow-none hover:bg-muted"
           />
-          <Button asChild className="bg-tys-rose text-white uppercase hover:bg-tys-rose/90">
+          <Button asChild className="bg-tys-blue text-white hover:bg-tys-blue/90">
             <Link href="/admin/shipments/new">
               <PlusIcon size={16} weight="bold" />
               New shipment

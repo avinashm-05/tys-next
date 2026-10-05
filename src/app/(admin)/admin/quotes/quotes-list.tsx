@@ -265,7 +265,7 @@ export function QuotesList({ tabs }: { tabs?: React.ReactNode }) {
       <div className="flex flex-wrap gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className="bg-tys-indigo text-white uppercase hover:bg-tys-indigo/90">
+            <Button className="border border-input bg-background text-foreground shadow-none hover:bg-muted">
               <PulseIcon size={16} weight="bold" />
               Status
               {selectedStatuses.size > 0 ? ` (${selectedStatuses.size})` : ""}
@@ -359,12 +359,12 @@ export function QuotesHeader() {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-2xl bg-tys-blue text-white">
+        <div className="flex size-10 items-center justify-center rounded-xl bg-[#ebf2ff] text-tys-blue">
           <FileTextIcon size={22} weight="bold" />
         </div>
         <h1 className="text-h2">Quotes</h1>
       </div>
-      <Button asChild className="bg-tys-blue text-white uppercase hover:bg-tys-blue/90">
+      <Button asChild className="bg-tys-blue text-white hover:bg-tys-blue/90">
         <Link href="/admin/quotes/new">
           <PlusIcon size={16} weight="bold" />
           New Quote

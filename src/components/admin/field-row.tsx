@@ -17,7 +17,7 @@ export function FieldRow({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-sm text-muted-foreground" htmlFor={htmlFor}>
+      <label className="text-[13px] font-medium text-foreground/70" htmlFor={htmlFor}>
         {label}
       </label>
       {children}
@@ -25,21 +25,14 @@ export function FieldRow({
   );
 }
 
-// Trailing field icon (SETU reference: every Sender/Recipient field carries
-// one) — same absolute-positioned pattern already used in vendor-form.tsx's
-// `text()` helper, reused here as a standalone Input variant.
+// Was a trailing-icon input (SETU reference: an icon in every field). Since
+// the 2026-10-05 admin restyle the icons are gone (they made long forms
+// noisy); kept as a plain Input so the shipment and quote forms don't change.
 export function IconInput({
-  icon: Icon,
   className,
   ...props
-}: ComponentProps<typeof Input> & { icon: React.ComponentType<{ size?: number; className?: string }> }) {
-  return (
-    <div className="relative">
-      <Input className={cn("pr-9", className)} {...props} />
-      <Icon
-        size={15}
-        className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-tys-rose/70"
-      />
-    </div>
-  );
+}: ComponentProps<typeof Input> & { icon?: React.ComponentType<{ size?: number; className?: string }> }) {
+  const { icon, ...inputProps } = props;
+  void icon;
+  return <Input className={cn(className)} {...inputProps} />;
 }

@@ -67,8 +67,9 @@ const SETTINGS_ITEMS = [{ title: "FedEx Markup", href: "/admin/settings" }] as c
 // rounded-xl overrides the sidebar primitive's default rounded-none — every
 // other control in the admin (buttons, cards, badges) is soft-cornered, so a
 // sharp-edged nav read as visually inconsistent.
+// 2026-10-05: portal-style nav (light-blue pill + blue text when active).
 const ACTIVE =
-  "rounded-xl data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:hover:bg-sidebar-primary data-active:hover:text-sidebar-primary-foreground";
+  "h-9 rounded-lg text-[14px] font-medium text-sidebar-foreground [&>svg]:text-[#6b778a] hover:bg-[#f2f4f7] hover:text-foreground data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-accent-foreground data-active:[&>svg]:text-sidebar-accent-foreground data-active:hover:bg-sidebar-accent data-active:hover:text-sidebar-accent-foreground";
 
 /**
  * The nav item's own icon, swapped for a spinner while its navigation is in
@@ -159,7 +160,7 @@ export function AppSidebar({
   const isSection = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <Sidebar collapsible="icon" variant="floating">
+    <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader className="px-4 py-3 group-data-[collapsible=icon]:px-2">
         {/* min-h keeps this row's own height constant across collapse — the
             label disappearing (`hidden`, not animatable) would otherwise
@@ -167,13 +168,11 @@ export function AppSidebar({
             stays first/fixed in place rather than re-centering, so it isn't
             the thing that visibly jumps either. */}
         <div className="flex min-h-9 items-center gap-2">
-          <SidebarTrigger className="shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" />
-          <Link
-            href="/admin"
-            className="text-sm font-semibold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden"
-          >
-            TYS Global Logistics
-            <span className="block text-xs font-normal text-sidebar-foreground/70">Admin</span>
+          <SidebarTrigger className="shrink-0 text-[#6b778a] hover:bg-[#f2f4f7] hover:text-foreground" />
+          <Link href="/admin" className="flex items-center gap-2 group-data-[collapsible=icon]:hidden" aria-label="TYS admin home">
+            {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, same as the site header */}
+            <img src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png" alt="TYS Global Logistics" width={480} height={177} className="h-7 w-auto" draggable={false} />
+            <span className="rounded-md bg-[#f2f4f7] px-1.5 py-0.5 text-[11px] font-semibold text-[#5b6472]">Admin</span>
           </Link>
         </div>
       </SidebarHeader>

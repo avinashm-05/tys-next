@@ -164,39 +164,51 @@
 }
 
 /* ── TYS brand tokens ─────────────────────────────────────────────────────
-   Thin layer over the shadcn slots so the admin doesn't read as stock.
-   Six brand values + a real type scale; everything else inherits. */
+   2026-10-05: the admin now wears the PUBLIC site's palette (same blue, ink,
+   cool greys and white panels as the marketing pages and the customer
+   portal) instead of the older navy + rainbow-accent look. One action
+   colour (blue); everything else is neutral. */
 :root {
-  --tys-navy: #16294e; /* primary — trust/marine logistics */
-  --tys-navy-deep: #0d1a33; /* sidebar & dark surfaces */
-  --tys-blue: #0364ff; /* action accent — CTAs, active nav (matches the public site's brand blue) */
-  --tys-ink: #1d2534; /* body text */
-  --tys-paper: #f7f8fa; /* app background */
-  --tys-mist: #dde2ea; /* borders/dividers */
+  --tys-navy: #101828; /* ink, used where the old navy was a text/surface colour */
+  --tys-navy-deep: #0b1220;
+  --tys-blue: #0364ff; /* THE action colour (= --pub-blue) */
+  --tys-ink: #101828; /* body text (= --pub-ink) */
+  --tys-paper: #f4f6f9; /* app background (portal background) */
+  --tys-mist: #e6e8ec; /* borders/dividers (portal border) */
 
-  /* Secondary accents (SETU-reference-inspired) — for pages that need more
-     than one accent color to distinguish action types (e.g. Vendors: a Map
-     View action vs. a Services filter vs. the primary blue Add action),
-     rather than every button sharing the single --tys-blue accent. */
-  --tys-indigo: #7c3aed; /* secondary accent — map/location actions, icon badges */
-  --tys-rose: #e11d48; /* secondary accent — filters/services, active tab */
-  --tys-teal: #0d9488; /* secondary accent — vendor type filter */
+  /* The old secondary accents are retired: anything still using them now
+     renders in the one blue (indigo/teal) or a proper danger red (rose), so
+     no leftover purple/pink/teal buttons remain anywhere. */
+  --tys-indigo: #0364ff;
+  --tys-rose: #e5484d;
+  --tys-teal: #0364ff;
 
   --background: var(--tys-paper);
   --foreground: var(--tys-ink);
-  --primary: var(--tys-navy);
+  --card: #ffffff;
+  --card-foreground: var(--tys-ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--tys-ink);
+  --primary: var(--tys-blue);
   --primary-foreground: #ffffff;
-  --ring: var(--tys-navy);
+  --secondary: #f2f4f7;
+  --secondary-foreground: var(--tys-ink);
+  --muted: #f2f4f7;
+  --muted-foreground: #5b6472;
+  --accent: #ebf2ff;
+  --accent-foreground: var(--tys-blue);
+  --ring: var(--tys-blue);
   --border: var(--tys-mist);
-  --input: var(--tys-mist);
+  --input: #dce0e6;
 
-  --sidebar: var(--tys-navy-deep);
-  --sidebar-foreground: #e6eaf2;
+  /* White sidebar, like the customer portal. */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #3a4353;
   --sidebar-primary: var(--tys-blue);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: color-mix(in oklch, var(--tys-navy-deep) 70%, white 8%);
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: color-mix(in oklch, var(--tys-navy-deep) 80%, white 12%);
+  --sidebar-accent: #ebf2ff;
+  --sidebar-accent-foreground: var(--tys-blue);
+  --sidebar-border: var(--tys-mist);
   --sidebar-ring: var(--tys-blue);
 }
 

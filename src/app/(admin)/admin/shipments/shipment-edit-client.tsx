@@ -186,7 +186,7 @@ export function ShipmentEditClient({ initial }: { initial: ShipmentDetail }) {
           Cancel
         </Button>
         <Button
-          className="bg-tys-rose text-white hover:bg-tys-rose/90"
+          className="border border-input bg-background text-foreground shadow-none hover:bg-muted"
           onClick={() => save(false)}
           disabled={saving}
         >
