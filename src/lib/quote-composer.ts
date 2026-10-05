@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ALLOWED_CURRENCIES } from "@/lib/validation/quote-price";
+import { quoteRef } from "@/lib/quote-ref";
 
 // The admin "Send quote" composer (2026-10-05). One set of editable fields
 // renders three things: the email (sent from sales@), the PDF (same design,
@@ -109,7 +110,7 @@ export function pricing(f: ComposerFields): Pricing {
 export function autoSubject(f: ComposerFields, quoteId: number): string {
   const p = pricing(f);
   const parts = [
-    `Quote #${quoteId}`,
+    `Quote #${quoteRef(quoteId)}`,
     f.serviceName,
     `${f.fromLabel} to ${f.toLabel}`,
     p.price > 0 ? formatMoney(p.price, f.currency) : "",
@@ -153,7 +154,7 @@ export type RenderOptions = {
 
 function whatsappBookingUrl(f: ComposerFields, o: RenderOptions) {
   const p = pricing(f);
-  const text = `Hi ${o.repName}, I'd like to book quote #${o.quoteId}, ${f.fromLabel} to ${f.toLabel}${
+  const text = `Hi ${o.repName}, I'd like to book quote #${quoteRef(o.quoteId)}, ${f.fromLabel} to ${f.toLabel}${
     p.price > 0 ? ` at ${formatMoney(p.price, f.currency)}` : ""
   }.`;
   return `https://wa.me/${COMPANY.whatsappDigits}?text=${encodeURIComponent(text)}`;
@@ -166,7 +167,7 @@ export function renderComposerHtml(f: ComposerFields, o: RenderOptions): string 
   const closing = pdf
     ? f.closing.replace(/reply to this email or message us on WhatsApp/i, "message us on WhatsApp or email us")
     : f.closing;
-  const rows: ComposerRow[] = [{ label: "Quote ID", value: `#${o.quoteId}` }, ...f.rows].filter(
+  const rows: ComposerRow[] = [{ label: "Quote ID", value: `#${quoteRef(o.quoteId)}` }, ...f.rows].filter(
     (r) => r.label && r.value,
   );
   const preheader = [
@@ -218,7 +219,7 @@ ${f.tipTitle ? `<div style="font-size:13px;font-weight:700;color:#0b1b3f;margin:
     }</td>`;
 
   const footerNote = pdf
-    ? `Quote #${o.quoteId}${o.preparedOn ? ` &middot; Prepared on ${esc(o.preparedOn)}` : ""} for your shipment from ${esc(f.fromLabel)} to ${esc(f.toLabel)}.`
+    ? `Quote #${quoteRef(o.quoteId)}${o.preparedOn ? ` &middot; Prepared on ${esc(o.preparedOn)}` : ""} for your shipment from ${esc(f.fromLabel)} to ${esc(f.toLabel)}.`
     : "You are receiving this because you requested a shipping quote on tysgloballogistics.com.";
 
   return `<!DOCTYPE html>
@@ -232,7 +233,7 @@ ${f.tipTitle ? `<div style="font-size:13px;font-weight:700;color:#0b1b3f;margin:
 <td style="vertical-align:middle;text-align:right;font-size:12px;font-weight:600;color:#cfe0ff;letter-spacing:.04em;">SHIPPING FROM THE US<br>TO THE WORLD</td>
 </tr></table></td></tr>
 <tr><td style="background:#ffffff;padding:34px 32px 28px;border-left:1px solid #e3ecfb;border-right:1px solid #e3ecfb;font-family:${FONT};">
-<div style="margin:0 0 14px;"><span style="display:inline-block;background:#e6efff;color:#0348c2;font-size:12px;font-weight:700;letter-spacing:.04em;padding:5px 11px;border-radius:999px;">Quote #${o.quoteId}</span></div>
+<div style="margin:0 0 14px;"><span style="display:inline-block;background:#e6efff;color:#0348c2;font-size:12px;font-weight:700;letter-spacing:.04em;padding:5px 11px;border-radius:999px;">Quote #${quoteRef(o.quoteId)}</span></div>
 <h1 style="margin:0 0 18px;font-size:26px;line-height:1.25;font-weight:800;letter-spacing:-.02em;color:#0b1b3f;">${esc(f.heading)}</h1>
 <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#1d2534;">${esc(greeting)}</p>
 ${f.intro ? `<p style="${P}">${multi(f.intro)}</p>` : ""}
@@ -259,7 +260,7 @@ ${closing ? `<p style="margin:0 0 20px;font-size:15px;line-height:1.65;color:#1d
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;"><tr>
 <td style="background:#0364ff;border-radius:999px;"><a href="${esc(whatsappBookingUrl(f, o))}" style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:999px;">Book on WhatsApp</a></td>
 <td style="width:12px;"></td>
-<td style="border:1.5px solid #c9d6ea;border-radius:999px;"><a href="mailto:${COMPANY.email}?subject=${encodeURIComponent(`Quote #${o.quoteId}: Booking`)}" style="display:inline-block;padding:12.5px 24px;font-size:15px;font-weight:700;color:#0b1b3f;text-decoration:none;border-radius:999px;">${pdf ? "Email us" : "Reply by email"}</a></td>
+<td style="border:1.5px solid #c9d6ea;border-radius:999px;"><a href="mailto:${COMPANY.email}?subject=${encodeURIComponent(`Quote #${quoteRef(o.quoteId)}: Booking`)}" style="display:inline-block;padding:12.5px 24px;font-size:15px;font-weight:700;color:#0b1b3f;text-decoration:none;border-radius:999px;">${pdf ? "Email us" : "Reply by email"}</a></td>
 </tr></table>
 ${f.note ? `<p style="margin:0 0 22px;font-size:13px;line-height:1.6;color:#5b6472;">${multi(f.note)}</p>` : ""}
 <p style="margin:0 0 4px;font-size:15px;line-height:1.65;color:#1d2534;">Best regards,</p>
@@ -288,7 +289,7 @@ export function renderComposerText(f: ComposerFields, o: Pick<RenderOptions, "qu
     f.intro,
     f.partnerLine,
     "",
-    `Quote #${o.quoteId}`,
+    `Quote #${quoteRef(o.quoteId)}`,
     `From: ${[f.fromLabel, f.fromSub].filter(Boolean).join(", ")}`,
     `To: ${[f.toLabel, f.toSub].filter(Boolean).join(", ")}`,
     `Service: ${f.serviceName}${f.serviceTagline ? ` (${f.serviceTagline})` : ""}`,
@@ -321,7 +322,7 @@ export function renderComposerWhatsApp(
   const lines = [
     `Hello${f.greetingName ? ` ${f.greetingName}` : ""}, thank you for your quote request with TYS Global Logistics.`,
     "",
-    `Here is your quote (Quote #${o.quoteId})${o.emailSent ? ", and we have also sent the same details to your email" : ""}:`,
+    `Here is your quote (Quote #${quoteRef(o.quoteId)})${o.emailSent ? ", and we have also sent the same details to your email" : ""}:`,
     `From: ${[f.fromLabel, f.fromSub].filter(Boolean).join(", ")}`,
     `To: ${[f.toLabel, f.toSub].filter(Boolean).join(", ")}`,
     `Service: ${f.serviceName}`,

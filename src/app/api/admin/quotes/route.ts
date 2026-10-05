@@ -6,6 +6,7 @@ import { emptyStringsToNull } from "@/lib/validation/common";
 import { adminQuoteDetailInput } from "@/lib/validation/admin-quote-detail";
 import { quoteStatus } from "@/lib/validation/quote";
 import { packageTypeWhere, QUOTE_INCLUDE, serializeQuoteRow } from "./helpers";
+import { parseQuoteRef } from "@/lib/quote-ref";
 
 // QuotesDataTable port (03-logic): filters status / package_type (FIND_IN_SET)
 // / date range / domestic-vs-international route. Search covers the
@@ -53,6 +54,10 @@ export const GET = adminRoute(async (req) => {
     ...(contactTerm
       ? {
           OR: [
+            // A quote number (#005800, 005800 or 58) finds that quote too.
+            ...(parseQuoteRef(contactTerm) != null && /^#?\d+$/.test(contactTerm)
+              ? [{ id: BigInt(parseQuoteRef(contactTerm)!) }]
+              : []),
             { name: { contains: contactTerm } },
             { email: { contains: contactTerm } },
             { mobileNumber: { contains: contactTerm } },

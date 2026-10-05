@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { decimal2 } from "@/lib/serialize";
 import { formatPackageTypes } from "@/lib/package-type";
 import { QuoteStatusPill } from "@/components/public/account/account-nav";
+import { quoteRef } from "@/lib/quote-ref";
 
 export const metadata: Metadata = { title: "My quotes | TYS Global Logistics" };
 
@@ -54,7 +55,7 @@ export default async function MyQuotesPage() {
                     {quote.fromCountry} ({quote.fromZip}) → {quote.toCountry} ({quote.toZip})
                   </div>
                   <div className="text-sm text-ink-muted">
-                    {formatPackageTypes(quote.packageType)} · Quote #{Number(quote.id)}
+                    {formatPackageTypes(quote.packageType)} · Quote #{quoteRef(quote.id)}
                     {quote.createdAt ? ` · ${dateFmt.format(quote.createdAt)}` : ""}
                   </div>
                 </div>

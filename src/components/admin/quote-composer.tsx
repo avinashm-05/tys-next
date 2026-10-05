@@ -36,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QUOTE_NOTES_REFRESH_EVENT } from "@/components/admin/quote-follow-up-button";
 import type { serializeQuoteDetail } from "@/app/api/admin/quotes/helpers";
+import { quoteRef } from "@/lib/quote-ref";
 
 type QuoteDetail = ReturnType<typeof serializeQuoteDetail>;
 type ZipInfo = { city: string | null; state: string | null } | null;
@@ -327,7 +328,7 @@ export function QuoteComposer({ quote, repName }: { quote: QuoteDetail; repName:
       const preparedOn = new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "America/New_York" }).format(new Date());
       const html = renderComposerHtml(f, { quoteId, repName, variant: "pdf", logoUrl: `${origin}${LOGO_PATH}`, preparedOn });
       const to = f.toLabel.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "");
-      await downloadPdf(html, `TYS_Quote_${quoteId}${to ? `_${to}` : ""}.pdf`);
+      await downloadPdf(html, `TYS_Quote_${quoteRef(quoteId)}${to ? `_${to}` : ""}.pdf`);
     } catch {
       toast.error("Couldn't create the PDF. Try again.");
     } finally {
@@ -376,7 +377,7 @@ export function QuoteComposer({ quote, repName }: { quote: QuoteDetail; repName:
           {/* Header */}
           <div className="flex items-center justify-between gap-3 border-b px-5 py-3.5 pr-12">
             <div className="min-w-0">
-              <DialogTitle className="text-base font-semibold">Send quote #{quoteId}</DialogTitle>
+              <DialogTitle className="text-base font-semibold">Send quote #{quoteRef(quoteId)}</DialogTitle>
               <DialogDescription className="truncate text-xs">
                 Edit anything on the left. The preview, PDF and WhatsApp text update as you type.
               </DialogDescription>

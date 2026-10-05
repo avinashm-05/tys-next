@@ -429,7 +429,9 @@ export function VendorMap() {
         </div>
       )}
 
-      <div className="h-[32rem] overflow-hidden rounded-md border">
+      {/* isolate: Leaflet's panes use z-index 400-1000, which otherwise
+          sit above the sidebar's hover labels (they were cut off at "Ven"). */}
+      <div className="isolate h-[32rem] overflow-hidden rounded-md border">
         <MapContainer
           ref={mapRef}
           {...(db.bounds

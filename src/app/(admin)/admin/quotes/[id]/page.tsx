@@ -14,6 +14,7 @@ import { QuoteComposer } from "@/components/admin/quote-composer";
 import { SALES_REP_NAME } from "@/lib/mail";
 import { QUOTE_DETAIL_INCLUDE, serializeQuoteDetail } from "@/app/api/admin/quotes/helpers";
 import { QuoteDetailEditor } from "./quote-detail-editor";
+import { quoteRef } from "@/lib/quote-ref";
 
 export const metadata: Metadata = { title: "Quote — TYS Global Logistics" };
 
@@ -37,7 +38,7 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
             </Link>
           </Button>
           <div>
-            <h1 className="text-h2">Quote #{q.id}</h1>
+            <h1 className="text-h2">Quote #{quoteRef(q.id)}</h1>
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
               Created <LocalDateTime iso={q.createdAt} /> <QuoteStatusBadge status={q.status} />
               {q.emailStatistic && (

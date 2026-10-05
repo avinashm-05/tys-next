@@ -1,3 +1,4 @@
+import { quoteRef } from "@/lib/quote-ref";
 // UI-lock phase: there's no Shipment table yet (see plan — a Quote converts
 // into a Shipment once accepted, but that model doesn't exist in Prisma
 // yet). This module stands in for that future API: deterministic (seeded,
@@ -412,7 +413,7 @@ export function blankShipmentFromQuote(quote: {
     {
       id: Date.now(),
       date: new Date().toISOString(),
-      comment: `Converted from Quote #${quote.id}.`,
+      comment: `Converted from Quote #${quoteRef(quote.id)}.`,
     },
   ];
   return shipment;

@@ -1,6 +1,7 @@
 import nodemailer, { type Transporter } from "nodemailer";
 import { countryName } from "@/lib/countries";
 import { maskEmail, maskEmailsIn } from "@/lib/mask";
+import { quoteRef } from "@/lib/quote-ref";
 
 /**
  * Mailer. Password-reset (A1) + quote-confirmation (A4.3). Production sends
@@ -733,9 +734,9 @@ export type AdminQuoteNotification = {
 export function renderAdminQuoteNotification(d: AdminQuoteNotification) {
   const cost = d.estimatedCost ? `${d.currency || "USD"} ${d.estimatedCost}` : "Not auto-rated (staff to price)";
   const html = emailShell({
-    title: `New quote request #${d.quoteId}`,
+    title: `New quote request #${quoteRef(d.quoteId)}`,
     preheader: `${d.customerName}: ${countryName(d.fromCountry)} to ${countryName(d.toCountry)}, ${d.packageTypeLabel || "packages"}.`,
-    eyebrow: `New quote #${d.quoteId}`,
+    eyebrow: `New quote #${quoteRef(d.quoteId)}`,
     heading: `${d.customerName || "New customer"} wants to ship to ${countryName(d.toCountry)}`,
     bodyHtml:
       routeCallout(`${countryName(d.fromCountry)} ${d.fromZip}`.trim(), `${countryName(d.toCountry)} ${d.toZip}`.trim()) +
@@ -755,7 +756,7 @@ export function renderAdminQuoteNotification(d: AdminQuoteNotification) {
     showContact: false,
   });
   const text =
-    `New quote request #${d.quoteId}\n\n` +
+    `New quote request #${quoteRef(d.quoteId)}\n\n` +
     `Customer: ${d.customerName} <${d.customerEmail}> ${d.mobileNumber}\n` +
     `From: ${countryName(d.fromCountry)} (${d.fromZip})\nTo: ${countryName(d.toCountry)} (${d.toZip})\n` +
     `Delivery: ${d.isResidence ? "Residential" : "Commercial"}\n` +
@@ -763,7 +764,7 @@ export function renderAdminQuoteNotification(d: AdminQuoteNotification) {
     `Estimated cost: ${cost}\n` +
     (d.callbackWindow ? `Call back: ${d.callbackWindow}\n` : "") +
     `\nOpen in admin: ${d.adminUrl}`;
-  return { subject: `New quote #${d.quoteId}: ${countryName(d.fromCountry)} to ${countryName(d.toCountry)}`, html, text };
+  return { subject: `New quote #${quoteRef(d.quoteId)}: ${countryName(d.fromCountry)} to ${countryName(d.toCountry)}`, html, text };
 }
 
 /**

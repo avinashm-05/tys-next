@@ -34,6 +34,7 @@ import {
   type QuoteWizardValues,
 } from "@/lib/validation/quote-wizard";
 import { detectTimezone, timezoneForCountry } from "@/lib/timezones";
+import { quoteRef } from "@/lib/quote-ref";
 
 const COUNTRY_OPTIONS = COUNTRY_LIST.map(([code, name]) => ({
   value: code,
@@ -413,7 +414,7 @@ export function QuoteWizardForm({
         setResult(data as SubmitResult);
       } else {
         // Name and quote number go to sessionStorage, never the URL (privacy).
-        rememberThankYou({ name: values.contact.name, ref: data.quote_id });
+        rememberThankYou({ name: values.contact.name, ref: data.quote_id ? quoteRef(data.quote_id) : null });
         router.push("/thank-you");
       }
     } catch {

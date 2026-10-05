@@ -66,7 +66,7 @@ export function ThankYouWhatsAppLink({
   children: React.ReactNode;
 }) {
   const s = useSubmission();
-  const text = s?.ref ? `Hi TYS, I just requested a quote (ref ${s.ref}).` : "Hi TYS, I just requested a quote.";
+  const text = s?.ref ? `Hi TYS, I just requested a quote (Quote #${s.ref}).` : "Hi TYS, I just requested a quote.";
   return (
     <a
       href={`https://wa.me/${number}?text=${encodeURIComponent(text)}`}

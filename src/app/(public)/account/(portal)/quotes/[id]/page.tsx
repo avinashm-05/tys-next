@@ -8,6 +8,7 @@ import { parseId } from "@/lib/list-query";
 import { decimal2 } from "@/lib/serialize";
 import { formatPackageTypes } from "@/lib/package-type";
 import { QuoteStatusPill } from "@/components/public/account/account-nav";
+import { quoteRef } from "@/lib/quote-ref";
 
 export const metadata: Metadata = { title: "Quote details | TYS Global Logistics" };
 
@@ -56,7 +57,7 @@ export default async function MyQuoteDetailPage({
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <h1 className="m-0 text-2xl font-bold text-ink">Quote #{Number(quote.id)}</h1>
+        <h1 className="m-0 text-2xl font-bold text-ink">Quote #{quoteRef(quote.id)}</h1>
         <QuoteStatusPill status={quote.status} />
         <Link
           href="/account/quotes"
