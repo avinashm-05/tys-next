@@ -79,7 +79,7 @@ function FilterCheckMark({ checked }: { checked: boolean }) {
   );
 }
 
-export function QuotesList() {
+export function QuotesList({ tabs }: { tabs?: React.ReactNode }) {
   const router = useRouter();
   // Defaults to "New Request" only — the list should open on what needs
   // action, not everything ever quoted; support broadens it manually.
@@ -260,20 +260,8 @@ export function QuotesList() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-tys-blue text-white">
-            <FileTextIcon size={22} weight="bold" />
-          </div>
-          <h1 className="text-h2">Quotes</h1>
-        </div>
-        <Button asChild className="bg-tys-blue text-white uppercase hover:bg-tys-blue/90">
-          <Link href="/admin/quotes/new">
-            <PlusIcon size={16} weight="bold" />
-            New Quote
-          </Link>
-        </Button>
-      </div>
+      <QuotesHeader />
+      {tabs}
       <div className="flex flex-wrap gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -362,6 +350,26 @@ export function QuotesList() {
           loading: list.loading,
         }}
       />
+    </div>
+  );
+}
+
+/** Title row shared by the All quotes and Incomplete tabs. */
+export function QuotesHeader() {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <div className="flex size-11 items-center justify-center rounded-2xl bg-tys-blue text-white">
+          <FileTextIcon size={22} weight="bold" />
+        </div>
+        <h1 className="text-h2">Quotes</h1>
+      </div>
+      <Button asChild className="bg-tys-blue text-white uppercase hover:bg-tys-blue/90">
+        <Link href="/admin/quotes/new">
+          <PlusIcon size={16} weight="bold" />
+          New Quote
+        </Link>
+      </Button>
     </div>
   );
 }

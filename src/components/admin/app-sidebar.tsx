@@ -7,7 +7,6 @@ import {
   ClockCounterClockwiseIcon,
   CurrencyDollarIcon,
   FileTextIcon,
-  UserListIcon,
   MapPinLineIcon,
   NewspaperIcon,
   ShieldCheckIcon,
@@ -40,7 +39,6 @@ import { SidebarProfile } from "@/components/admin/sidebar-profile";
 const ITEMS = [
   { title: "Dashboard", href: "/admin", icon: SquaresFourIcon },
   { title: "Quotes", href: "/admin/quotes", icon: FileTextIcon },
-  { title: "Started Quotes", href: "/admin/leads", icon: UserListIcon },
   { title: "Customers", href: "/admin/customers", icon: UsersIcon },
   { title: "Get Rates", href: "/admin/price-check", icon: CurrencyDollarIcon },
   { title: "Shipments", href: "/admin/shipments", icon: ShippingContainerIcon },
