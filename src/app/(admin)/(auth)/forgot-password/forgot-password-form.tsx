@@ -45,8 +45,9 @@ export function ForgotPasswordForm() {
         <CardHeader>
           <CardTitle className="text-h3">Check your email</CardTitle>
           <CardDescription>
-            If an account exists for {sentTo}, a reset link is on its way. The link expires in 60
-            minutes.
+            If {sentTo} has a staff account, a reset link is on its way. It expires in 60 minutes.
+            Nothing within 2 minutes? Check your spam folder, or ask the owner to check your access
+            on the Staff page.
           </CardDescription>
         </CardHeader>
         <CardContent>

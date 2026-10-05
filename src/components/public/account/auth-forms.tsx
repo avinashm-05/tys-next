@@ -330,10 +330,19 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <p className="m-0 text-sm text-ink-muted">
-        If an account exists for <strong className="text-ink">{email}</strong>, a password-reset
-        link is on its way.
-      </p>
+      <div className="flex flex-col gap-2 text-sm text-ink-muted">
+        <p className="m-0">
+          If <strong className="text-ink">{email}</strong> has an account, a password-reset link is on its
+          way. It expires in 60 minutes.
+        </p>
+        <p className="m-0">
+          Nothing within 2 minutes? Check your spam folder, or{" "}
+          <Link href="/account/register" className="font-medium text-brand hover:underline">
+            create an account
+          </Link>
+          .
+        </p>
+      </div>
     );
   }
   return (
