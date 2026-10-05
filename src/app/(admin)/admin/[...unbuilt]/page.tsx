@@ -2,19 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = { title: "Coming soon — TYS Global Logistics" };
+export const metadata: Metadata = { title: "Not found — TYS Global Logistics" };
 
-// The ONE shared placeholder for every admin section that isn't built yet
-// (Quotes, Services, Vendors, Settings, …). Real pages added in later phases
-// take precedence over this catch-all, so the sidebar stays fully navigable.
-// Guarded by the admin layout's requireAdminPage().
-export default function UnbuiltSectionPage() {
+// Every admin section is built now (2026-10-06), so any other /admin/...
+// address is simply a wrong link. Guarded by the admin layout's
+// requireAdminPage(), so only signed-in staff ever see this.
+export default function AdminNotFoundPage() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
-      <h1 className="text-h2">Coming in a later phase</h1>
+      <h1 className="text-h2">Page not found</h1>
       <p className="max-w-md text-sm text-muted-foreground">
-        This part of the admin isn&apos;t built yet — it arrives in an upcoming phase of the
-        rebuild.
+        That link doesn&apos;t match anything in the admin. It may be old or mistyped.
       </p>
       <Button asChild variant="outline">
         <Link href="/admin">Back to dashboard</Link>

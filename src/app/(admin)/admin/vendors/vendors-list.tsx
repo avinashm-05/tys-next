@@ -359,7 +359,11 @@ export function VendorsList() {
         cell: ({ row }) => (
           <div>
             <span className="block font-medium">{row.original.name}</span>
-            <span className="block text-xs text-muted-foreground">{row.original.email}</span>
+            {/* Imported vendors with no email got a stand-in address (email is
+                required and unique); show that honestly instead (2026-10-06). */}
+            <span className="block text-xs text-muted-foreground">
+              {/@imported\.tysgloballogistics\.com$/.test(row.original.email) ? <em>No email on file</em> : row.original.email}
+            </span>
           </div>
         ),
       },

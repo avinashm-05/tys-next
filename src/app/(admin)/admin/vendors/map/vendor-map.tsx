@@ -123,6 +123,26 @@ function ClusterLayer({ vendors, distanceUnit }: { vendors: MapVendor[]; distanc
   return null;
 }
 
+/**
+ * Zoomed far out, Leaflet reports longitudes past ±180 (the world repeats
+ * sideways) and latitudes past ±90, which the API rightly rejects; that was
+ * the live "Couldn't load vendors for this area" at world zoom (2026-10-06).
+ * Clamp latitude, cover the whole globe when the view spans 360°+, otherwise
+ * wrap each edge into -180..180 (the API handles a wrapped, antimeridian-
+ * crossing pair).
+ */
+function worldSafeBounds(b: L.LatLngBounds) {
+  const clampLat = (v: number) => Math.max(-90, Math.min(90, v));
+  const wrapLng = (v: number) => ((((v + 180) % 360) + 360) % 360) - 180;
+  const sw = b.getSouthWest();
+  const ne = b.getNorthEast();
+  const fullWidth = ne.lng - sw.lng >= 360;
+  return {
+    sw: { lat: clampLat(sw.lat), lng: fullWidth ? -180 : wrapLng(sw.lng) },
+    ne: { lat: clampLat(ne.lat), lng: fullWidth ? 180 : wrapLng(ne.lng) },
+  };
+}
+
 /** Debounced moveend → bounds refresh (300ms, like the Blade map). */
 function BoundsWatcher({
   onBounds,
@@ -189,10 +209,7 @@ export function VendorMap() {
       const res = await adminApi<{ vendors: MapVendor[] }>("/api/admin/vendors/map/bounds", {
         method: "POST",
         body: JSON.stringify({
-          bounds: {
-            sw: { lat: b.getSouthWest().lat, lng: b.getSouthWest().lng },
-            ne: { lat: b.getNorthEast().lat, lng: b.getNorthEast().lng },
-          },
+          bounds: worldSafeBounds(b),
           status,
           ...(typeId !== "all" ? { vendor_type_id: Number(typeId) } : {}),
         }),

@@ -12,7 +12,6 @@ import {
   EnvelopeIcon,
   GlobeIcon,
   MapPinIcon,
-  PhoneIcon,
   UserCircleIcon,
   UserIcon,
 } from "@phosphor-icons/react";
@@ -185,7 +184,7 @@ export function VendorForm({
       icon?: React.ComponentType<{ size?: number; className?: string }>;
     },
   ) => {
-    const Icon = extra?.icon;
+
     return (
       <Field data-invalid={!!errors[name]}>
         <FieldLabel htmlFor={name}>{label}</FieldLabel>
@@ -195,15 +194,9 @@ export function VendorForm({
             autoFocus={extra?.autoFocus}
             placeholder={extra?.placeholder}
             aria-invalid={!!errors[name]}
-            className={Icon ? `${FIELD_TEXT} pr-9` : FIELD_TEXT}
+            className={FIELD_TEXT}
             {...form.register(name)}
           />
-          {Icon && (
-            <Icon
-              size={15}
-              className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-tys-rose/70"
-            />
-          )}
         </div>
         {extra?.description && <FieldDescription>{extra.description}</FieldDescription>}
         <FieldError errors={[errors[name]]} />
@@ -233,11 +226,7 @@ export function VendorForm({
                         id="added_by"
                         value={vendor?.addedByName ?? "You"}
                         disabled
-                        className={`${FIELD_TEXT} pr-9`}
-                      />
-                      <BuildingsIcon
-                        size={15}
-                        className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-tys-rose/70"
+                        className={FIELD_TEXT}
                       />
                     </div>
                   </Field>
@@ -298,12 +287,8 @@ export function VendorForm({
                         <Input
                           id="phone_number"
                           aria-invalid={!!errors.phone_number}
-                          className={`${FIELD_TEXT} pr-9`}
+                          className={FIELD_TEXT}
                           {...form.register("phone_number")}
-                        />
-                        <PhoneIcon
-                          size={15}
-                          className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-tys-rose/70"
                         />
                       </div>
                     </div>
