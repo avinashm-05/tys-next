@@ -54,6 +54,8 @@ interface DataTableProps<TData, TValue> {
   server?: ServerMode;
   /** Per-column search boxes under the header row (SETU reference) — opt-in per list. */
   columnFilters?: ColumnFilterConfig[];
+  /** Makes each row open something (CRM-style lists): the whole row is the click target. */
+  onRowClick?: (row: TData) => void;
 }
 
 /** Column header that toggles server/client sorting: `header: sortableHeader("Name")`. */
@@ -86,6 +88,7 @@ export function DataTable<TData, TValue>({
   emptyMessage = "Nothing here yet.",
   server,
   columnFilters,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const [clientSorting, setClientSorting] = useState<SortingState>([]);
 
@@ -166,7 +169,11 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className={onRowClick ? "cursor-pointer" : undefined}
+                  onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
