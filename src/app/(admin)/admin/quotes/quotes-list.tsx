@@ -367,7 +367,7 @@ export function QuotesHeader() {
       <Button asChild className="bg-tys-blue text-white hover:bg-tys-blue/90">
         <Link href="/admin/quotes/new">
           <PlusIcon size={16} weight="bold" />
-          New Quote
+          New quote
         </Link>
       </Button>
     </div>

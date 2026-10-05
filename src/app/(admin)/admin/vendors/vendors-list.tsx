@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   CaretDownIcon,
   CheckIcon,
+  DownloadSimpleIcon,
   ListChecksIcon,
   MapPinIcon,
   PencilSimpleIcon,
@@ -187,6 +188,41 @@ export function VendorsList() {
   });
   const [toDelete, setToDelete] = useState<VendorRow | null>(null);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState<"export" | "activate" | "deactivate" | null>(null);
+
+  // Bulk actions on the ticked rows (2026-10-05). Export downloads a CSV
+  // that opens straight in Excel; activate/deactivate update in one go.
+  async function bulk(action: "export" | "activate" | "deactivate") {
+    setBulkBusy(action);
+    try {
+      const res = await fetch("/api/admin/vendors/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json, text/csv" },
+        body: JSON.stringify({ action, ids: [...selectedRows] }),
+      });
+      if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { message?: string }).message ?? "Something went wrong.");
+      if (action === "export") {
+        const blob = await res.blob();
+        const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "TYS_vendors.csv";
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success(`Exported ${selectedRows.size} ${selectedRows.size === 1 ? "vendor" : "vendors"}.`);
+      } else {
+        const { updated } = (await res.json()) as { updated: number };
+        toast.success(`${updated} ${updated === 1 ? "vendor" : "vendors"} marked ${action === "activate" ? "active" : "inactive"}.`);
+        setSelectedRows(new Set());
+        list.refresh();
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setBulkBusy(null);
+    }
+  }
 
   function columnFilter(setter: (v: string) => void) {
     return (v: string) => {
@@ -439,11 +475,24 @@ export function VendorsList() {
         </div>
       </div>
       {selectedRows.size > 0 && (
-        <div className="flex items-center gap-2 border border-tys-mist bg-muted/40 px-3 py-2 text-xs font-medium">
-          {selectedRows.size} selected
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-brand-softer px-3 py-2">
+          <span className="text-sm font-semibold">
+            {selectedRows.size} {selectedRows.size === 1 ? "vendor" : "vendors"} selected
+          </span>
           <Button variant="ghost" size="sm" onClick={() => setSelectedRows(new Set())}>
             Clear
           </Button>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" disabled={bulkBusy !== null} onClick={() => bulk("export")}>
+              <DownloadSimpleIcon size={14} /> {bulkBusy === "export" ? "Exporting…" : "Export to Excel"}
+            </Button>
+            <Button variant="outline" size="sm" disabled={bulkBusy !== null} onClick={() => bulk("activate")}>
+              {bulkBusy === "activate" ? "Saving…" : "Mark active"}
+            </Button>
+            <Button variant="outline" size="sm" disabled={bulkBusy !== null} onClick={() => bulk("deactivate")}>
+              {bulkBusy === "deactivate" ? "Saving…" : "Mark inactive"}
+            </Button>
+          </div>
         </div>
       )}
       <DataTable
