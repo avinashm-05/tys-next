@@ -129,44 +129,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
-  /* 2026-10-05: true dark, Attio-style (neutral near-black, not navy); the
-     brand blue stays the one action colour. */
-  --background: #0a0a0b;
-  --foreground: #ededef;
-  --card: #121214;
-  --card-foreground: #ededef;
-  --popover: #161618;
-  --popover-foreground: #ededef;
-  --primary: #3d86ff;
-  --primary-foreground: #ffffff;
-  --secondary: #1b1b1e;
-  --secondary-foreground: #ededef;
-  --muted: #1b1b1e;
-  --muted-foreground: #9b9ba3;
-  --accent: #1d2433;
-  --accent-foreground: #ffffff;
-  --destructive: #f2555a;
-  --destructive-foreground: #ffffff;
-  --border: #242428;
-  --input: #2c2c31;
-  --ring: #3d86ff;
 
-  --sidebar: #0f0f11;
-  --sidebar-foreground: #c9c9cf;
-  --sidebar-primary: #3d86ff;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgba(61, 134, 255, 0.14);
-  --sidebar-accent-foreground: #8db8ff;
-  --sidebar-border: #1f1f23;
-  --sidebar-ring: #3d86ff;
-
-  --soft: #151517;
-  --brand-soft: rgba(61, 134, 255, 0.14);
-  --brand-softer: rgba(61, 134, 255, 0.07);
-  --chart-muted: rgba(61, 134, 255, 0.28);
-  --tys-mist: #242428;
-}
 
 /* ── TYS brand tokens ─────────────────────────────────────────────────────
    2026-10-05: the admin now wears the PUBLIC site's palette (same blue, ink,
@@ -223,41 +186,44 @@
   --chart-muted: #cfe0ff; /* inactive chart bars */
 }
 
-/* ── TYS dark palette ─────────────────────────────────────────────────────
-   Brand-aligned dark mode (overrides the stock shadcn .dark block above, same
-   way the light :root override works). Surfaces are dark NAVY, not gray; the
-   brand BLUE stays the primary/accent action color; the sidebar keeps a
-   distinct lighter navy so it never merges into the page background. */
+/* ── TYS dark palette (true dark, Attio-style, 2026-10-05) ─────────────── */
 .dark {
-  --background: #0b1120; /* near-black dark navy — page background */
-  --foreground: #e6eaf2; /* light body text */
-  --card: #131c30; /* raised surface, a step lighter than the bg */
-  --card-foreground: #e6eaf2;
-  --popover: #131c30;
-  --popover-foreground: #e6eaf2;
-  --primary: var(--tys-blue); /* brand blue reads well on dark */
+  /* 2026-10-05: true dark, Attio-style (neutral near-black, not navy); the
+     brand blue stays the one action colour. */
+  --background: #0a0a0b;
+  --foreground: #ededef;
+  --card: #121214;
+  --card-foreground: #ededef;
+  --popover: #161618;
+  --popover-foreground: #ededef;
+  --primary: #3d86ff;
   --primary-foreground: #ffffff;
-  --secondary: #1b2942; /* subtle filled surface */
-  --secondary-foreground: #e6eaf2;
-  --muted: #1b2942;
-  --muted-foreground: #9aa8c2; /* dimmed but legible (~7:1 on the bg) */
-  --accent: #1f2d47; /* hover / active surface */
+  --secondary: #1b1b1e;
+  --secondary-foreground: #ededef;
+  --muted: #1b1b1e;
+  --muted-foreground: #9b9ba3;
+  --accent: #1d2433;
   --accent-foreground: #ffffff;
-  --destructive: #ef5350; /* readable red on dark */
+  --destructive: #f2555a;
   --destructive-foreground: #ffffff;
-  --border: #26324a; /* low-contrast light-on-dark divider */
-  --input: #2d3a54; /* inputs a touch more visible than borders */
-  --ring: var(--tys-blue); /* blue focus ring in dark */
+  --border: #242428;
+  --input: #2c2c31;
+  --ring: #3d86ff;
 
-  /* Sidebar: distinct navy, clearly separated from both bg and cards. */
-  --sidebar: #16294e; /* brand navy (tys-navy) — lighter than the page bg */
-  --sidebar-foreground: #e6eaf2;
-  --sidebar-primary: var(--tys-blue);
+  --sidebar: #0f0f11;
+  --sidebar-foreground: #c9c9cf;
+  --sidebar-primary: #3d86ff;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1f345c; /* nav hover */
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #24406e;
-  --sidebar-ring: var(--tys-blue);
+  --sidebar-accent: rgba(61, 134, 255, 0.14);
+  --sidebar-accent-foreground: #8db8ff;
+  --sidebar-border: #1f1f23;
+  --sidebar-ring: #3d86ff;
+
+  --soft: #151517;
+  --brand-soft: rgba(61, 134, 255, 0.14);
+  --brand-softer: rgba(61, 134, 255, 0.07);
+  --chart-muted: rgba(61, 134, 255, 0.28);
+  --tys-mist: #242428;
 }
 
 @theme inline {
