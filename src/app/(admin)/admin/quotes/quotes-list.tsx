@@ -32,6 +32,8 @@ import {
 import { DataTable, sortableHeader, type ColumnFilterConfig } from "@/components/shared/data-table";
 import { QuoteStatusControl } from "@/components/admin/quote-status-control";
 import { DateRangeFilter } from "@/components/admin/date-range-filter";
+import { quoteRef } from "@/lib/quote-ref";
+import { countryName } from "@/lib/countries";
 
 export type QuoteRow = {
   id: number;
@@ -152,102 +154,106 @@ export function QuotesList({ tabs }: { tabs?: React.ReactNode }) {
     list.setPage(1);
   }
 
+  // CRM-style columns (2026-10-05): fewer, denser columns that fit without
+  // sideways scrolling; the whole row opens the quote.
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+  const money = (v: string | null, c: string | null) =>
+    v == null ? null : new Intl.NumberFormat("en-US", { style: "currency", currency: c ?? "USD", maximumFractionDigits: 2 }).format(Number(v));
   const columns: ColumnDef<QuoteRow>[] = [
     {
-      id: "route",
-      size: 160,
-      header: "Route",
+      accessorKey: "createdAt",
+      size: 185,
+      header: sortableHeader("Quote"),
       cell: ({ row }) => (
-        <div className="text-xs">
-          <span className="block font-medium">
-            {row.original.fromZip} {row.original.fromCountry} → {row.original.toZip}{" "}
-            {row.original.toCountry}
-          </span>
-          <span className="text-muted-foreground">
-            {row.original.isResidence ? "Residential" : "Commercial"}
+        <div>
+          <span className="block font-semibold tabular-nums">#{quoteRef(row.original.id)}</span>
+          <span className="block text-xs text-muted-foreground">
+            <LocalDateTime iso={row.original.createdAt} />
           </span>
         </div>
       ),
     },
     {
       id: "contact",
-      size: 200,
-      header: "Contact",
+      size: 230,
+      header: "Customer",
       cell: ({ row }) => (
-        <div className="text-xs">
-          <span className="block font-medium">{row.original.contact.name ?? "—"}</span>
-          <span className="block text-muted-foreground">{row.original.contact.email ?? "—"}</span>
-          <span className="block text-muted-foreground">{row.original.contact.phone ?? "—"}</span>
+        <div className="min-w-0">
+          <span className="block truncate font-medium">{row.original.contact.name ?? "No name"}</span>
+          <span className="block truncate text-xs text-muted-foreground">{row.original.contact.email ?? row.original.contact.phone ?? "—"}</span>
         </div>
       ),
     },
     {
-      id: "packageType",
-      size: 130,
-      header: "Packages",
-      cell: ({ row }) => formatPackageTypes(row.original.packageType),
+      id: "route",
+      size: 210,
+      header: "Route",
+      cell: ({ row }) => {
+        const q = row.original;
+        return (
+          <div className="min-w-0">
+            <span className="block truncate font-medium">
+              {countryName(q.fromCountry) || q.fromCountry} → {countryName(q.toCountry) || q.toCountry}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {q.fromZip} → {q.toZip} · {q.isResidence ? "Residential" : "Commercial"}
+            </span>
+          </div>
+        );
+      },
     },
     {
-      accessorKey: "totalChargeableWeight",
-      size: 110,
-      header: sortableHeader("Chg. weight"),
-      cell: ({ row }) => row.original.totalChargeableWeight ?? "—",
+      id: "packageType",
+      size: 150,
+      header: "Shipment",
+      cell: ({ row }) => (
+        <div className="min-w-0">
+          <span className="block truncate">{formatPackageTypes(row.original.packageType)}</span>
+          {row.original.totalChargeableWeight && (
+            <span className="block text-xs text-muted-foreground">{row.original.totalChargeableWeight} chargeable</span>
+          )}
+        </div>
+      ),
     },
     {
       accessorKey: "estimatedCost",
-      size: 120,
-      header: sortableHeader("Est. cost"),
-      cell: ({ row }) =>
-        row.original.estimatedCost == null
-          ? "—"
-          : `${row.original.estimatedCost} ${row.original.currency ?? ""}`.trim(),
-    },
-    {
-      id: "opens",
       size: 110,
-      header: "Email opens",
-      cell: ({ row }) => row.original.emailStatistic?.openCount ?? "—",
-    },
-    {
-      accessorKey: "createdAt",
-      size: 190,
-      header: sortableHeader("Created"),
-      cell: ({ row }) => <LocalDateTime iso={row.original.createdAt} />,
+      header: sortableHeader("Price"),
+      cell: ({ row }) => {
+        const m = money(row.original.estimatedCost, row.original.currency);
+        return m ? <span className="font-semibold tabular-nums">{m}</span> : <span className="text-muted-foreground">Not priced</span>;
+      },
     },
     {
       id: "status",
-      size: 160,
+      size: 170,
       header: "Status",
       cell: ({ row }) => (
-        <QuoteStatusControl
-          quoteId={row.original.id}
-          status={row.original.status}
-          onChanged={() => list.refresh()}
-          className="w-36"
-        />
+        <div onClick={stop} onKeyDown={stop} className="flex flex-col gap-1">
+          <QuoteStatusControl
+            quoteId={row.original.id}
+            status={row.original.status}
+            onChanged={() => list.refresh()}
+            className="h-8 w-36"
+          />
+          {(row.original.emailStatistic?.openCount ?? 0) > 0 && (
+            <span className="text-xs text-muted-foreground">Opened {row.original.emailStatistic?.openCount}×</span>
+          )}
+        </div>
       ),
     },
     {
       id: "actions",
-      size: 180,
+      size: 150,
       header: () => <span className="sr-only">Actions</span>,
-      cell: ({ row }) => (
-        <div className="flex justify-end gap-2">
-          {row.original.status === "accepted" && (
-            <Button
-              size="sm"
-              className="bg-tys-indigo text-white hover:bg-tys-indigo/90"
-              disabled={convertingId === row.original.id}
-              onClick={() => convertToShipment(row.original.id)}
-            >
-              {convertingId === row.original.id ? "Converting…" : "Convert to Shipment"}
+      cell: ({ row }) =>
+        row.original.status === "accepted" ? (
+          <div className="flex justify-end" onClick={stop}>
+            <Button size="sm" disabled={convertingId === row.original.id} onClick={() => convertToShipment(row.original.id)}>
+              {convertingId === row.original.id ? "Converting…" : "Make shipment"}
             </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={() => router.push(`/admin/quotes/${row.original.id}`)}>
-            View
-          </Button>
-        </div>
-      ),
+          </div>
+        ) : null,
     },
   ];
 
@@ -338,6 +344,7 @@ export function QuotesList({ tabs }: { tabs?: React.ReactNode }) {
       <DataTable
         columns={columns}
         data={list.rows}
+        onRowClick={(q) => router.push(`/admin/quotes/${q.id}`)}
         emptyMessage="No quotes match the current filters."
         columnFilters={columnFilters}
         server={{
