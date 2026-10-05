@@ -303,11 +303,31 @@ export function SiteHeader() {
   };
   const keepMenu = () => window.clearTimeout(closeTimer.current);
 
-  // Lock page scroll behind the open mobile sheet.
+  // Lock page scroll behind the open mobile sheet. body{overflow:hidden}
+  // alone is ignored by iPhone Safari for touch: a swipe still scrolled the
+  // page behind, the announcement bar scrolled away and the sheet looked
+  // like it slid off or vanished (owner's report, 2026-10-06). So: lock the
+  // root element too, and cancel any touch-drag that isn't inside the
+  // sheet's own scrolling list.
+  const sheetNavRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    if (!mobileOpen) return;
+    const root = document.documentElement;
+    const prev = { html: root.style.overflow, body: document.body.style.overflow, ob: root.style.overscrollBehavior };
+    root.style.overflow = "hidden";
+    root.style.overscrollBehavior = "none";
+    document.body.style.overflow = "hidden";
+    const onTouchMove = (e: TouchEvent) => {
+      const list = sheetNavRef.current;
+      if (list && e.target instanceof Node && list.contains(e.target) && list.scrollHeight > list.clientHeight) return;
+      e.preventDefault();
+    };
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => {
-      document.body.style.overflow = "";
+      root.style.overflow = prev.html;
+      root.style.overscrollBehavior = prev.ob;
+      document.body.style.overflow = prev.body;
+      document.removeEventListener("touchmove", onTouchMove);
     };
   }, [mobileOpen]);
 
@@ -554,7 +574,7 @@ export function SiteHeader() {
         }}
         className="z-40 flex flex-col bg-white xl:hidden"
       >
-        <nav data-lenis-prevent className="flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-2 sm:px-10">
+        <nav ref={sheetNavRef} data-lenis-prevent className="flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-2 sm:px-10">
           {[...GROUPS.map((g) => ({ kind: "group" as const, g })), ...NAV_LINKS.map((l) => ({ kind: "link" as const, l }))].map(
             (row, i) => (
               <div
