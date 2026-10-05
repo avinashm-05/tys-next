@@ -152,6 +152,15 @@ export async function POST(req: NextRequest) {
     return res;
   }
 
+  // Staff can't switch their own 2-step off (it's required for every staff
+  // account); the owner resets it from the Staff page if a phone is lost.
+  if (path.endsWith("/two-factor/disable")) {
+    const current = await auth.api.getSession({ headers: req.headers }).catch(() => null);
+    if (current?.user && isAdminRole((current.user as { role?: string | null }).role)) {
+      return Response.json({ message: "2-step sign-in is required for staff accounts." }, { status: 403 });
+    }
+  }
+
   // 2-step sign-in events (staff activity log).
   const twoStep = TWO_STEP_EVENTS.find(([suffix]) => path.endsWith(suffix));
   if (twoStep) {

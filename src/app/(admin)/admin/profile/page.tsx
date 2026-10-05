@@ -15,14 +15,28 @@ const dateFmt = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyl
 export default async function ProfilePage() {
   const session = await requireAdminPage();
   const userId = BigInt(session.user.id);
-  const [user, sessions] = await Promise.all([
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const [user, sessions, security, work] = await Promise.all([
     db.user.findUnique({ where: { id: userId }, select: { name: true, email: true, role: true, createdAt: true } }),
     db.session.findMany({
       where: { userId, expiresAt: { gt: new Date() } },
       orderBy: { updatedAt: "desc" },
-      select: { token: true, userAgent: true, createdAt: true, updatedAt: true },
+      select: { id: true, token: true, userAgent: true, ipAddress: true, createdAt: true, updatedAt: true },
+    }),
+    // Your own recent sign-in events, so anything that wasn't you stands out.
+    db.adminAuditLog.findMany({
+      where: { userId, OR: [{ action: { startsWith: "sign_in" } }, { action: { startsWith: "two_factor" } }] },
+      orderBy: { id: "desc" },
+      take: 8,
+      select: { action: true, ip: true, createdAt: true },
+    }),
+    // What you did this month (from the Activity log).
+    db.adminAuditLog.findMany({
+      where: { userId, action: "admin.api", createdAt: { gte: monthStart }, statusCode: { lt: 400 } },
+      select: { path: true },
     }),
   ]);
+  const count = (re: RegExp) => work.filter((w) => w.path && re.test(w.path)).length;
   const currentToken = (session.session as { token?: string }).token;
 
   return (
@@ -32,10 +46,19 @@ export default async function ProfilePage() {
       role={ROLE_LABELS[user?.role ?? ""] ?? "Staff"}
       since={user?.createdAt ? dateFmt.format(user.createdAt) : null}
       sessions={sessions.map((s) => ({
+        id: Number(s.id),
         device: describeDevice(s.userAgent),
+        ip: s.ipAddress,
         lastActive: dateFmt.format(s.updatedAt ?? s.createdAt ?? new Date()),
         current: s.token === currentToken,
       }))}
+      security={security.map((e) => ({ action: e.action, ip: e.ip, at: dateFmt.format(e.createdAt) }))}
+      stats={{
+        quotesSent: count(/\/quotes\/\d+\/(compose|send|send-options)$/),
+        followUps: count(/\/quotes\/\d+\/follow-up$/),
+        notes: count(/\/quotes\/\d+\/notes$/),
+        changes: work.length,
+      }}
     />
   );
 }

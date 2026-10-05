@@ -3,13 +3,43 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { DesktopIcon, EnvelopeSimpleIcon, ShieldCheckIcon } from "@phosphor-icons/react";
+import { useTheme } from "next-themes";
+import {
+  DesktopIcon,
+  DeviceMobileIcon,
+  EnvelopeSimpleIcon,
+  MonitorIcon,
+  MoonIcon,
+  ShieldCheckIcon,
+  SunIcon,
+  WarningCircleIcon,
+} from "@phosphor-icons/react";
+import { adminApi, ApiError } from "@/lib/admin-api";
+import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CustomerAvatar } from "@/components/admin/customer-bits";
 
-type SessionRow = { device: string; lastActive: string; current: boolean };
+type SessionRow = { id: number; device: string; ip: string | null; lastActive: string; current: boolean };
+type SecurityEvent = { action: string; ip: string | null; at: string };
+type Stats = { quotesSent: number; followUps: number; notes: number; changes: number };
+
+const EVENT_LABEL: Record<string, { label: string; bad?: boolean }> = {
+  "sign_in.password_ok_code_pending": { label: "Password entered, code emailed" },
+  "two_factor.verify_email_code.success": { label: "Signed in" },
+  "two_factor.verify.success": { label: "Signed in (authenticator app)" },
+  "sign_in.success": { label: "Signed in" },
+  "sign_in.code_success": { label: "Signed in" },
+  "sign_in.failed": { label: "Wrong password", bad: true },
+  "sign_in.code_failed": { label: "Wrong code", bad: true },
+  "two_factor.verify_email_code.failed": { label: "Wrong code", bad: true },
+  "two_factor.verify.failed": { label: "Wrong code", bad: true },
+  "sign_in.blocked": { label: "Sign-in blocked (too many tries)", bad: true },
+  "sign_in.locked": { label: "Account locked after failed tries", bad: true },
+  "two_factor.enable_started": { label: "Started authenticator-app setup" },
+  "two_factor.disabled": { label: "2-step turned off", bad: true },
+};
 
 export function ProfilePanels({
   name,
@@ -17,12 +47,16 @@ export function ProfilePanels({
   role,
   since,
   sessions,
+  security,
+  stats,
 }: {
   name: string;
   email: string;
   role: string;
   since: string | null;
   sessions: SessionRow[];
+  security: SecurityEvent[];
+  stats: Stats;
 }) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
@@ -36,9 +70,23 @@ export function ProfilePanels({
           </p>
         </div>
       </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {([
+          ["Quotes sent", stats.quotesSent],
+          ["Follow-ups", stats.followUps],
+          ["Notes added", stats.notes],
+          ["Changes made", stats.changes],
+        ] as const).map(([label, n]) => (
+          <div key={label} className="rounded-2xl border bg-card p-4">
+            <div className="text-[28px] leading-none tabular-nums [font-family:var(--font-display)]">{n}</div>
+            <div className="mt-1.5 text-xs text-muted-foreground">{label} this month</div>
+          </div>
+        ))}
+      </div>
       <DetailsPanel name={name} email={email} />
+      <SecurityPanel sessions={sessions} security={security} />
       <PasswordPanel />
-      <SecurityPanel sessions={sessions} />
+      <PreferencesPanel />
     </div>
   );
 }
@@ -134,7 +182,14 @@ function PasswordPanel() {
     const { error } = await authClient.changePassword({ currentPassword: current, newPassword: next, revokeOtherSessions: true });
     setBusy(false);
     if (error) {
-      setError(error.status === 400 || error.status === 401 ? "Your current password is incorrect." : "Couldn't change the password. Try again.");
+      const msg = (error.message ?? "").toLowerCase();
+      setError(
+        msg.includes("breach")
+          ? error.message ?? "That password appeared in a data breach. Choose a different one."
+          : error.status === 400 || error.status === 401
+            ? "Your current password is incorrect."
+            : "Couldn't change the password. Try again.",
+      );
       return;
     }
     setCurrent("");
@@ -144,7 +199,7 @@ function PasswordPanel() {
   }
 
   return (
-    <Panel title="Password" description="Changing it signs you out everywhere else.">
+    <Panel title="Password" description="At least 10 characters. Passwords found in known data breaches are refused. Changing it signs you out everywhere else.">
       <form onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5 sm:col-span-2 sm:max-w-[calc(50%-0.5rem)]">
           <Label htmlFor="pf-current">Current password</Label>
@@ -177,9 +232,23 @@ function PasswordPanel() {
   );
 }
 
-function SecurityPanel({ sessions }: { sessions: SessionRow[] }) {
+function SecurityPanel({ sessions, security }: { sessions: SessionRow[]; security: SecurityEvent[] }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [endingId, setEndingId] = useState<number | null>(null);
+
+  async function signOutOne(id: number) {
+    setEndingId(id);
+    try {
+      await adminApi(`/api/admin/profile/sessions/${id}`, { method: "DELETE" });
+      toast.success("That device was signed out.");
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Couldn't sign that device out.");
+    } finally {
+      setEndingId(null);
+    }
+  }
   const others = sessions.filter((s) => !s.current).length;
 
   async function signOutOthers() {
@@ -217,16 +286,88 @@ function SecurityPanel({ sessions }: { sessions: SessionRow[] }) {
           </div>
           <ul className="divide-y rounded-xl border">
             {sessions.map((s, i) => (
-              <li key={i} className="flex items-center gap-3 px-4 py-3">
-                <DesktopIcon size={18} className="shrink-0 text-muted-foreground" />
+              <li key={s.id ?? i} className="flex items-center gap-3 px-4 py-3">
+                {/iPhone|Android/.test(s.device) ? (
+                  <DeviceMobileIcon size={18} className="shrink-0 text-muted-foreground" />
+                ) : (
+                  <DesktopIcon size={18} className="shrink-0 text-muted-foreground" />
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{s.device}</p>
-                  <p className="text-xs text-muted-foreground">Last active {s.lastActive} ET</p>
+                  <p className="text-xs text-muted-foreground">
+                    Last active {s.lastActive} ET{s.ip ? ` · IP ${s.ip}` : ""}
+                  </p>
                 </div>
-                {s.current && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">This device</span>}
+                {s.current ? (
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600">This device</span>
+                ) : (
+                  <Button variant="ghost" size="sm" disabled={endingId === s.id} onClick={() => signOutOne(s.id)}>
+                    {endingId === s.id ? "Signing out…" : "Sign out"}
+                  </Button>
+                )}
               </li>
             ))}
           </ul>
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm font-semibold">Recent sign-in activity</p>
+          {security.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nothing yet.</p>
+          ) : (
+            <ul className="divide-y rounded-xl border">
+              {security.map((e, i) => {
+                const ev = EVENT_LABEL[e.action] ?? { label: e.action };
+                return (
+                  <li key={i} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                    {ev.bad ? (
+                      <WarningCircleIcon size={16} weight="fill" className="shrink-0 text-destructive" />
+                    ) : (
+                      <ShieldCheckIcon size={16} className="shrink-0 text-muted-foreground" />
+                    )}
+                    <span className={cn("min-w-0 flex-1", ev.bad && "font-medium text-destructive")}>{ev.label}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {e.at} ET{e.ip ? ` · ${e.ip}` : ""}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">Don&apos;t recognise something? Change your password and sign out other devices.</p>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function PreferencesPanel() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <Panel title="Preferences">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium">Appearance</p>
+          <p className="text-xs text-muted-foreground">Saved on this device.</p>
+        </div>
+        <div className="inline-flex rounded-xl border p-1" suppressHydrationWarning>
+          {([
+            ["light", "Light", SunIcon],
+            ["dark", "Dark", MoonIcon],
+            ["system", "Match my computer", MonitorIcon],
+          ] as const).map(([value, label, Icon]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setTheme(value)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition",
+                theme === value ? "bg-tys-blue text-white" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon size={15} /> {label}
+            </button>
+          ))}
         </div>
       </div>
     </Panel>

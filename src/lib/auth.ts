@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { twoFactor, username } from "better-auth/plugins";
+import { haveIBeenPwned, twoFactor, username } from "better-auth/plugins";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { cache } from "react";
 import { headers } from "next/headers";
@@ -287,6 +287,15 @@ export const auth = betterAuth({
         },
       },
     }),
+    // Security pass (2026-10-05): refuse any new password that appears in
+    // known data breaches (Have I Been Pwned). Only the first 5 characters
+    // of the password's SHA-1 hash leave the server (k-anonymity), never the
+    // password. Covers customer sign-up, resets and every password change.
+    haveIBeenPwned({
+      paths: ["/sign-up/email", "/change-password", "/reset-password", "/set-password"],
+      customPasswordCompromisedMessage:
+        "This password has appeared in a data breach somewhere online. Please choose a different one.",
+    }),
     nextCookies(),
   ],
 });
@@ -343,9 +352,15 @@ export function hasTwoFactor(session: AppSession): boolean {
 /** Where an admin without 2-step sign-in is sent to set it up. */
 export const TWO_STEP_SETUP_PATH = "/two-step";
 
-/** 2-step is optional unless STAFF_REQUIRE_TWO_STEP=true (owner's call, 2026-10-05). */
+/**
+ * Staff must have 2-step on, enforced on the SERVER for every admin page and
+ * API (security pass, 2026-10-05). Sign-in switches it on for every staff
+ * account (auth route), so this never blocks a normal sign-in; it stops any
+ * session that somehow skipped the code. STAFF_REQUIRE_TWO_STEP=false is the
+ * emergency off switch.
+ */
 export function twoStepRequired(): boolean {
-  return process.env.STAFF_REQUIRE_TWO_STEP === "true";
+  return process.env.STAFF_REQUIRE_TWO_STEP !== "false";
 }
 
 export function requireAdmin(session: AppSession | null): AppSession {
@@ -356,7 +371,9 @@ export function requireAdmin(session: AppSession | null): AppSession {
     throw new HttpError(401, "Your session has expired. Please sign in again.");
   }
   if (twoStepRequired() && !hasTwoFactor(session)) {
-    throw new HttpError(403, "Set up 2-step sign-in first.");
+    // A session that never passed the emailed code: end it, sign in again.
+    void endSession(session).catch(() => {});
+    throw new HttpError(401, "Please sign in again.");
   }
   return session;
 }
@@ -411,7 +428,12 @@ export function adminRoute<Ctx = unknown>(
  */
 export async function requireAdminPage(): Promise<AppSession> {
   const session = await requireAdminPageAllowingSetup();
-  if (twoStepRequired() && !hasTwoFactor(session)) redirect(TWO_STEP_SETUP_PATH);
+  if (twoStepRequired() && !hasTwoFactor(session)) {
+    // Sessions from before the emailed code existed: sign in again with
+    // password + code (which switches 2-step on), not the app-setup page.
+    await endSession(session);
+    redirect("/login");
+  }
   return session;
 }
 
