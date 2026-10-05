@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { emailOTP, twoFactor, username } from "better-auth/plugins";
+import { twoFactor, username } from "better-auth/plugins";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { cache } from "react";
 import { headers } from "next/headers";
@@ -268,33 +268,23 @@ export const auth = betterAuth({
   // are derived from real names, so it let anyone confirm "does John Smith
   // have an account?". 404 it.
   disabledPaths: ["/is-username-available"],
-  // twoFactor (2026-09-30): authenticator-app codes + one-time backup codes.
-  // Optional since 2026-10-05 (owner: "simpler, like Attio, add security
-  // later"); STAFF_REQUIRE_TWO_STEP=true makes it mandatory again.
-  //
-  // emailOTP (2026-10-05): the Attio-style staff login. Staff type their
-  // email and get a 6-digit code in that inbox, no password needed. Codes
-  // go to STAFF accounts only (anyone else gets the same "check your inbox"
-  // answer and no email), sign-up through it is off, and the route handler
-  // puts it behind the same lockout as password sign-in.
+  // Staff 2-step sign-in (owner's call, 2026-10-05): email + password, THEN
+  // a 6-digit code emailed to them. The code is only sent after the password
+  // checks out, so typing someone's email gets a stranger nothing. Every
+  // staff account has twoFactorEnabled switched on at sign-in (route handler),
+  // which is what makes Better Auth stop and ask for the code. Staff who set
+  // up an authenticator app earlier can still use it instead.
   plugins: [
     username(),
-    twoFactor({ issuer: "TYS Global Logistics" }),
-    emailOTP({
-      otpLength: 6,
-      expiresIn: 10 * 60,
-      allowedAttempts: 5,
-      disableSignUp: true,
-      storeOTP: "hashed",
-      sendVerificationOTP: async ({ email, otp, type }) => {
-        if (type !== "sign-in") return;
-        const user = await db.user.findFirst({ where: { email }, select: { role: true } });
-        if (!user || !ADMIN_ROLES.includes(user.role as (typeof ADMIN_ROLES)[number])) return;
-        // Not awaited: the answer must take the same time for staff and
-        // non-staff emails, or response timing would tell them apart.
-        void sendLoginCodeEmail(email, otp).catch((err) => {
-          console.error("[auth] login code email FAILED:", err instanceof Error ? `${err.name}: ${err.message}` : err);
-        });
+    twoFactor({
+      issuer: "TYS Global Logistics",
+      otpOptions: {
+        period: 10, // minutes
+        allowedAttempts: 5,
+        storeOTP: "hashed",
+        sendOTP: async ({ user, otp }) => {
+          await sendLoginCodeEmail(user.email, otp);
+        },
       },
     }),
     nextCookies(),

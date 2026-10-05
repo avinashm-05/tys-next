@@ -272,7 +272,7 @@ export async function sendMail(opts: {
 
 // ── Account emails ──
 
-/** Staff sign-in code (Attio-style login, 2026-10-05). Expires in 10 minutes (auth.ts emailOTP). */
+/** Staff 2-step code, sent only after a correct password (2026-10-05). Expires in 10 minutes (auth.ts twoFactor otpOptions). */
 export function renderLoginCode(code: string) {
   const html = emailShell({
     title: "Your sign-in code",
@@ -280,13 +280,13 @@ export function renderLoginCode(code: string) {
     eyebrow: "Staff sign-in",
     heading: "Your sign-in code",
     bodyHtml:
-      p("Enter this code on the sign-in page to open the TYS admin panel.") +
+      p("Your password was entered correctly. Enter this code on the sign-in page to finish signing in to the TYS admin panel.") +
       `<div style="margin:0 0 22px;padding:18px 0;background:${C.tint};border:1px solid ${C.line};border-radius:14px;text-align:center;font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:34px;font-weight:800;letter-spacing:.32em;color:${C.navy};">${esc(code)}</div>` +
-      p(`The code expires in <strong>10 minutes</strong> and works once. If you didn't try to sign in, you can ignore this email; nobody can get in without the code.`, `font-size:14px;color:${C.muted};`),
-    footerNote: "You're receiving this because someone asked to sign in to the TYS admin panel with this email address.",
+      p(`The code expires in <strong>10 minutes</strong> and works once. <strong>If this wasn't you</strong>, someone knows your password: don't share this code, and change your password right away.`, `font-size:14px;color:${C.muted};`),
+    footerNote: "You're receiving this because someone signed in to the TYS admin panel with this email address and its password.",
     showContact: false,
   });
-  const text = `Your TYS admin sign-in code: ${code}\n\nIt expires in 10 minutes and works once. If you didn't try to sign in, ignore this email.`;
+  const text = `Your TYS admin sign-in code: ${code}\n\nIt expires in 10 minutes and works once. If this wasn't you, someone knows your password: change it right away.`;
   return { subject: `${code} is your TYS sign-in code`, html, text };
 }
 

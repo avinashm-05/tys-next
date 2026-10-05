@@ -2,15 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeftIcon, EnvelopeSimpleIcon } from "@phosphor-icons/react";
+import { ArrowLeftIcon } from "@phosphor-icons/react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// Staff sign-in, Attio-style (2026-10-05): work email → a 6-digit code in
-// that inbox → in. No password to remember. "Use a password instead" keeps
-// the old way as a fallback (e.g. the code email is slow or in spam), and an
-// account that turned on authenticator 2-step still gets that step there.
+// Staff sign-in (2026-10-05): Attio-style screens, standard 2-step flow:
+// work email + password → a 6-digit code emailed to them → in. The code is
+// only sent after the password is right, so a stranger typing a staff email
+// gets nothing. Staff who set up an authenticator app earlier can use it
+// instead of the email code.
 
 /** Laravel-shaped 422 body ({ message, errors }) — includes the login lockout. */
 type ServerError = { status: number; message?: string; code?: string; errors?: Record<string, string[]> };
@@ -29,70 +30,77 @@ function serverMessage(error: unknown, fallback: string): string {
 const title = "text-[22px] font-semibold tracking-tight text-foreground";
 const sub = "mt-1.5 text-sm text-muted-foreground";
 const primaryBtn = "h-11 w-full rounded-xl bg-tys-blue text-[15px] font-semibold text-white hover:bg-tys-blue/90";
+const inputCls = "h-11 rounded-xl bg-background text-[15px]";
 
 export function LoginForm() {
-  const [step, setStep] = useState<"email" | "code" | "password" | "totp">("email");
+  const [step, setStep] = useState<"password" | "code" | "totp">("password");
   const [email, setEmail] = useState("");
+  const [hasApp, setHasApp] = useState(false);
 
-  if (step === "code") return <EmailCodeStep email={email} onBack={() => setStep("email")} />;
-  if (step === "password")
-    return <PasswordStep email={email} onBack={() => setStep("email")} onTwoStep={() => setStep("totp")} />;
-  if (step === "totp") return <TotpStep onBack={() => setStep("password")} />;
+  if (step === "code")
+    return <EmailCodeStep email={email} hasApp={hasApp} onUseApp={() => setStep("totp")} onBack={() => setStep("password")} />;
+  if (step === "totp") return <TotpStep onBack={() => setStep("code")} />;
   return (
-    <EmailStep
+    <PasswordStep
       email={email}
       setEmail={setEmail}
-      onCodeSent={() => setStep("code")}
-      onUsePassword={() => setStep("password")}
+      onTwoStep={(methods) => {
+        setHasApp(methods.includes("totp"));
+        setStep("code");
+      }}
     />
   );
 }
 
-function EmailStep({
+function PasswordStep({
   email,
   setEmail,
-  onCodeSent,
-  onUsePassword,
+  onTwoStep,
 }: {
   email: string;
   setEmail: (v: string) => void;
-  onCodeSent: () => void;
-  onUsePassword: () => void;
+  onTwoStep: (methods: string[]) => void;
 }) {
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const value = email.trim().toLowerCase();
-    if (!EMAIL.test(value)) {
-      setError("Enter your work email address.");
+    if (!EMAIL.test(value) || !password) {
+      setError("Enter your work email and password.");
       return;
     }
     setBusy(true);
     setError(null);
-    // Same answer for every address: only staff accounts actually get a
-    // code, but the page never says which addresses are staff.
-    const { error } = await authClient.emailOtp.sendVerificationOtp({ email: value, type: "sign-in" });
-    setBusy(false);
-    if (error) {
-      setError(serverMessage(error, "We couldn't send a code. Try again."));
+    const { data, error } = await authClient.signIn.email({ email: value, password });
+    if (!error) {
+      const d = data as { twoFactorRedirect?: boolean; twoFactorMethods?: string[] } | null;
+      if (d?.twoFactorRedirect) {
+        setEmail(value);
+        onTwoStep(d.twoFactorMethods ?? []);
+        return;
+      }
+      window.location.assign("/admin");
       return;
     }
-    setEmail(value);
-    onCodeSent();
+    setBusy(false);
+    setError(
+      (error as ServerError).status === 401
+        ? "These credentials do not match our records."
+        : serverMessage(error, "Sign in failed. Try again."),
+    );
   }
 
   return (
     <div>
       <div className="text-center">
         <h1 className={title}>Log in to TYS Admin</h1>
-        <p className={sub}>Welcome back. Enter your work email to continue.</p>
+        <p className={sub}>Welcome back. Sign in with your work email.</p>
       </div>
       <form onSubmit={submit} noValidate className="mt-8 flex flex-col gap-3">
-        <label htmlFor="email" className="text-sm font-medium text-foreground/80">
-          Work email
-        </label>
+        <label htmlFor="email" className="text-sm font-medium text-foreground/80">Work email</label>
         <Input
           id="email"
           type="email"
@@ -101,19 +109,30 @@ function EmailStep({
           placeholder="name@tysgloballogistics.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className={inputCls}
+        />
+        <div className="mt-1 flex items-center justify-between">
+          <label htmlFor="password" className="text-sm font-medium text-foreground/80">Password</label>
+          <Link href="/forgot-password" className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
+        <Input
+          id="password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           aria-invalid={!!error}
-          className="h-11 rounded-xl bg-background text-[15px]"
+          className={inputCls}
         />
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Button type="submit" disabled={busy} className={primaryBtn}>
-          <EnvelopeSimpleIcon size={17} weight="bold" />
-          {busy ? "Sending code…" : "Continue with email"}
+        <Button type="submit" disabled={busy} className={`${primaryBtn} mt-1`}>
+          {busy ? "Checking…" : "Continue"}
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        <button type="button" onClick={onUsePassword} className="font-medium text-foreground/80 underline-offset-4 hover:underline">
-          Use a password instead
-        </button>
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        For your security, we&apos;ll email you a 6-digit code next.
       </p>
     </div>
   );
@@ -174,11 +193,35 @@ function CodeBoxes({ value, onChange, onComplete, disabled, invalid }: {
   );
 }
 
-function EmailCodeStep({ email, onBack }: { email: string; onBack: () => void }) {
+function EmailCodeStep({ email, hasApp, onUseApp, onBack }: { email: string; hasApp: boolean; onUseApp: () => void; onBack: () => void }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
   const [wait, setWait] = useState(RESEND_SECONDS);
+  const sentOnce = useRef(false);
+
+  async function send() {
+    setError(null);
+    setWait(RESEND_SECONDS);
+    const { error } = await authClient.twoFactor.sendOtp();
+    if (error) {
+      setError(
+        error.status === 401
+          ? "This sign-in expired. Go back and enter your password again."
+          : serverMessage(error, "We couldn't send the code. Try again."),
+      );
+      return;
+    }
+    setSent(true);
+  }
+
+  // The code goes out as soon as this step opens (the password was right).
+  useEffect(() => {
+    if (sentOnce.current) return;
+    sentOnce.current = true;
+    void send();
+  }, []);
 
   useEffect(() => {
     if (wait <= 0) return;
@@ -189,7 +232,7 @@ function EmailCodeStep({ email, onBack }: { email: string; onBack: () => void })
   async function verify(otp: string) {
     setBusy(true);
     setError(null);
-    const { error } = await authClient.signIn.emailOtp({ email, otp });
+    const { error } = await authClient.twoFactor.verifyOtp({ code: otp });
     if (!error) {
       // Full navigation so the server sees the fresh session cookie.
       window.location.assign("/admin");
@@ -197,23 +240,13 @@ function EmailCodeStep({ email, onBack }: { email: string; onBack: () => void })
     }
     setBusy(false);
     setCode("");
-    const e = error as ServerError;
     setError(
-      e.errors
-        ? serverMessage(error, "")
-        : e.code === "TOO_MANY_ATTEMPTS" || /too many/i.test(e.message ?? "")
-          ? "Too many wrong tries for this code. Send a new one."
-          : /expired/i.test(e.message ?? "")
-            ? "This code expired. Send a new one."
-            : serverMessage(error, "That code didn't match. Check the newest email and try again."),
+      error.status === 401 && /expired|invalid two factor cookie/i.test(error.message ?? "")
+        ? "This sign-in expired. Go back and enter your password again."
+        : /too many/i.test(error.message ?? "")
+          ? "Too many wrong tries. Go back and sign in again."
+          : serverMessage(error, "That code didn't match. Check the newest email and try again."),
     );
-  }
-
-  async function resend() {
-    setError(null);
-    setWait(RESEND_SECONDS);
-    const { error } = await authClient.emailOtp.sendVerificationOtp({ email, type: "sign-in" });
-    if (error) setError(serverMessage(error, "We couldn't send a new code. Try again."));
   }
 
   return (
@@ -221,8 +254,8 @@ function EmailCodeStep({ email, onBack }: { email: string; onBack: () => void })
       <div className="text-center">
         <h1 className={title}>Check your email</h1>
         <p className={sub}>
-          We sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>. It expires in 10
-          minutes.
+          {sent ? "We sent" : "Sending"} a 6-digit code to <span className="font-medium text-foreground">{email}</span>. It
+          expires in 10 minutes.
         </p>
       </div>
       <form
@@ -236,7 +269,7 @@ function EmailCodeStep({ email, onBack }: { email: string; onBack: () => void })
         <CodeBoxes value={code} onChange={setCode} onComplete={(v) => void verify(v)} disabled={busy} invalid={!!error} />
         {error && <p className="text-center text-sm text-destructive">{error}</p>}
         <Button type="submit" disabled={busy || code.length < 6} className={primaryBtn}>
-          {busy ? "Signing in…" : "Continue"}
+          {busy ? "Signing in…" : "Verify and log in"}
         </Button>
       </form>
       <p className="mt-4 text-center text-xs text-muted-foreground">
@@ -244,86 +277,19 @@ function EmailCodeStep({ email, onBack }: { email: string; onBack: () => void })
         {wait > 0 ? (
           <span>Send a new code in {wait}s</span>
         ) : (
-          <button type="button" onClick={resend} className="font-medium text-foreground/80 underline-offset-4 hover:underline">
+          <button type="button" onClick={send} className="font-medium text-foreground/80 underline-offset-4 hover:underline">
             Send a new code
           </button>
         )}
       </p>
-      <BackLink onClick={onBack}>Use a different email</BackLink>
-    </div>
-  );
-}
-
-function PasswordStep({ email: initialEmail, onBack, onTwoStep }: { email: string; onBack: () => void; onTwoStep: () => void }) {
-  const [email, setEmail] = useState(initialEmail);
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!EMAIL.test(email.trim()) || !password) {
-      setError("Enter your email and password.");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    const { data, error } = await authClient.signIn.email({ email: email.trim().toLowerCase(), password });
-    if (!error) {
-      if ((data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect) {
-        onTwoStep();
-        return;
-      }
-      window.location.assign("/admin");
-      return;
-    }
-    setBusy(false);
-    setError(
-      (error as ServerError).status === 401
-        ? "These credentials do not match our records."
-        : serverMessage(error, "Sign in failed. Try again."),
-    );
-  }
-
-  return (
-    <div>
-      <div className="text-center">
-        <h1 className={title}>Log in with password</h1>
-        <p className={sub}>For when the email code isn&apos;t arriving.</p>
-      </div>
-      <form onSubmit={submit} noValidate className="mt-8 flex flex-col gap-3">
-        <label htmlFor="pw-email" className="text-sm font-medium text-foreground/80">Work email</label>
-        <Input
-          id="pw-email"
-          type="email"
-          autoComplete="email"
-          autoFocus={!initialEmail}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="h-11 rounded-xl bg-background text-[15px]"
-        />
-        <div className="mt-1 flex items-center justify-between">
-          <label htmlFor="password" className="text-sm font-medium text-foreground/80">Password</label>
-          <Link href="/forgot-password" className="text-xs text-muted-foreground underline-offset-4 hover:underline">
-            Forgot password?
-          </Link>
-        </div>
-        <Input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          autoFocus={!!initialEmail}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          aria-invalid={!!error}
-          className="h-11 rounded-xl bg-background text-[15px]"
-        />
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        <Button type="submit" disabled={busy} className={primaryBtn}>
-          {busy ? "Signing in…" : "Log in"}
-        </Button>
-      </form>
-      <BackLink onClick={onBack}>Back to email code</BackLink>
+      {hasApp && (
+        <p className="mt-3 text-center">
+          <button type="button" onClick={onUseApp} className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+            Use my authenticator app instead
+          </button>
+        </p>
+      )}
+      <BackLink onClick={onBack}>Back</BackLink>
     </div>
   );
 }
