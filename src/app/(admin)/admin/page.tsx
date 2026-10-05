@@ -221,7 +221,7 @@ export default async function AdminDashboardPage() {
           {bookingRows.map((s) => (
             <Row
               key={String(s.id)}
-              href={`/admin/shipments/${s.id}`}
+              href={`/admin/shipments/${s.id}/edit`}
               title={s.senderContactName || "No name"}
               meta={`Booking #${s.id} · ${route(s.fromCountry, s.toCountry)}${s.recipientCity ? ` · to ${s.recipientCity}` : ""}`}
               right={ago(s.createdAt, now)}

@@ -4,11 +4,9 @@ import type { ComponentProps } from "react";
 import { Tabs as TabsPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 
-// SETU reference: a full-width pill row with a solid rose active tab and a
-// small diamond "caret" pointing down into the panel — different enough from
-// the shared shadcn Tabs' underline look that it gets its own component.
-// Shared across every tabbed detail page (Vendor, Shipment, …) so the pill
-// styling stays identical everywhere it's used.
+// Tabs on every detail page (Vendor, Shipment, …). Since the 2026-10-05
+// restyle: quiet underline tabs in the public-site blue, replacing the solid
+// rose pill + diamond caret of the earlier SETU-reference look.
 export const DetailTabs = TabsPrimitive.Root;
 export const DetailTabsContent = TabsPrimitive.Content;
 
@@ -18,7 +16,7 @@ export function DetailTabsList({
 }: ComponentProps<typeof TabsPrimitive.List>) {
   return (
     <TabsPrimitive.List
-      className={cn("grid grid-cols-2 bg-muted sm:grid-cols-4", className)}
+      className={cn("flex flex-wrap gap-1 border-b", className?.replace(/\bgrid-cols-\d+\b|\bsm:grid-cols-\d+\b/g, ""))}
       {...props}
     />
   );
@@ -31,8 +29,7 @@ export function DetailTabsTrigger({
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        "relative flex h-12 items-center justify-center px-2 text-xs font-bold tracking-wide text-foreground/60 uppercase transition-colors hover:text-foreground data-[state=active]:bg-tys-rose data-[state=active]:text-white",
-        "after:absolute after:-bottom-1.5 after:left-1/2 after:size-3 after:-translate-x-1/2 after:rotate-45 after:bg-tys-rose after:opacity-0 after:transition-opacity data-[state=active]:after:opacity-100",
+        "-mb-px border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-tys-blue data-[state=active]:text-foreground",
         className,
       )}
       {...props}

@@ -108,7 +108,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
     }),
     ...bookings.flatMap((b) =>
       b.createdAt
-        ? [{ at: b.createdAt, kind: "booking" as const, title: `Booked shipment #${b.id}`, meta: `${route(b.fromCountry, b.toCountry)}${b.recipientCity ? ` · to ${b.recipientCity}` : ""}`, href: `/admin/shipments/${b.id}` }]
+        ? [{ at: b.createdAt, kind: "booking" as const, title: `Booked shipment #${b.id}`, meta: `${route(b.fromCountry, b.toCountry)}${b.recipientCity ? ` · to ${b.recipientCity}` : ""}`, href: `/admin/shipments/${b.id}/edit` }]
         : [],
     ),
   ].sort((a, b) => b.at.getTime() - a.at.getTime());
@@ -251,7 +251,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                 <ul className="divide-y">
                   {bookings.map((b) => (
                     <li key={String(b.id)}>
-                      <Link href={`/admin/shipments/${b.id}`} className="flex flex-wrap items-center gap-3 px-5 py-3.5 hover:bg-muted/50">
+                      <Link href={`/admin/shipments/${b.id}/edit`} className="flex flex-wrap items-center gap-3 px-5 py-3.5 hover:bg-muted/50">
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium">
                             Booking #{b.id}

@@ -277,7 +277,7 @@ export function PriceCheckTool() {
       </div>
 
       <Card className="overflow-visible">
-        <div className="rounded-t-2xl bg-tys-rose py-2.5 text-center text-sm font-bold tracking-wide text-white uppercase">
+        <div className="rounded-t-2xl bg-[#ebf2ff] py-2.5 text-center text-sm font-semibold text-tys-blue">
           Air / Ground
         </div>
         <CardContent className="flex flex-col gap-4 pt-4">
@@ -558,7 +558,7 @@ export function PriceCheckTool() {
               Add new row
             </Button>
             <div className="flex gap-2">
-              <Button variant="outline" className="uppercase" onClick={reset} disabled={loading}>
+              <Button variant="outline" onClick={reset} disabled={loading}>
                 Reset
               </Button>
               <Button
