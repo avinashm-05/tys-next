@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
@@ -343,6 +343,9 @@ function SecurityPanel({ sessions, security }: { sessions: SessionRow[]; securit
 
 function PreferencesPanel() {
   const { theme, setTheme } = useTheme();
+  // The saved theme is only known in the browser; highlight after mount so
+  // the server and browser render the same HTML.
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   return (
     <Panel title="Preferences">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -350,7 +353,7 @@ function PreferencesPanel() {
           <p className="text-sm font-medium">Appearance</p>
           <p className="text-xs text-muted-foreground">Saved on this device.</p>
         </div>
-        <div className="inline-flex rounded-xl border p-1" suppressHydrationWarning>
+        <div className="inline-flex rounded-xl border p-1">
           {([
             ["light", "Light", SunIcon],
             ["dark", "Dark", MoonIcon],
@@ -362,7 +365,7 @@ function PreferencesPanel() {
               onClick={() => setTheme(value)}
               className={cn(
                 "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition",
-                theme === value ? "bg-tys-blue text-white" : "text-muted-foreground hover:text-foreground",
+                mounted && theme === value ? "bg-tys-blue text-white" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon size={15} /> {label}
