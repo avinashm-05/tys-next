@@ -162,7 +162,7 @@ export default async function AdminDashboardPage() {
             >
               <div className="flex items-center justify-between">
                 <span className={`text-sm font-medium ${hero ? "text-white/85" : "text-muted-foreground"}`}>{k.label}</span>
-                <span className={`flex size-8 items-center justify-center rounded-full ${hero ? "bg-white/15 text-white" : "bg-[#ebf2ff] text-tys-blue"}`}>
+                <span className={`flex size-8 items-center justify-center rounded-full ${hero ? "bg-white/15 text-white" : "bg-brand-soft text-tys-blue"}`}>
                   <k.icon size={16} weight="bold" />
                 </span>
               </div>
@@ -195,7 +195,7 @@ export default async function AdminDashboardPage() {
             <div key={day} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5" title={`${day}: ${n} quote${n === 1 ? "" : "s"}`}>
               {n > 0 && <span className="text-[11px] tabular-nums text-muted-foreground">{n}</span>}
               <div
-                className={`w-full rounded-md ${i === days.length - 1 ? "bg-tys-blue" : "bg-[#cfe0ff]"}`}
+                className={`w-full rounded-md ${i === days.length - 1 ? "bg-tys-blue" : "bg-chart-muted"}`}
                 style={{ height: `${Math.max(n ? 8 : 3, (n / max) * 100)}%` }}
               />
               <span className="text-[10px] text-muted-foreground">{Number(day.slice(8))}</span>

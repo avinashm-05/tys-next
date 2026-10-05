@@ -13,7 +13,7 @@ export default async function VendorMapPage() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-[#ebf2ff] text-tys-blue">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-brand-soft text-tys-blue">
             <StorefrontIcon size={22} weight="bold" />
           </div>
           <h1 className="text-h2">Vendor map</h1>

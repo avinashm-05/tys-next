@@ -23,11 +23,11 @@ export function SectionIconBadge({
     <div
       aria-hidden
       className={cn(
-        "-mt-10 flex size-14 shrink-0 items-center justify-center rounded-2xl bg-tys-indigo text-white shadow-md",
+        "-mt-10 flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-tys-blue ring-4 ring-background",
         className,
       )}
     >
-      <IconComponent size={28} weight="bold" />
+      <IconComponent size={24} weight="bold" />
     </div>
   );
 }

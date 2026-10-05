@@ -3,7 +3,7 @@
 // Attio-style (2026-10-05): quiet off-white page, logo, one narrow column.
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-[#fafbfc] px-4 py-12 dark:bg-background">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-soft px-4 py-12 dark:bg-background">
       <div className="w-full max-w-[380px]">
         {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, same as the site header */}
         <img

@@ -259,7 +259,7 @@ function RouteSection({
   const liveTime = useNowInTimeZone(zipInfo?.timezone ?? null);
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border bg-[#fafbfc] p-4">
+    <section className="flex flex-col gap-3 rounded-xl border bg-soft p-4">
       <h2 className="text-[15px] font-semibold">{title}</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FieldRow label="Country">

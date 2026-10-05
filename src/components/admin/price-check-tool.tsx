@@ -270,14 +270,14 @@ export function PriceCheckTool() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-[#ebf2ff] text-tys-blue">
+        <div className="flex size-10 items-center justify-center rounded-xl bg-brand-soft text-tys-blue">
           <CurrencyDollarIcon size={22} weight="bold" />
         </div>
         <h1 className="text-h2">Get Rates</h1>
       </div>
 
       <Card className="overflow-visible">
-        <div className="rounded-t-2xl bg-[#ebf2ff] py-2.5 text-center text-sm font-semibold text-tys-blue">
+        <div className="rounded-t-2xl bg-brand-soft py-2.5 text-center text-sm font-semibold text-tys-blue">
           Air / Ground
         </div>
         <CardContent className="flex flex-col gap-4 pt-4">

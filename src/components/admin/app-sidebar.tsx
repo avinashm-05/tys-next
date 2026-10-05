@@ -69,7 +69,7 @@ const SETTINGS_ITEMS = [{ title: "FedEx Markup", href: "/admin/settings" }] as c
 // sharp-edged nav read as visually inconsistent.
 // 2026-10-05: portal-style nav (light-blue pill + blue text when active).
 const ACTIVE =
-  "h-9 rounded-lg text-[14px] font-medium text-sidebar-foreground [&>svg]:text-[#6b778a] hover:bg-[#f2f4f7] hover:text-foreground data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-accent-foreground data-active:[&>svg]:text-sidebar-accent-foreground data-active:hover:bg-sidebar-accent data-active:hover:text-sidebar-accent-foreground";
+  "h-9 rounded-lg text-[14px] font-medium text-sidebar-foreground [&>svg]:text-muted-foreground hover:bg-muted hover:text-foreground data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-accent-foreground data-active:[&>svg]:text-sidebar-accent-foreground data-active:hover:bg-sidebar-accent data-active:hover:text-sidebar-accent-foreground";
 
 /**
  * The nav item's own icon, swapped for a spinner while its navigation is in
@@ -168,11 +168,13 @@ export function AppSidebar({
             stays first/fixed in place rather than re-centering, so it isn't
             the thing that visibly jumps either. */}
         <div className="flex min-h-9 items-center gap-2">
-          <SidebarTrigger className="shrink-0 text-[#6b778a] hover:bg-[#f2f4f7] hover:text-foreground" />
+          <SidebarTrigger className="shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground" />
           <Link href="/admin" className="flex items-center gap-2 group-data-[collapsible=icon]:hidden" aria-label="TYS admin home">
             {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset, same as the site header */}
-            <img src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png" alt="TYS Global Logistics" width={480} height={177} className="h-7 w-auto" draggable={false} />
-            <span className="rounded-md bg-[#f2f4f7] px-1.5 py-0.5 text-[11px] font-semibold text-[#5b6472]">Admin</span>
+            <img src="/frontend/logo/TYS_GLOBAL_LOGISTICS_Blue.png" alt="TYS Global Logistics" width={480} height={177} className="h-7 w-auto dark:hidden" draggable={false} />
+            {/* eslint-disable-next-line @next/next/no-img-element -- dark-mode logo */}
+            <img src="/frontend/logo/TYS_GLOBAL_LOGISTICS_White.png" alt="" width={480} height={177} className="hidden h-7 w-auto dark:block" draggable={false} />
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">Admin</span>
           </Link>
         </div>
       </SidebarHeader>

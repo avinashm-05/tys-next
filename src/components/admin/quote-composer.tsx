@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowCounterClockwiseIcon,
+  CaretDownIcon,
   CheckCircleIcon,
   CopyIcon,
   DownloadSimpleIcon,
@@ -204,15 +205,19 @@ async function copyText(text: string) {
 
 // ── UI ──
 
-function Section({ title, children, aside }: { title: string; children: React.ReactNode; aside?: React.ReactNode }) {
+/** A folded-away group of extra options (closed by default). */
+function More({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 border-b border-border/70 px-5 py-5 last:border-b-0">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{title}</h3>
-        {aside}
-      </div>
-      {children}
-    </section>
+    <details className="group border-t">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3.5 hover:bg-muted/50 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">
+          <span className="block text-sm font-medium">{title}</span>
+          {hint && <span className="block truncate text-xs text-muted-foreground">{hint}</span>}
+        </span>
+        <CaretDownIcon size={14} className="shrink-0 text-muted-foreground transition group-open:rotate-180" />
+      </summary>
+      <div className="flex flex-col gap-3 px-5 pt-1 pb-5">{children}</div>
+    </details>
   );
 }
 
@@ -276,6 +281,9 @@ export function QuoteComposer({ quote, repName }: { quote: QuoteDetail; repName:
   };
   const setRow = (i: number, row: Partial<ComposerRow>) =>
     set("rows", f.rows.map((r, j) => (j === i ? { ...r, ...row } : r)));
+  const rowValue = (label: string) => f.rows.find((r) => r.label === label)?.value ?? "";
+  const setRowValue = (label: string, value: string) =>
+    set("rows", f.rows.some((r) => r.label === label) ? f.rows.map((r) => (r.label === label ? { ...r, value } : r)) : [...f.rows, { label, value }]);
 
   const quoteId = quote.id;
   const origin = typeof window === "undefined" ? "" : window.location.origin;
@@ -397,21 +405,12 @@ export function QuoteComposer({ quote, repName }: { quote: QuoteDetail; repName:
 
           {/* Body */}
           <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,460px)_minmax(0,1fr)]">
-            {/* Form */}
+            {/* Form: essentials up top, everything else folded away. */}
             <div className="min-h-0 overflow-y-auto border-r">
-              <Section title="Recipient">
-                <Field label="To" error={errors.to}>{input("to", { type: "email" })}</Field>
-                <Field label="Subject" hint={f.subject ? undefined : "Leave empty to use the automatic subject."}>
-                  {input("subject", { placeholder: autoSubject(f, quoteId) })}
-                </Field>
-              </Section>
-
-              <Section title="Price">
+              <div className="flex flex-col gap-4 px-5 py-5">
+                <Field label="Send to" error={errors.to}>{input("to", { type: "email" })}</Field>
                 <Field label="Service" error={errors.serviceName}>{input("serviceName")}</Field>
-                <Field label="Service line" hint="Shown under the service name, e.g. By air · Door to door · 4 to 5 working days">
-                  {input("serviceTagline")}
-                </Field>
-                <div className="grid grid-cols-[1fr_110px] gap-3">
+                <div className="grid grid-cols-[1fr_100px] gap-3">
                   <Field label="Your price" error={errors.price}>{input("price", { inputMode: "decimal", placeholder: "0.00" })}</Field>
                   <Field label="Currency">
                     <Select value={f.currency} onValueChange={(v) => set("currency", v as ComposerFields["currency"])}>
@@ -422,13 +421,14 @@ export function QuoteComposer({ quote, repName }: { quote: QuoteDetail; repName:
                     </Select>
                   </Field>
                 </div>
+
                 <div className="flex flex-col gap-2">
-                  <span className="text-xs font-medium text-foreground/80">Crossed-out original rate</span>
+                  <span className="text-xs font-medium text-foreground/80">Show a saving</span>
                   <div className="inline-flex self-start rounded-lg border p-0.5">
                     {([
-                      ["none", "None"],
-                      ["amount", "Type the rate"],
-                      ["percent", "From discount %"],
+                      ["none", "No"],
+                      ["amount", "Original rate"],
+                      ["percent", "Discount %"],
                     ] as const).map(([v, l]) => (
                       <button
                         key={v}
@@ -443,66 +443,55 @@ export function QuoteComposer({ quote, repName }: { quote: QuoteDetail; repName:
                       </button>
                     ))}
                   </div>
-                  {f.originalMode !== "none" && (
-                    <div className="grid grid-cols-2 gap-3">
-                      {f.originalMode === "amount" ? (
-                        <Field label="Original rate">{input("originalAmount", { inputMode: "decimal", placeholder: "e.g. 2151.11" })}</Field>
-                      ) : (
-                        <Field label="Discount %">{input("discountPercent", { inputMode: "decimal", placeholder: "e.g. 30" })}</Field>
-                      )}
-                      <Field label="Label">{input("originalLabel")}</Field>
-                    </div>
-                  )}
+                  {f.originalMode !== "none" &&
+                    (f.originalMode === "amount" ? (
+                      <Input value={f.originalAmount} onChange={(e) => set("originalAmount", e.target.value)} inputMode="decimal" placeholder="Original rate, e.g. 2151.11" />
+                    ) : (
+                      <Input value={f.discountPercent} onChange={(e) => set("discountPercent", e.target.value)} inputMode="decimal" placeholder="Discount %, e.g. 30" />
+                    ))}
                   {p.original != null && p.savings != null && (
                     <p className="text-xs text-muted-foreground">
-                      Shows <s>{formatMoney(p.original, f.currency)}</s> → <span className="font-semibold text-foreground">{formatMoney(p.price, f.currency)}</span>, saves {formatMoney(p.savings, f.currency)} ({p.percentOff}% off).
+                      <s>{formatMoney(p.original, f.currency)}</s> → <span className="font-semibold text-foreground">{formatMoney(p.price, f.currency)}</span> · saves {formatMoney(p.savings, f.currency)} ({p.percentOff}% off)
                     </p>
                   )}
                 </div>
-              </Section>
 
-              <Section title="Route">
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="From" error={errors.fromLabel}>{input("fromLabel")}</Field>
-                  <Field label="Under it">{input("fromSub")}</Field>
-                  <Field label="To" error={errors.toLabel}>{input("toLabel")}</Field>
-                  <Field label="Under it">{input("toSub")}</Field>
-                </div>
-              </Section>
+                <Field label="Delivery time">
+                  <Input value={rowValue("Delivery time")} onChange={(e) => setRowValue("Delivery time", e.target.value)} placeholder="e.g. 4 to 5 working days" />
+                </Field>
+                <Field label="What's being shipped">
+                  <Textarea
+                    value={rowValue("Shipment description")}
+                    onChange={(e) => setRowValue("Shipment description", e.target.value)}
+                    rows={2}
+                    className="min-h-0 resize-y"
+                    placeholder="e.g. Queen bed, mattress, 10 boxes"
+                  />
+                </Field>
+              </div>
 
-              <Section
-                title="Details"
-                aside={
-                  <button type="button" onClick={() => set("rows", [...f.rows, { label: "", value: "" }])} className="flex items-center gap-1 text-xs font-medium text-tys-blue hover:underline">
-                    <PlusIcon size={12} weight="bold" /> Add row
-                  </button>
-                }
-              >
+              <More title="Other details" hint={`${f.rows.filter((r) => r.label && r.value && r.label !== "Delivery time" && r.label !== "Shipment description").length} rows · box size, weight, volume, customs…`}>
                 <p className="-mt-1 text-xs text-muted-foreground">Quote ID is added automatically. Empty rows are left out.</p>
                 <div className="flex flex-col gap-2">
-                  {f.rows.map((r, i) => (
-                    <div key={i} className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] items-start gap-2">
-                      <Input value={r.label} placeholder="Label" onChange={(e) => setRow(i, { label: e.target.value })} />
-                      <Textarea
-                        value={r.value}
-                        placeholder="Value"
-                        rows={1}
-                        className="min-h-9 resize-y py-2"
-                        onChange={(e) => setRow(i, { value: e.target.value })}
-                      />
-                      <button
-                        type="button"
-                        aria-label={`Remove ${r.label || "row"}`}
-                        onClick={() => set("rows", f.rows.filter((_, j) => j !== i))}
-                        className="mt-2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                      >
-                        <XIcon size={14} />
-                      </button>
-                    </div>
-                  ))}
+                  {f.rows.map((r, i) =>
+                    r.label === "Delivery time" || r.label === "Shipment description" ? null : (
+                      <div key={i} className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] items-start gap-2">
+                        <Input value={r.label} placeholder="Label" onChange={(e) => setRow(i, { label: e.target.value })} />
+                        <Textarea value={r.value} placeholder="Value" rows={1} className="min-h-9 resize-y py-2" onChange={(e) => setRow(i, { value: e.target.value })} />
+                        <button
+                          type="button"
+                          aria-label={`Remove ${r.label || "row"}`}
+                          onClick={() => set("rows", f.rows.filter((_, j) => j !== i))}
+                          className="mt-2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                          <XIcon size={14} />
+                        </button>
+                      </div>
+                    ),
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {QUICK_ROWS.filter((l) => !f.rows.some((r) => r.label === l)).map((l) => (
+                  {QUICK_ROWS.filter((l) => l !== "Delivery time" && !f.rows.some((r) => r.label === l)).map((l) => (
                     <button
                       key={l}
                       type="button"
@@ -512,10 +501,17 @@ export function QuoteComposer({ quote, repName }: { quote: QuoteDetail; repName:
                       + {l}
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => set("rows", [...f.rows, { label: "", value: "" }])}
+                    className="rounded-full border border-dashed px-2.5 py-1 text-xs text-muted-foreground hover:border-tys-blue hover:text-tys-blue"
+                  >
+                    <PlusIcon size={11} weight="bold" className="mr-0.5 inline" /> Custom row
+                  </button>
                 </div>
-              </Section>
+              </More>
 
-              <Section title="Message">
+              <More title="Wording" hint="Greeting, heading, opening, closing, small print">
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Greeting name" hint="Empty = “Hi there,”">{input("greetingName")}</Field>
                   <Field label="Heading" error={errors.heading}>{input("heading")}</Field>
@@ -523,22 +519,31 @@ export function QuoteComposer({ quote, repName }: { quote: QuoteDetail; repName:
                 <Field label="Opening">{area("intro", 3)}</Field>
                 <Field label="Why our rate is lower" hint="Leave empty to hide.">{area("partnerLine", 2)}</Field>
                 <Field label="Closing">{area("closing", 2)}</Field>
-                <Field label="Small print" hint="Shown in small grey text above the signature.">{area("note", 3)}</Field>
-              </Section>
+                <Field label="Small print">{area("note", 3)}</Field>
+              </More>
 
-              <Section
-                title="Tip box"
-                aside={
-                  !f.tipText && (
+              <More title="Route, subject and tip box" hint={`${f.fromLabel} → ${f.toLabel}`}>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="From" error={errors.fromLabel}>{input("fromLabel")}</Field>
+                  <Field label="Under it">{input("fromSub")}</Field>
+                  <Field label="To" error={errors.toLabel}>{input("toLabel")}</Field>
+                  <Field label="Under it">{input("toSub")}</Field>
+                </div>
+                <Field label="Service line" hint="Under the service name, e.g. By air · Door to door">{input("serviceTagline")}</Field>
+                <Field label="Subject" hint={f.subject ? undefined : "Empty = automatic subject"}>
+                  {input("subject", { placeholder: autoSubject(f, quoteId) })}
+                </Field>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-foreground/80">Tip box</span>
+                  {!f.tipText && (
                     <button type="button" onClick={() => setFields({ ...f, tipTitle: "A tip on customs", tipText: CUSTOMS_TIP })} className="text-xs font-medium text-tys-blue hover:underline">
                       Insert customs tip
                     </button>
-                  )
-                }
-              >
-                <Field label="Title">{input("tipTitle", { placeholder: "Optional" })}</Field>
-                <Field label="Text" hint="Leave empty to hide the box.">{area("tipText", 2)}</Field>
-              </Section>
+                  )}
+                </div>
+                {input("tipTitle", { placeholder: "Tip title (optional)" })}
+                {area("tipText", 2, { placeholder: "Tip text. Empty hides the box." })}
+              </More>
             </div>
 
             {/* Preview */}

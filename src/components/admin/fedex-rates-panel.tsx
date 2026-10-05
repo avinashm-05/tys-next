@@ -19,7 +19,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { openQuoteComposer } from "@/lib/quote-composer";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -88,12 +87,7 @@ export function FedExRatesPanel({
   /** Unused since the composer owns sending; kept so callers don't change. */
   sendTo?: string | null;
   // This panel always rates whatever the DB currently has (the /fedex-rates
-  // route re-reads the quote fresh on every call) — it never saw the sibling
-  // editor's in-memory package edits. Staff who typed a weight/dimension and
-  // hit "Get live rates" without saving first would silently rate the OLD
-  // (pre-edit) package data with no indication anything was stale — exactly
-  // the kind of mismatch that prompted this investigation. Saving here first
-  // closes that gap instead of just documenting it.
+  // route re-reads the quote fresh on every call), so the editor saves first.
   onBeforeGetRates?: () => Promise<boolean>;
 }) {
   const router = useRouter();
@@ -108,40 +102,25 @@ export function FedExRatesPanel({
   const [pickupType, setPickupType] = useState("DROPOFF_AT_FEDEX_LOCATION");
   const [shipDate, setShipDate] = useState(new Date().toISOString().slice(0, 10));
   const [residence, setResidence] = useState(isResidence);
-  // This is a re-rate of what the customer already told us (residential
-  // comes straight from their quote) — the rest are sensible FedEx-call
-  // defaults, not something to edit on every visit. Hidden unless support
-  // actually needs to change one, so "Get live rates" reads as the primary
-  // action instead of a form.
   const [showParams, setShowParams] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RatesResponse | null>(null);
-  const [lockingKey, setLockingKey] = useState<string | null>(null);
-  // Check one or more services — a single "Send quote" button below handles
-  // both cases through the same endpoint (which already renders a single
-  // price line vs. a comparison table depending on count), so there's no
-  // separate "lock this one" vs. "email these as options" split anymore.
-  const [selectedRates, setSelectedRates] = useState<Set<string>>(new Set());
 
-  // Manual entry (international / auto-failed).
-  const manualCurrencyDefault = ALLOWED_CURRENCIES.includes(defaultCurrency as never)
-    ? defaultCurrency
-    : "USD";
+  // Manual entry (international / auto-rating failed).
+  const manualCurrencyDefault = ALLOWED_CURRENCIES.includes(defaultCurrency as never) ? defaultCurrency : "USD";
   const [baseRate, setBaseRate] = useState("");
   const [manualCurrency, setManualCurrency] = useState(manualCurrencyDefault);
+  const [locking, setLocking] = useState(false);
 
-  // Discount for the callback-support scenario — off, until support turns it
-  // on. Applies live to every rate row below, and optionally to the already-
-  // locked price.
-  const [discountOn, setDiscountOn] = useState(false);
+  // Optional discount (customer called back): taken off TYS's margin, never
+  // below the FedEx cost. Hidden behind a link until someone needs it.
+  const [discountOpen, setDiscountOpen] = useState(false);
   const [discountType, setDiscountType] = useState<"percent" | "flat">("percent");
   const [discountValue, setDiscountValue] = useState("");
-  const [discountReason, setDiscountReason] = useState("");
   const parsedDiscount = parseFloat(discountValue);
-  const discount = discountOn && !isNaN(parsedDiscount) && parsedDiscount > 0
-    ? { type: discountType, value: parsedDiscount }
-    : null;
+  const discount =
+    discountOpen && !isNaN(parsedDiscount) && parsedDiscount > 0 ? { type: discountType, value: parsedDiscount } : null;
 
   async function getRates() {
     setLoading(true);
@@ -149,9 +128,6 @@ export function FedExRatesPanel({
     if (onBeforeGetRates) {
       const saved = await onBeforeGetRates();
       if (!saved) {
-        // handleSave already toasted the specific error — just stop here
-        // instead of rating stale (or, on a first-ever save, nonexistent)
-        // package data.
         setLoading(false);
         return;
       }
@@ -174,85 +150,36 @@ export function FedExRatesPanel({
     }
   }
 
-  async function lockAmount(key: string, amount: number, currency: string, label: string) {
-    setLockingKey(key);
-    try {
-      await adminApi(`/api/admin/quotes/${quoteId}/price`, {
-        method: "PATCH",
-        body: JSON.stringify({ source: "service", amount, currency }),
-      });
-      toast.success(`Price locked: ${money(amount, currency)} (${label}).`);
-      router.refresh();
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Couldn't lock the price.");
-    } finally {
-      setLockingKey(null);
-    }
-  }
-
-  function toggleRateSelection(serviceType: string, on: boolean) {
-    setSelectedRates((prev) => {
-      const next = new Set(prev);
-      if (on) next.add(serviceType);
-      else next.delete(serviceType);
-      return next;
+  // ONE action per price (2026-10-05): "Use this price" opens the Send quote
+  // composer filled in. With a discount, the full price becomes the
+  // crossed-out original.
+  function pickRate(r: Rate, markupPercent: number) {
+    const price = discount ? applyDiscount(r.raw_total_charge, markupPercent, discount.type, discount.value) : r.total_charge;
+    openQuoteComposer({
+      serviceName: r.service_name,
+      price,
+      currency: r.currency,
+      originalAmount: price < r.total_charge ? r.total_charge : undefined,
+      deliveryTime: r.estimated_delivery || undefined,
     });
   }
 
-  // Since 2026-10-05 this card no longer emails anything itself: there is ONE
-  // "Send quote" (the composer at the top of the page, with preview, PDF and
-  // WhatsApp text). This button hands the composer what's picked here:
-  //  - checked rate(s) → the first one's price (discounted if the discount is
-  //    on, with the full rate as the crossed-out original); the rest are
-  //    listed as other options
-  //  - a manual base rate → locked first (markup applied on the server)
-  //  - neither → the price already locked on the quote
-  const hasSelection = selectedRates.size > 0 && result?.success;
-  const hasManualEntry = baseRate.trim() !== "";
-  const canSend = hasSelection || hasManualEntry || currentAmount != null;
-  const [handingOff, setHandingOff] = useState(false);
-
-  async function handleUseInQuote() {
-    if (hasSelection && result?.success) {
-      const picked = result.rates.filter((r) => selectedRates.has(r.service_type));
-      const priced = picked.map((r) => {
-        const discounted = discount
-          ? applyDiscount(r.raw_total_charge, result.markupPercent, discount.type, discount.value)
-          : null;
-        return { rate: r, price: discounted ?? r.total_charge };
+  async function useManualRate() {
+    setLocking(true);
+    try {
+      // The server applies the international markup to the FedEx cost.
+      const saved = await adminApi<{ estimatedCost: string; currency: string }>(`/api/admin/quotes/${quoteId}/price`, {
+        method: "PATCH",
+        body: JSON.stringify({ source: "manual", baseRate, currency: manualCurrency }),
       });
-      const [first, ...rest] = priced;
-      openQuoteComposer({
-        serviceName: first.rate.service_name,
-        price: first.price,
-        currency: first.rate.currency,
-        originalAmount: first.price < first.rate.total_charge ? first.rate.total_charge : undefined,
-        deliveryTime: first.rate.estimated_delivery || undefined,
-        otherOptions: rest.map((o) => ({ serviceName: o.rate.service_name, price: o.price, currency: o.rate.currency })),
-      });
-      return;
+      setBaseRate("");
+      router.refresh();
+      openQuoteComposer({ price: Number(saved.estimatedCost), currency: saved.currency });
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Couldn't work out the price.");
+    } finally {
+      setLocking(false);
     }
-    if (hasManualEntry) {
-      setHandingOff(true);
-      try {
-        const saved = await adminApi<{ estimatedCost: string; currency: string }>(
-          `/api/admin/quotes/${quoteId}/price`,
-          {
-            method: "PATCH",
-            body: JSON.stringify({ source: "manual", baseRate, currency: manualCurrency }),
-          },
-        );
-        setBaseRate("");
-        router.refresh();
-        openQuoteComposer({ price: Number(saved.estimatedCost), currency: saved.currency });
-      } catch (e) {
-        toast.error(e instanceof ApiError ? e.message : "Couldn't lock the price.");
-      } finally {
-        setHandingOff(false);
-      }
-      return;
-    }
-    openQuoteComposer({ price: currentAmount ?? undefined, currency: defaultCurrency });
   }
 
   const showManual = result !== null && !result.success;
@@ -260,10 +187,8 @@ export function FedExRatesPanel({
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle>FedEx live rates</CardTitle>
-        <CardDescription>
-          Pull automated rates (US↔US) or enter a rate manually, then lock in the quoted price.
-        </CardDescription>
+        <CardTitle>FedEx prices</CardTitle>
+        <CardDescription>Get today&rsquo;s FedEx prices for this shipment, then pick one to send.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <button
@@ -347,41 +272,81 @@ export function FedExRatesPanel({
           </div>
         )}
 
-        <div>
-          <Button
-            onClick={getRates}
-            disabled={loading}
-            className="bg-tys-blue text-white hover:bg-tys-blue/90"
-          >
-            {loading ? "Fetching rates…" : "Get live rates"}
+        <div className="flex flex-wrap items-center gap-3">
+          <Button onClick={getRates} disabled={loading}>
+            {loading ? "Getting prices…" : result ? "Refresh prices" : "Get FedEx prices"}
           </Button>
+          {currentAmount != null && (
+            <Button variant="outline" onClick={() => openQuoteComposer({ price: currentAmount, currency: defaultCurrency })}>
+              Send the saved price ({money(currentAmount, defaultCurrency)})
+            </Button>
+          )}
+          {result?.success && (
+            <button
+              type="button"
+              onClick={() => setDiscountOpen((v) => !v)}
+              className="ml-auto flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              <TagIcon size={15} />
+              {discountOpen ? "No discount" : "Give a discount"}
+            </button>
+          )}
         </div>
 
-        {result?.success && (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs text-muted-foreground">
-              Check a service and press <span className="font-medium text-foreground">Use in quote email</span>{" "}
-              to open it in the quote composer. Check more than one to list the others as options.
-            </p>
-            <FedExRatesTable
-              rates={result.rates}
-              markupPercent={result.markupPercent}
-              selection={{ selected: selectedRates, onToggle: toggleRateSelection }}
-              renderAction={(r) => {
-                const discounted = discount
-                  ? applyDiscount(r.raw_total_charge, result.markupPercent, discount.type, discount.value)
-                  : null;
-                return discounted != null ? (
-                  <span className="text-xs">
-                    <span className="text-muted-foreground line-through">
-                      {money(r.total_charge, r.currency)}
-                    </span>{" "}
-                    <span className="font-semibold text-tys-rose">{money(discounted, r.currency)}</span>
-                  </span>
-                ) : null;
-              }}
+        {discountOpen && result?.success && (
+          <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-brand-softer p-3">
+            <div className="inline-flex rounded-lg border bg-card p-0.5">
+              {(["percent", "flat"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setDiscountType(t)}
+                  className={cn(
+                    "flex items-center gap-1 rounded-md px-3 py-1.5 text-sm",
+                    discountType === t ? "bg-tys-blue text-white" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t === "percent" ? <><PercentIcon size={13} /> Percent</> : `${defaultCurrency} amount`}
+                </button>
+              ))}
+            </div>
+            <Input
+              type="number"
+              min={0}
+              step="0.01"
+              className="w-28"
+              value={discountValue}
+              onChange={(e) => setDiscountValue(e.target.value)}
+              placeholder={discountType === "percent" ? "10" : "20.00"}
+              aria-label="Discount"
             />
+            <p className="text-xs text-muted-foreground">Taken off our margin only, never below the FedEx cost.</p>
           </div>
+        )}
+
+        {result?.success && (
+          <FedExRatesTable
+            rates={result.rates}
+            markupPercent={result.markupPercent}
+            renderAction={(r) => {
+              const discounted = discount
+                ? applyDiscount(r.raw_total_charge, result.markupPercent, discount.type, discount.value)
+                : null;
+              return (
+                <div className="flex items-center justify-end gap-3">
+                  {discounted != null && (
+                    <span className="text-xs whitespace-nowrap">
+                      <span className="text-muted-foreground line-through">{money(r.total_charge, r.currency)}</span>{" "}
+                      <span className="font-semibold text-emerald-700">{money(discounted, r.currency)}</span>
+                    </span>
+                  )}
+                  <Button size="sm" onClick={() => pickRate(r, result.markupPercent)}>
+                    <PaperPlaneTiltIcon size={14} weight="bold" /> Use this price
+                  </Button>
+                </div>
+              );
+            }}
+          />
         )}
 
         {showManual && (
@@ -389,7 +354,7 @@ export function FedExRatesPanel({
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-muted-foreground" htmlFor="manual-rate">
-                  Base rate
+                  FedEx cost
                 </label>
                 <Input
                   id="manual-rate"
@@ -419,115 +384,14 @@ export function FedExRatesPanel({
                   </SelectContent>
                 </Select>
               </div>
+              <Button onClick={useManualRate} disabled={locking || !(Number(baseRate) > 0)}>
+                <PaperPlaneTiltIcon size={14} weight="bold" />
+                {locking ? "Working out price…" : "Use this price"}
+              </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Use in quote email below will lock this rate (international markup applied on the server)
-              and open it in the quote composer.
-            </p>
+            <p className="text-xs text-muted-foreground">Our markup is added automatically.</p>
           </FedExRateUnavailable>
         )}
-
-        <div className="rounded-md border border-tys-mist p-4">
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <Checkbox checked={discountOn} onCheckedChange={(v) => setDiscountOn(v === true)} />
-            <TagIcon size={16} className="text-tys-rose" />
-            Customer called back — apply a discount
-          </label>
-          {discountOn && (
-            <div className="mt-3 flex flex-col gap-3">
-              <p className="text-xs text-muted-foreground">
-                Applies live to every service above — pick whichever category fits and lock the
-                discounted number.
-              </p>
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="inline-flex rounded-md border border-input p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setDiscountType("percent")}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded px-3 py-1.5 text-sm",
-                      discountType === "percent"
-                        ? "bg-tys-rose text-white"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    <PercentIcon size={14} />
-                    Percent
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDiscountType("flat")}
-                    className={cn(
-                      "rounded px-3 py-1.5 text-sm",
-                      discountType === "flat"
-                        ? "bg-tys-rose text-white"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {defaultCurrency} flat
-                  </button>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-muted-foreground" htmlFor="discount-value">
-                    {discountType === "percent" ? "Percent off" : `Amount off (${defaultCurrency})`}
-                  </label>
-                  <Input
-                    id="discount-value"
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    className="w-32"
-                    value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value)}
-                    placeholder={discountType === "percent" ? "10" : "20.00"}
-                  />
-                </div>
-                {currentAmount != null && discount != null && result?.success && (() => {
-                  // No stored breakdown for an already-locked price — back
-                  // out the implied FedEx cost using the current markup
-                  // setting so the same margin-based discount math applies.
-                  const impliedRawCost = currentAmount / (1 + result.markupPercent / 100);
-                  const newAmount = applyDiscount(impliedRawCost, result.markupPercent, discount.type, discount.value);
-                  return (
-                    <Button
-                      variant="outline"
-                      disabled={lockingKey !== null}
-                      onClick={() => lockAmount("current", newAmount, defaultCurrency, "current locked price")}
-                    >
-                      Apply to current locked price ({money(currentAmount, defaultCurrency)} →{" "}
-                      {money(newAmount, defaultCurrency)})
-                    </Button>
-                  );
-                })()}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-muted-foreground" htmlFor="discount-reason">
-                  Reason (internal note)
-                </label>
-                <Textarea
-                  id="discount-reason"
-                  rows={2}
-                  value={discountReason}
-                  onChange={(e) => setDiscountReason(e.target.value)}
-                  placeholder="e.g. price-matched a competitor, goodwill for a delayed callback…"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Hands the picked price to the one "Send quote" composer. */}
-        <div className="flex items-center justify-end rounded-xl border border-tys-mist bg-muted/20 p-4">
-          <Button
-            size="lg"
-            className="bg-tys-blue text-white hover:bg-tys-blue/90"
-            disabled={!canSend || handingOff}
-            onClick={handleUseInQuote}
-          >
-            <PaperPlaneTiltIcon size={16} weight="bold" />
-            {handingOff ? "Locking price…" : "Use in quote email"}
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

@@ -27,7 +27,7 @@ export function ShipmentHeaderInfo({
   return (
     <div className="rounded-2xl border border-tys-mist bg-card p-6">
       <div className="mb-6 flex items-center gap-4">
-        <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-tys-blue text-white shadow-md">
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-tys-blue">
           <Icon size={28} weight="bold" />
         </div>
         <h1 className="text-h2">

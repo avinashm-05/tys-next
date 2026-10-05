@@ -1,6 +1,7 @@
 "use client";
 
-import { SignOutIcon } from "@phosphor-icons/react";
+import Link from "next/link";
+import { SignOutIcon, UserCircleIcon } from "@phosphor-icons/react";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -56,7 +57,7 @@ export function SidebarProfile({
                   <span className="truncate font-medium">{user.name}</span>
                   <span className="truncate text-[11px] text-sidebar-foreground/60">{user.email}</span>
                 </div>
-                <SignOutIcon aria-hidden className="ml-auto size-4 shrink-0" />
+                
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="top" className="min-w-56">
@@ -70,6 +71,12 @@ export function SidebarProfile({
                 )}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/admin/profile">
+                  <UserCircleIcon />
+                  My profile
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={handleSignOut}>
                 <SignOutIcon />
                 Sign out

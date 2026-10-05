@@ -13,7 +13,7 @@ const AVATAR_TONES = [
 ];
 
 function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const parts = name.trim().split(/\s+/).filter((w) => /^[\p{L}\p{N}]/u.test(w)); // skips "(local)" etc.
   return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() || "?";
 }
 

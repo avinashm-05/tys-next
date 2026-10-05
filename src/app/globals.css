@@ -130,37 +130,42 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* 2026-10-05: true dark, Attio-style (neutral near-black, not navy); the
+     brand blue stays the one action colour. */
+  --background: #0a0a0b;
+  --foreground: #ededef;
+  --card: #121214;
+  --card-foreground: #ededef;
+  --popover: #161618;
+  --popover-foreground: #ededef;
+  --primary: #3d86ff;
+  --primary-foreground: #ffffff;
+  --secondary: #1b1b1e;
+  --secondary-foreground: #ededef;
+  --muted: #1b1b1e;
+  --muted-foreground: #9b9ba3;
+  --accent: #1d2433;
+  --accent-foreground: #ffffff;
+  --destructive: #f2555a;
+  --destructive-foreground: #ffffff;
+  --border: #242428;
+  --input: #2c2c31;
+  --ring: #3d86ff;
+
+  --sidebar: #0f0f11;
+  --sidebar-foreground: #c9c9cf;
+  --sidebar-primary: #3d86ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(61, 134, 255, 0.14);
+  --sidebar-accent-foreground: #8db8ff;
+  --sidebar-border: #1f1f23;
+  --sidebar-ring: #3d86ff;
+
+  --soft: #151517;
+  --brand-soft: rgba(61, 134, 255, 0.14);
+  --brand-softer: rgba(61, 134, 255, 0.07);
+  --chart-muted: rgba(61, 134, 255, 0.28);
+  --tys-mist: #242428;
 }
 
 /* ── TYS brand tokens ─────────────────────────────────────────────────────
@@ -210,6 +215,12 @@
   --sidebar-accent-foreground: var(--tys-blue);
   --sidebar-border: var(--tys-mist);
   --sidebar-ring: var(--tys-blue);
+
+  /* Soft fills that flip with the theme (no hard-coded light hex in pages). */
+  --soft: #fafbfc; /* quiet inset panel */
+  --brand-soft: #ebf2ff; /* blue tint: active nav, icon chips */
+  --brand-softer: #f5f9ff; /* faint blue panel */
+  --chart-muted: #cfe0ff; /* inactive chart bars */
 }
 
 /* ── TYS dark palette ─────────────────────────────────────────────────────
@@ -260,6 +271,10 @@
   --color-tys-indigo: var(--tys-indigo);
   --color-tys-rose: var(--tys-rose);
   --color-tys-teal: var(--tys-teal);
+  --color-soft: var(--soft);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-softer: var(--brand-softer);
+  --color-chart-muted: var(--chart-muted);
 
   /* Type scale (~1.25 ratio). Use text-display/h1/h2/h3 — not ad-hoc sizes. */
   --text-display: 2.44rem;

@@ -2,20 +2,12 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { toast } from "sonner";
-import { EnvelopeSimpleIcon, PaperPlaneTiltIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
+import { ChatTextIcon, EnvelopeSimpleIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import { adminApi, ApiError } from "@/lib/admin-api";
 import { QUOTE_NOTES_REFRESH_EVENT } from "@/components/admin/quote-follow-up-button";
 import { LocalDateTime } from "@/components/shared/local-date-time";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 
 type NoteRow = { id: number; comment: string; createdAt: string | null; createdByName: string | null };
@@ -95,99 +87,72 @@ export const QuoteNotesSection = forwardRef<QuoteNotesSectionHandle, { quoteId: 
     }
   }
 
+  // Notes as a simple feed (2026-10-05): write box on top, newest first,
+  // emails sent show with an envelope.
   return (
     <Card size="sm" className="overflow-visible">
       <CardContent className="flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <PaperPlaneTiltIcon size={18} className="text-tys-blue" />
-          <h2 className="font-heading text-lg font-semibold">Notes</h2>
+        <h2 className="text-[15px] font-semibold">Notes</h2>
+        <div className="flex flex-col gap-2">
+          <Textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && draft.trim()) void postDraft();
+            }}
+            placeholder="Add a note for the team, e.g. called, no answer; try again at 3 PM"
+            rows={2}
+            disabled={posting}
+          />
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground">Only staff see notes. ⌘ + Enter to add.</span>
+            <Button type="button" size="sm" disabled={!draft.trim() || posting} onClick={postDraft}>
+              <PlusIcon size={14} /> {posting ? "Adding…" : "Add note"}
+            </Button>
+          </div>
         </div>
-      </CardContent>
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-800 hover:bg-slate-800">
-              <TableHead className="w-40 text-white">Date</TableHead>
-              <TableHead className="text-white">Comments</TableHead>
-              <TableHead className="w-24 text-right text-white">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell className="align-top text-xs text-muted-foreground">
-                <LocalDateTime iso={new Date()} />
-              </TableCell>
-              <TableCell>
-                <Textarea
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Write a comment…"
-                  rows={2}
-                  disabled={posting}
-                />
-              </TableCell>
-              <TableCell className="text-right align-top">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  disabled={!draft.trim() || posting}
-                  onClick={postDraft}
-                  aria-label="Post comment"
-                >
-                  <PlusIcon size={16} />
-                </Button>
-              </TableCell>
-            </TableRow>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={3} className="py-8 text-center text-sm text-muted-foreground">
-                  Loading notes…
-                </TableCell>
-              </TableRow>
-            ) : notes.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="py-8 text-center text-sm text-muted-foreground">
-                  No comments yet.
-                </TableCell>
-              </TableRow>
-            ) : (
-              notes.map((note) => (
-                <TableRow key={note.id}>
-                  <TableCell className="align-top text-xs">
-                    {note.createdAt ? <LocalDateTime iso={note.createdAt} /> : "—"}
-                  </TableCell>
-                  <TableCell className="align-top text-sm whitespace-pre-wrap">
-                    {note.comment.startsWith("Email sent:") ? (
-                      <span className="flex items-start gap-2">
-                        <EnvelopeSimpleIcon size={16} className="mt-0.5 shrink-0 text-tys-blue" />
-                        <span>{note.comment}</span>
-                      </span>
-                    ) : (
-                      note.comment
-                    )}
-                    <span className="mt-1 block text-xs text-muted-foreground">
-                      {note.createdByName ? `By ${note.createdByName}` : note.comment.startsWith("Email sent:") ? "Sent automatically" : null}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right align-top">
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      title="Delete"
-                      aria-label="Delete comment"
-                      disabled={deletingId === note.id}
-                      onClick={() => removeNote(note.id)}
-                    >
-                      <TrashIcon size={16} />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+
+        {loading ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Loading notes…</p>
+        ) : notes.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">No notes yet.</p>
+        ) : (
+          <ul className="flex flex-col divide-y rounded-xl border">
+            {notes.map((note) => {
+              const isEmail = note.comment.startsWith("Email sent:");
+              return (
+                <li key={note.id} className="group flex items-start gap-3 px-4 py-3">
+                  <span
+                    className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full ${
+                      isEmail ? "bg-brand-soft text-tys-blue" : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {isEmail ? <EnvelopeSimpleIcon size={14} /> : <ChatTextIcon size={14} />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm whitespace-pre-wrap">{isEmail ? note.comment.replace(/^Email sent:\s*/, "Email sent: ") : note.comment}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {note.createdByName ? note.createdByName : isEmail ? "Sent automatically" : "Staff"} ·{" "}
+                      {note.createdAt ? <LocalDateTime iso={note.createdAt} /> : "—"}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    title="Delete"
+                    aria-label="Delete note"
+                    className="opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+                    disabled={deletingId === note.id}
+                    onClick={() => removeNote(note.id)}
+                  >
+                    <TrashIcon size={15} />
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </CardContent>
     </Card>
     );
