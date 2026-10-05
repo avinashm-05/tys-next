@@ -17,8 +17,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ConfirmDeleteDialog } from "@/components/admin/confirm-delete-dialog";
-import { QUOTE_NOTES_REFRESH_EVENT } from "@/components/admin/quote-follow-up-button";
+import { openQuoteComposer } from "@/lib/quote-composer";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -79,7 +78,6 @@ export function FedExRatesPanel({
   defaultCurrency,
   currentAmount,
   packageType,
-  sendTo,
   onBeforeGetRates,
 }: {
   quoteId: number;
@@ -87,7 +85,8 @@ export function FedExRatesPanel({
   defaultCurrency: string;
   currentAmount: number | null;
   packageType: string;
-  sendTo: string | null;
+  /** Unused since the composer owns sending; kept so callers don't change. */
+  sendTo?: string | null;
   // This panel always rates whatever the DB currently has (the /fedex-rates
   // route re-reads the quote fresh on every call) — it never saw the sibling
   // editor's in-memory package edits. Staff who typed a weight/dimension and
@@ -124,7 +123,6 @@ export function FedExRatesPanel({
   // price line vs. a comparison table depending on count), so there's no
   // separate "lock this one" vs. "email these as options" split anymore.
   const [selectedRates, setSelectedRates] = useState<Set<string>>(new Set());
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // Manual entry (international / auto-failed).
   const manualCurrencyDefault = ALLOWED_CURRENCIES.includes(defaultCurrency as never)
@@ -201,35 +199,42 @@ export function FedExRatesPanel({
     });
   }
 
-  // The one "Send quote" action, regardless of how the price gets there:
-  //  - one or more rates checked → send-options (its email already renders
-  //    as a single price line for exactly one, a comparison table for more)
-  //  - a manual base rate typed in → lock it, then send the confirmation
-  //  - neither, but a price is already locked from a previous visit → just send
+  // Since 2026-10-05 this card no longer emails anything itself: there is ONE
+  // "Send quote" (the composer at the top of the page, with preview, PDF and
+  // WhatsApp text). This button hands the composer what's picked here:
+  //  - checked rate(s) → the first one's price (discounted if the discount is
+  //    on, with the full rate as the crossed-out original); the rest are
+  //    listed as other options
+  //  - a manual base rate → locked first (markup applied on the server)
+  //  - neither → the price already locked on the quote
   const hasSelection = selectedRates.size > 0 && result?.success;
   const hasManualEntry = baseRate.trim() !== "";
   const canSend = hasSelection || hasManualEntry || currentAmount != null;
+  const [handingOff, setHandingOff] = useState(false);
 
-  async function handleSend() {
-    try {
-      if (hasSelection && result?.success) {
-        const rates = result.rates.filter((r) => selectedRates.has(r.service_type));
-        const res = await adminApi<{ sentTo: string; count: number }>(
-          `/api/admin/quotes/${quoteId}/send-options`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              rates: rates.map((r) => ({
-                service_name: r.service_name,
-                total_charge: r.total_charge,
-                currency: r.currency,
-              })),
-            }),
-          },
-        );
-        toast.success(`Sent to ${res.sentTo}.`);
-        setSelectedRates(new Set());
-      } else if (hasManualEntry) {
+  async function handleUseInQuote() {
+    if (hasSelection && result?.success) {
+      const picked = result.rates.filter((r) => selectedRates.has(r.service_type));
+      const priced = picked.map((r) => {
+        const discounted = discount
+          ? applyDiscount(r.raw_total_charge, result.markupPercent, discount.type, discount.value)
+          : null;
+        return { rate: r, price: discounted ?? r.total_charge };
+      });
+      const [first, ...rest] = priced;
+      openQuoteComposer({
+        serviceName: first.rate.service_name,
+        price: first.price,
+        currency: first.rate.currency,
+        originalAmount: first.price < first.rate.total_charge ? first.rate.total_charge : undefined,
+        deliveryTime: first.rate.estimated_delivery || undefined,
+        otherOptions: rest.map((o) => ({ serviceName: o.rate.service_name, price: o.price, currency: o.rate.currency })),
+      });
+      return;
+    }
+    if (hasManualEntry) {
+      setHandingOff(true);
+      try {
         const saved = await adminApi<{ estimatedCost: string; currency: string }>(
           `/api/admin/quotes/${quoteId}/price`,
           {
@@ -237,23 +242,17 @@ export function FedExRatesPanel({
             body: JSON.stringify({ source: "manual", baseRate, currency: manualCurrency }),
           },
         );
-        const res = await adminApi<{ sentTo: string }>(`/api/admin/quotes/${quoteId}/send`, {
-          method: "POST",
-        });
-        toast.success(`Locked ${saved.estimatedCost} ${saved.currency} and sent to ${res.sentTo}.`);
         setBaseRate("");
-      } else {
-        const res = await adminApi<{ sentTo: string }>(`/api/admin/quotes/${quoteId}/send`, {
-          method: "POST",
-        });
-        toast.success(`Sent to ${res.sentTo}.`);
+        router.refresh();
+        openQuoteComposer({ price: Number(saved.estimatedCost), currency: saved.currency });
+      } catch (e) {
+        toast.error(e instanceof ApiError ? e.message : "Couldn't lock the price.");
+      } finally {
+        setHandingOff(false);
       }
-      window.dispatchEvent(new Event(QUOTE_NOTES_REFRESH_EVENT));
-      router.refresh();
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Couldn't send the quote.");
-      throw e; // ConfirmDeleteDialog shows this inline and keeps the dialog open
+      return;
     }
+    openQuoteComposer({ price: currentAmount ?? undefined, currency: defaultCurrency });
   }
 
   const showManual = result !== null && !result.success;
@@ -361,9 +360,8 @@ export function FedExRatesPanel({
         {result?.success && (
           <div className="flex flex-col gap-2">
             <p className="text-xs text-muted-foreground">
-              Check one service to send that price, or a few to email as options for the customer to
-              compare — <span className="font-medium text-foreground">Send quote</span> below sends
-              whatever&rsquo;s checked.
+              Check a service and press <span className="font-medium text-foreground">Use in quote email</span>{" "}
+              to open it in the quote composer. Check more than one to list the others as options.
             </p>
             <FedExRatesTable
               rates={result.rates}
@@ -423,8 +421,8 @@ export function FedExRatesPanel({
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Send quote below will lock this rate (international markup applied on the server) and
-              email it.
+              Use in quote email below will lock this rate (international markup applied on the server)
+              and open it in the quote composer.
             </p>
           </FedExRateUnavailable>
         )}
@@ -518,38 +516,18 @@ export function FedExRatesPanel({
           )}
         </div>
 
-        {/* The one send action for the whole card — sends whatever's
-            currently selected/entered, whether that's checked rates, a
-            manual entry, or an already-locked price from an earlier visit. */}
+        {/* Hands the picked price to the one "Send quote" composer. */}
         <div className="flex items-center justify-end rounded-xl border border-tys-mist bg-muted/20 p-4">
           <Button
             size="lg"
             className="bg-tys-blue text-white hover:bg-tys-blue/90"
-            disabled={!canSend}
-            onClick={() => setConfirmOpen(true)}
+            disabled={!canSend || handingOff}
+            onClick={handleUseInQuote}
           >
             <PaperPlaneTiltIcon size={16} weight="bold" />
-            Send quote
+            {handingOff ? "Locking price…" : "Use in quote email"}
           </Button>
         </div>
-
-        <ConfirmDeleteDialog
-          open={confirmOpen}
-          onOpenChange={setConfirmOpen}
-          title="Send quote"
-          description={
-            hasSelection
-              ? `Email ${selectedRates.size} rate option${selectedRates.size === 1 ? "" : "s"} to ${sendTo ?? "the customer"}? The status will move to "quoted".`
-              : hasManualEntry
-                ? `Lock ${baseRate} ${manualCurrency} and email the confirmed quote to ${sendTo ?? "the customer"}? The status will move to "quoted".`
-                : `Email the confirmed quote to ${sendTo ?? "the customer"}? The status will move to "quoted".`
-          }
-          confirmLabel="Send quote"
-          confirmVariant="default"
-          busyLabel="Sending…"
-          errorFallback="The quote could not be sent. Try again."
-          onConfirm={handleSend}
-        />
       </CardContent>
     </Card>
   );

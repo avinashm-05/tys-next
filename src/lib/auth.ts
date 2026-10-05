@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { twoFactor, username } from "better-auth/plugins";
+import { emailOTP, twoFactor, username } from "better-auth/plugins";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { cache } from "react";
 import { headers } from "next/headers";
@@ -11,7 +11,7 @@ import { db } from "@/lib/db";
 import { audit } from "@/lib/audit";
 import { clientIp } from "@/lib/client-ip";
 import { AUTH_COOKIE_PREFIX } from "@/lib/auth-cookie";
-import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
+import { sendLoginCodeEmail, sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
 import { generateUniqueUsername } from "@/lib/username";
 import { HttpError, toErrorResponse } from "@/lib/validation/errors";
 
@@ -269,10 +269,36 @@ export const auth = betterAuth({
   // have an account?". 404 it.
   disabledPaths: ["/is-username-available"],
   // twoFactor (2026-09-30): authenticator-app codes + one-time backup codes.
-  // Required for every admin account (see requireAdmin/requireAdminPage);
-  // optional and unused for customers. No "trust this device": staff enter
-  // a code on every sign-in.
-  plugins: [username(), twoFactor({ issuer: "TYS Global Logistics" }), nextCookies()],
+  // Optional since 2026-10-05 (owner: "simpler, like Attio, add security
+  // later"); STAFF_REQUIRE_TWO_STEP=true makes it mandatory again.
+  //
+  // emailOTP (2026-10-05): the Attio-style staff login. Staff type their
+  // email and get a 6-digit code in that inbox, no password needed. Codes
+  // go to STAFF accounts only (anyone else gets the same "check your inbox"
+  // answer and no email), sign-up through it is off, and the route handler
+  // puts it behind the same lockout as password sign-in.
+  plugins: [
+    username(),
+    twoFactor({ issuer: "TYS Global Logistics" }),
+    emailOTP({
+      otpLength: 6,
+      expiresIn: 10 * 60,
+      allowedAttempts: 5,
+      disableSignUp: true,
+      storeOTP: "hashed",
+      sendVerificationOTP: async ({ email, otp, type }) => {
+        if (type !== "sign-in") return;
+        const user = await db.user.findFirst({ where: { email }, select: { role: true } });
+        if (!user || !ADMIN_ROLES.includes(user.role as (typeof ADMIN_ROLES)[number])) return;
+        // Not awaited: the answer must take the same time for staff and
+        // non-staff emails, or response timing would tell them apart.
+        void sendLoginCodeEmail(email, otp).catch((err) => {
+          console.error("[auth] login code email FAILED:", err instanceof Error ? `${err.name}: ${err.message}` : err);
+        });
+      },
+    }),
+    nextCookies(),
+  ],
 });
 
 export type AppSession = typeof auth.$Infer.Session;
@@ -327,6 +353,11 @@ export function hasTwoFactor(session: AppSession): boolean {
 /** Where an admin without 2-step sign-in is sent to set it up. */
 export const TWO_STEP_SETUP_PATH = "/two-step";
 
+/** 2-step is optional unless STAFF_REQUIRE_TWO_STEP=true (owner's call, 2026-10-05). */
+export function twoStepRequired(): boolean {
+  return process.env.STAFF_REQUIRE_TWO_STEP === "true";
+}
+
 export function requireAdmin(session: AppSession | null): AppSession {
   if (!session?.user) throw new HttpError(401, "Unauthenticated.");
   if (!isAdmin(session)) throw new HttpError(403, "This action is unauthorized.");
@@ -334,7 +365,7 @@ export function requireAdmin(session: AppSession | null): AppSession {
     void endSession(session).catch(() => {});
     throw new HttpError(401, "Your session has expired. Please sign in again.");
   }
-  if (!hasTwoFactor(session)) {
+  if (twoStepRequired() && !hasTwoFactor(session)) {
     throw new HttpError(403, "Set up 2-step sign-in first.");
   }
   return session;
@@ -385,7 +416,7 @@ export function adminRoute<Ctx = unknown>(
  */
 export async function requireAdminPage(): Promise<AppSession> {
   const session = await requireAdminPageAllowingSetup();
-  if (!hasTwoFactor(session)) redirect(TWO_STEP_SETUP_PATH);
+  if (twoStepRequired() && !hasTwoFactor(session)) redirect(TWO_STEP_SETUP_PATH);
   return session;
 }
 

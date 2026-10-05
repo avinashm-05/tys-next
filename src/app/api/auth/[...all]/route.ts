@@ -53,6 +53,23 @@ export async function POST(req: NextRequest) {
   const all = await rateLimit(`auth.post:${ip}`, ALL_AUTH_POSTS_PER_MIN, 60);
   if (!all.allowed) return tooMany(all.retryAfterSeconds);
 
+  // Staff sign-in code requests (Attio-style login, 2026-10-05): per IP like
+  // the other email senders, plus per EMAIL so nobody can flood a staff
+  // inbox from many IPs. Over the limit answers 429 for everyone alike.
+  if (path.endsWith("/email-otp/send-verification-otp")) {
+    let email = "";
+    try {
+      email = String(((await req.clone().json()) as { email?: string }).email ?? "").trim().toLowerCase();
+    } catch {
+      // Better Auth rejects it below
+    }
+    const perIp = await rateLimit(`auth.send-otp:${ip}`, 5, 60);
+    if (!perIp.allowed) return tooMany(perIp.retryAfterSeconds);
+    const perEmail = await rateLimit(`auth.send-otp.email:${email || "(empty)"}`, 5, 15 * 60);
+    if (!perEmail.allowed) return tooMany(perEmail.retryAfterSeconds);
+    return handlers.POST(req);
+  }
+
   for (const [suffix, name, limit] of EMAIL_SENDING_LIMITS) {
     if (path.endsWith(suffix)) {
       const { allowed, retryAfterSeconds } = await rateLimit(`${name}:${ip}`, limit, 60);
@@ -61,7 +78,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const byEmail = path.endsWith("/sign-in/email");
+  // A sign-in CODE is checked against the same per-email counters as a
+  // password, so guessing codes and guessing passwords share one lock.
+  const byCode = path.endsWith("/sign-in/email-otp");
+  const byEmail = path.endsWith("/sign-in/email") || byCode;
   const byUsername = path.endsWith("/sign-in/username");
   if (byEmail || byUsername) {
     let identifier = "";
@@ -117,7 +137,7 @@ export async function POST(req: NextRequest) {
 
     const res = await handlers.POST(req);
     // Activity log for STAFF accounts only (customers aren't logged).
-    void logStaffSignIn(identifier, byUsername, res.clone(), ip).catch(() => {});
+    void logStaffSignIn(identifier, byUsername, res.clone(), ip, byCode).catch(() => {});
     if (res.ok) {
       await rateLimitClear(pairKey);
     } else if (res.status === 400 || res.status === 401 || res.status === 422) {
@@ -160,7 +180,7 @@ function isAdminRole(role: string | null | undefined) {
   return ADMIN_ROLES.includes(role as (typeof ADMIN_ROLES)[number]);
 }
 
-async function logStaffSignIn(identifier: string, byUsername: boolean, res: Response, ip: string) {
+async function logStaffSignIn(identifier: string, byUsername: boolean, res: Response, ip: string, byCode = false) {
   if (!identifier) return;
   const user = await db.user.findFirst({
     where: byUsername ? { username: identifier } : { email: identifier },
@@ -174,7 +194,14 @@ async function logStaffSignIn(identifier: string, byUsername: boolean, res: Resp
   } else if (res.status === 422) {
     action = "sign_in.blocked";
   }
-  await audit({ userId: user.id, action, method: "POST", path: byUsername ? "/sign-in/username" : "/sign-in/email", statusCode: res.status, ip });
+  await audit({
+    userId: user.id,
+    action: byCode ? action.replace("sign_in.", "sign_in.code_") : action,
+    method: "POST",
+    path: byCode ? "/sign-in/email-otp" : byUsername ? "/sign-in/username" : "/sign-in/email",
+    statusCode: res.status,
+    ip,
+  });
 }
 
 async function logTwoStep(action: string, res: Response, sessionUserId: string | null, pending: boolean, ip: string) {

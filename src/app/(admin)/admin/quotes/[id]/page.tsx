@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { QuoteStatusBadge } from "@/components/admin/quote-status-badge";
 import { QuoteStatusControl } from "@/components/admin/quote-status-control";
 import { QuoteFollowUpButton } from "@/components/admin/quote-follow-up-button";
+import { QuoteComposer } from "@/components/admin/quote-composer";
+import { SALES_REP_NAME } from "@/lib/mail";
 import { QUOTE_DETAIL_INCLUDE, serializeQuoteDetail } from "@/app/api/admin/quotes/helpers";
 import { QuoteDetailEditor } from "./quote-detail-editor";
 
@@ -49,6 +51,7 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {q.status === "quoted" && <QuoteFollowUpButton quoteId={q.id} sendTo={q.contact.email} />}
+          <QuoteComposer quote={q} repName={SALES_REP_NAME} />
           <QuoteStatusControl quoteId={q.id} status={q.status} className="w-40" />
         </div>
       </div>
