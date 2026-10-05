@@ -46,7 +46,14 @@ export function SettingsForm({
       fedex_markup_percentage_international: initialInternational,
     },
   });
-  const { errors, isSubmitting } = form.formState;
+  const { errors, isSubmitting, isDirty } = form.formState;
+  // Live example so the % means something: what a $100 FedEx rate is quoted at.
+  const example = (v: unknown) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 0 ? `A $100 FedEx rate is quoted at $${(100 * (1 + n / 100)).toFixed(2).replace(/\.00$/, "")}.` : "";
+  };
+  const domestic = form.watch("fedex_markup_percentage");
+  const international = form.watch("fedex_markup_percentage_international");
 
   async function onSubmit(values: SettingsInput) {
     try {
@@ -66,55 +73,60 @@ export function SettingsForm({
 
   return (
     <div className="flex max-w-xl flex-col gap-4">
-      <h1 className="text-h2">FedEx Markup</h1>
+      <div>
+        <h1 className="text-h2">FedEx markup</h1>
+        <p className="text-sm text-muted-foreground">How much TYS adds on top of FedEx&rsquo;s price. Changes apply to new prices only.</p>
+      </div>
       <Card>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
             <FieldGroup>
               <Field data-invalid={!!errors.fedex_markup_percentage}>
                 <FieldLabel htmlFor="fedex_markup_percentage">
-                  Domestic markup (US → US) percentage
+                  Domestic (within the US)
                 </FieldLabel>
-                <Input
-                  id="fedex_markup_percentage"
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  max={100}
-                  className="max-w-36"
-                  aria-invalid={!!errors.fedex_markup_percentage}
-                  {...form.register("fedex_markup_percentage")}
-                />
+                <div className="relative max-w-36">
+                  <Input
+                    id="fedex_markup_percentage"
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    max={100}
+                    className="pr-8"
+                    aria-invalid={!!errors.fedex_markup_percentage}
+                    {...form.register("fedex_markup_percentage")}
+                  />
+                  <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                </div>
                 <FieldDescription>
-                  Applied to automated FedEx rates on US-to-US quotes (0–100).
+                  Added to live FedEx prices on US-to-US quotes. {example(domestic)}
                 </FieldDescription>
                 <FieldError errors={[errors.fedex_markup_percentage]} />
               </Field>
               <Field data-invalid={!!errors.fedex_markup_percentage_international}>
                 <FieldLabel htmlFor="fedex_markup_percentage_international">
-                  International markup percentage
+                  International
                 </FieldLabel>
-                <Input
-                  id="fedex_markup_percentage_international"
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  max={100}
-                  className="max-w-36"
-                  aria-invalid={!!errors.fedex_markup_percentage_international}
-                  {...form.register("fedex_markup_percentage_international")}
-                />
+                <div className="relative max-w-36">
+                  <Input
+                    id="fedex_markup_percentage_international"
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    max={100}
+                    className="pr-8"
+                    aria-invalid={!!errors.fedex_markup_percentage_international}
+                    {...form.register("fedex_markup_percentage_international")}
+                  />
+                  <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                </div>
                 <FieldDescription>
-                  Applied to the staff-entered retail on non-US quotes (0–100).
+                  Added to the FedEx cost you type in on international quotes. {example(international)}
                 </FieldDescription>
                 <FieldError errors={[errors.fedex_markup_percentage_international]} />
               </Field>
               <div>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-tys-blue text-white hover:bg-tys-blue/90"
-                >
+                <Button type="submit" disabled={isSubmitting || !isDirty}>
                   {isSubmitting ? "Saving…" : "Save changes"}
                 </Button>
               </div>

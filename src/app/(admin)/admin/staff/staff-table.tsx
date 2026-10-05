@@ -61,21 +61,21 @@ export function StaffTable({ rows }: { rows: StaffRow[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Staff</h1>
+          <h1 className="text-h2">Staff</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Who can open the admin panel. New members get an email to set their password, then 2-step sign-in on
             their first visit.
           </p>
         </div>
-        <Button className="bg-tys-blue text-white hover:bg-tys-blue/90" onClick={() => setAddOpen(true)}>
+        <Button onClick={() => setAddOpen(true)}>
           <PlusIcon size={16} weight="bold" /> Add staff member
         </Button>
       </div>
 
-      <div className="rounded-xl border">
+      <div className="overflow-x-auto rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>

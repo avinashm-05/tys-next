@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireAdminPage } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
+import { quoteRef } from "@/lib/quote-ref";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Activity | TYS Global Logistics" };
@@ -15,7 +16,12 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
 
 const ACTIONS: Record<string, { label: string; tone: "default" | "secondary" | "destructive" | "outline" }> = {
   "sign_in.success": { label: "Signed in", tone: "secondary" },
-  "sign_in.password_ok_code_pending": { label: "Password OK, waiting for code", tone: "outline" },
+  "sign_in.password_ok_code_pending": { label: "Password OK, code emailed", tone: "outline" },
+  "two_factor.verify_email_code.success": { label: "Signed in", tone: "secondary" },
+  // From the short-lived passwordless login (Oct 5, 2026), kept readable.
+  "sign_in.code_success": { label: "Signed in (code only)", tone: "secondary" },
+  "sign_in.code_failed": { label: "Wrong sign-in code", tone: "destructive" },
+  "two_factor.verify_email_code.failed": { label: "Wrong email code", tone: "destructive" },
   "sign_in.failed": { label: "Wrong password", tone: "destructive" },
   "sign_in.blocked": { label: "Sign-in blocked (too many tries)", tone: "destructive" },
   "sign_in.locked": { label: "Account locked", tone: "destructive" },
@@ -28,11 +34,35 @@ const ACTIONS: Record<string, { label: string; tone: "default" | "secondary" | "
   "admin.api": { label: "Change", tone: "default" },
 };
 
-// What changed a record, in plain words, from the API path + method.
+// What changed, in plain words, from the API path + method (2026-10-05).
+const PHRASES: Array<[RegExp, (m: RegExpMatchArray, method: string) => string]> = [
+  [/^quotes\/(\d+)\/(compose|send|send-options)$/, (m) => `Sent quote #${quoteRef(Number(m[1]))}`],
+  [/^quotes\/(\d+)\/follow-up$/, (m) => `Sent a follow-up on quote #${quoteRef(Number(m[1]))}`],
+  [/^quotes\/(\d+)\/price$/, (m) => `Set the price on quote #${quoteRef(Number(m[1]))}`],
+  [/^quotes\/(\d+)\/status$/, (m) => `Changed the status of quote #${quoteRef(Number(m[1]))}`],
+  [/^quotes\/(\d+)\/notes(\/\d+)?$/, (m, method) => `${method === "DELETE" ? "Deleted a note on" : "Added a note to"} quote #${quoteRef(Number(m[1]))}`],
+  [/^quotes\/(\d+)\/convert-to-shipment$/, (m) => `Made a shipment from quote #${quoteRef(Number(m[1]))}`],
+  [/^quotes\/(\d+)$/, (m, method) => `${method === "DELETE" ? "Deleted" : "Edited"} quote #${quoteRef(Number(m[1]))}`],
+  [/^quotes$/, () => "Created a quote"],
+  [/^shipments\/(\d+)$/, (m, method) => `${method === "DELETE" ? "Deleted" : "Edited"} shipment #${m[1]}`],
+  [/^shipments$/, () => "Created a shipment"],
+  [/^vendors\/bulk$/, () => "Bulk action on vendors (export or status)"],
+  [/^vendors\/(\d+)\/(comments|contacts|services)/, (m) => `Updated ${m[2]} of vendor #${m[1]}`],
+  [/^vendors\/(\d+)$/, (m, method) => `${method === "DELETE" ? "Deleted" : "Edited"} vendor #${m[1]}`],
+  [/^vendors$/, () => "Added a vendor"],
+  [/^staff/, () => "Changed staff access"],
+  [/^settings/, () => "Changed the FedEx markup"],
+  [/^blog/, (_m, method) => (method === "DELETE" ? "Deleted a blog post" : "Saved a blog post")],
+];
+
 function describe(method: string | null, path: string | null): string {
   if (!path) return "";
   const p = path.replace(/^\/api\/admin\//, "");
-  const verb = method === "DELETE" ? "Deleted" : method === "POST" ? "Created / sent" : "Updated";
+  for (const [re, fn] of PHRASES) {
+    const m = p.match(re);
+    if (m) return fn(m, method ?? "");
+  }
+  const verb = method === "DELETE" ? "Deleted" : method === "POST" ? "Created" : "Updated";
   return `${verb}: ${p}`;
 }
 
@@ -41,20 +71,21 @@ function describe(method: string | null, path: string | null): string {
 export default async function ActivityPage() {
   await requireAdminPage();
   const rows = await db.adminAuditLog.findMany({
+    where: { NOT: { path: { contains: "/vendors/map/" } } },
     orderBy: { id: "desc" },
     take: 500,
     include: { user: { select: { name: true, email: true } } },
   });
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6">
+    <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Activity</h1>
+        <h1 className="text-h2">Activity</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Staff sign-ins and every change made in the admin panel. Newest first.
         </p>
       </div>
-      <div className="rounded-xl border">
+      <div className="overflow-x-auto rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>

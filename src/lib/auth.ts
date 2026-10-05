@@ -370,6 +370,11 @@ export function requireAdmin(session: AppSession | null): AppSession {
  * Runs the session check, hands the verified session to the handler, and
  * converts thrown HttpError/ZodError into the Laravel-shaped responses.
  */
+// POST endpoints that only LOOK things up (vendor map panning, FedEx
+// tracking): not changes, so they stay out of the Activity log, which they
+// used to flood with a row per map pan.
+const READ_ONLY_POST = /^\/api\/admin\/(vendors\/map\/(bounds|radius|search)|tracking(\/bulk)?)$/;
+
 export function adminRoute<Ctx = unknown>(
   handler: (req: Request, ctx: Ctx, session: AppSession) => Promise<Response> | Response,
 ): (req: Request, ctx: Ctx) => Promise<Response> {
@@ -385,7 +390,7 @@ export function adminRoute<Ctx = unknown>(
     // Activity log: every WRITE by a signed-in admin, whatever its outcome
     // (reads aren't logged, they'd drown it; anonymous hits aren't either,
     // so nobody can flood the table from outside).
-    if (session && req.method !== "GET" && req.method !== "HEAD") {
+    if (session && req.method !== "GET" && req.method !== "HEAD" && !READ_ONLY_POST.test(new URL(req.url).pathname)) {
       await audit({
         userId: session?.user.id ?? null,
         action: "admin.api",
