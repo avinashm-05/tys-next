@@ -97,6 +97,9 @@
     "@prisma/engines@6.19.3": true
   },
   "overrides": {
-    "deepmerge-ts": "^8.0.0"
+    "deepmerge-ts": "^8.0.0",
+    "@prisma/adapter-mariadb": {
+      "mariadb": "3.4.7"
+    }
   }
 }
